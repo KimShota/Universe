@@ -70,7 +70,7 @@ export default function MainScreen() {
     }
   };
 
-  renderPlanets() {
+  const renderPlanets = () => {
     const planets = [];
     const currentPlanet = user?.current_planet || 0;
 
