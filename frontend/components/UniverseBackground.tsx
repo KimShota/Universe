@@ -1,13 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
-import { Canvas, Circle, Group } from '@shopify/react-native-skia';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  withSequence,
-} from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet, Dimensions, Animated } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -18,14 +10,15 @@ const generateStars = (count: number) => {
     stars.push({
       x: Math.random() * width,
       y: Math.random() * height,
-      radius: Math.random() * 2 + 0.5,
+      size: Math.random() * 3 + 1,
       opacity: Math.random() * 0.5 + 0.3,
+      delay: Math.random() * 3000,
     });
   }
   return stars;
 };
 
-const STARS = generateStars(150);
+const STARS = generateStars(100);
 
 export const UniverseBackground: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   return (
@@ -36,7 +29,7 @@ export const UniverseBackground: React.FC<{ children?: React.ReactNode }> = ({ c
       {/* Stars layer */}
       <View style={styles.starsContainer}>
         {STARS.map((star, index) => (
-          <Star key={index} star={star} index={index} />
+          <Star key={index} star={star} />
         ))}
       </View>
       
@@ -48,27 +41,30 @@ export const UniverseBackground: React.FC<{ children?: React.ReactNode }> = ({ c
   );
 };
 
-const Star: React.FC<{ star: any; index: number }> = ({ star, index }) => {
-  const opacity = useSharedValue(star.opacity);
+const Star: React.FC<{ star: any }> = ({ star }) => {
+  const opacityAnim = useRef(new Animated.Value(star.opacity)).current;
 
   useEffect(() => {
-    // Random twinkling effect
-    const delay = Math.random() * 3000;
-    setTimeout(() => {
-      opacity.value = withRepeat(
-        withSequence(
-          withTiming(0.2, { duration: 2000 }),
-          withTiming(star.opacity, { duration: 2000 })
-        ),
-        -1,
-        true
-      );
-    }, delay);
-  }, []);
+    const startTwinkling = () => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(opacityAnim, {
+            toValue: 0.2,
+            duration: 2000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacityAnim, {
+            toValue: star.opacity,
+            duration: 2000,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    };
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-  }));
+    const timer = setTimeout(startTwinkling, star.delay);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <Animated.View
@@ -77,11 +73,11 @@ const Star: React.FC<{ star: any; index: number }> = ({ star, index }) => {
         {
           left: star.x,
           top: star.y,
-          width: star.radius * 2,
-          height: star.radius * 2,
-          borderRadius: star.radius,
+          width: star.size,
+          height: star.size,
+          borderRadius: star.size / 2,
+          opacity: opacityAnim,
         },
-        animatedStyle,
       ]}
     />
   );
