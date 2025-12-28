@@ -316,6 +316,11 @@ export default function SOSFlowScreen() {
 
         {step === 3 && (
           <View style={styles.affirmationsContainer}>
+            {/* Title */}
+            <View style={styles.affirmationHeader}>
+              <Text style={styles.affirmationTitle}>Write Your Affirmations</Text>
+            </View>
+
             {/* Star positions in diamond/square formation */}
             <View style={styles.starsLayout}>
               {/* Top Star */}
