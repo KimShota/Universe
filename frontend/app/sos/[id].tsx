@@ -85,10 +85,49 @@ export default function SOSFlowScreen() {
 
   const handleLetGo = () => {
     setIsVacuuming(true);
-    setTimeout(() => {
-      setIsVacuuming(false);
-      setStep(3);
-    }, 2000);
+    
+    // Animate all asteroids being sucked into the black hole
+    Animated.parallel([
+      // Asteroid 1: move to center and shrink
+      Animated.timing(asteroid1Position, {
+        toValue: { x: 0, y: 0 },
+        duration: 1500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(asteroid1Scale, {
+        toValue: 0,
+        duration: 1500,
+        useNativeDriver: true,
+      }),
+      // Asteroid 2: move to center and shrink
+      Animated.timing(asteroid2Position, {
+        toValue: { x: 0, y: 0 },
+        duration: 1500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(asteroid2Scale, {
+        toValue: 0,
+        duration: 1500,
+        useNativeDriver: true,
+      }),
+      // Asteroid 3: move to center and shrink
+      Animated.timing(asteroid3Position, {
+        toValue: { x: 0, y: 0 },
+        duration: 1500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(asteroid3Scale, {
+        toValue: 0,
+        duration: 1500,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      // After animation completes, move to next step
+      setTimeout(() => {
+        setIsVacuuming(false);
+        setStep(3);
+      }, 500);
+    });
   };
 
   const handleComplete = async () => {
