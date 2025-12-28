@@ -143,10 +143,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 48,
     borderRadius: 30,
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
     elevation: 8,
   },
   loginButtonText: {
