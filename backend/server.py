@@ -80,7 +80,7 @@ class ContentTipsProgress(BaseModel):
 
 # Request/Response Models
 class SessionDataResponse(BaseModel):
-    user_id: str
+    id: str
     email: str
     name: str
     picture: Optional[str] = None
