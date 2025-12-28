@@ -30,11 +30,19 @@ export default function SOSFlowScreen() {
   const [asteroids, setAsteroids] = useState(['', '', '']);
   const [affirmations, setAffirmations] = useState(['', '', '', '']);
   const [isVacuuming, setIsVacuuming] = useState(false);
+  const [rotateInterpolate, setRotateInterpolate] = useState(null);
   
   // Vortex rotation animation
   const vortexRotation = useRef(new Animated.Value(0));
 
   useEffect(() => {
+    // Create interpolation once
+    const interpolation = vortexRotation.current.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['0deg', '360deg'],
+    });
+    setRotateInterpolate(interpolation);
+
     if (step === 2) {
       // Start infinite rotation
       Animated.loop(
@@ -46,13 +54,6 @@ export default function SOSFlowScreen() {
       ).start();
     }
   }, [step]);
-
-  const rotateInterpolate = useMemo(() => 
-    vortexRotation.current.interpolate({
-      inputRange: [0, 1],
-      outputRange: ['0deg', '360deg'],
-    }), []
-  );
 
   if (!issue) {
     return (
