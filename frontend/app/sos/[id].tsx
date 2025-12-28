@@ -47,10 +47,12 @@ export default function SOSFlowScreen() {
     }
   }, [step]);
 
-  const rotateInterpolate = vortexRotation.current.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
+  const rotateInterpolate = useMemo(() => 
+    vortexRotation.current.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['0deg', '360deg'],
+    }), []
+  );
 
   if (!issue) {
     return (
