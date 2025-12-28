@@ -71,6 +71,48 @@ export default function SOSFlowScreen() {
 
   const blackHoleRotateInterpolate = blackHoleRotation.interpolate({
     inputRange: [0, 1],
+    outputRange: ['0deg', '-360deg'],
+  });
+  
+  // Animation refs
+  const vortexRotation = useRef(new Animated.Value(0)).current;
+  const blackHoleRotation = useRef(new Animated.Value(0)).current;
+  const asteroid1Position = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+  const asteroid2Position = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+  const asteroid3Position = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+  const asteroid1Scale = useRef(new Animated.Value(1)).current;
+  const asteroid2Scale = useRef(new Animated.Value(1)).current;
+  const asteroid3Scale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (step === 2) {
+      // Start infinite vortex rotation
+      Animated.loop(
+        Animated.timing(vortexRotation, {
+          toValue: 1,
+          duration: 20000,
+          useNativeDriver: true,
+        })
+      ).start();
+
+      // Start infinite black hole swirl (faster than vortex)
+      Animated.loop(
+        Animated.timing(blackHoleRotation, {
+          toValue: 1,
+          duration: 8000,
+          useNativeDriver: true,
+        })
+      ).start();
+    }
+  }, [step]);
+
+  const vortexRotateInterpolate = vortexRotation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  const blackHoleRotateInterpolate = blackHoleRotation.interpolate({
+    inputRange: [0, 1],
     outputRange: ['0deg', '-360deg'], // Counter-clockwise for effect
   });
 
