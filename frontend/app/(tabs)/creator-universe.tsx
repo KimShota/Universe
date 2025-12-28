@@ -186,16 +186,10 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    paddingVertical: 24,
+    paddingVertical: 16,
   },
   starCharacter: {
     fontSize: 48,
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#FFD700',
   },
   scrollView: {
     flex: 1,
@@ -204,56 +198,86 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   goalContainer: {
-    marginBottom: 32,
+    alignItems: 'center',
+    marginBottom: 0,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFD700',
-    marginBottom: 12,
+  goalLabel: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginBottom: 8,
   },
   goalInput: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderWidth: 2,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
-    borderRadius: 16,
+    borderColor: 'rgba(255, 215, 0, 0.5)',
+    borderRadius: 12,
     padding: 16,
     color: '#fff',
     fontSize: 16,
-    minHeight: 100,
+    minHeight: 80,
+    width: '80%',
+    textAlign: 'center',
     textAlignVertical: 'top',
   },
-  pillarsContainer: {
-    gap: 16,
+  connectionsContainer: {
+    height: 60,
+    marginBottom: 0,
   },
-  pillarCard: {
+  svg: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+  pillarsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 0,
+    paddingHorizontal: 5,
+  },
+  pillarBox: {
+    width: '23%',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderWidth: 2,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
-    borderRadius: 16,
-    padding: 16,
+    borderColor: 'rgba(255, 215, 0, 0.4)',
+    borderRadius: 8,
+    padding: 8,
+    minHeight: 80,
+    justifyContent: 'center',
   },
   pillarTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
     color: '#FFD700',
-    marginBottom: 12,
+    fontSize: 12,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
-  ideaText: {
-    color: '#fff',
-    fontSize: 14,
-    marginBottom: 8,
-    paddingLeft: 8,
+  pillarConnectionsContainer: {
+    height: 40,
+    marginBottom: 0,
   },
-  addIdeaButton: {
+  ideasRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
+    justifyContent: 'space-between',
+    paddingHorizontal: 5,
+  },
+  ideasColumn: {
+    width: '23%',
     gap: 8,
   },
-  addIdeaText: {
-    color: '#FFD700',
-    fontSize: 14,
-    fontWeight: '600',
+  ideaBox: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
+    borderRadius: 6,
+    padding: 8,
+    minHeight: 60,
+  },
+  ideaInput: {
+    color: '#fff',
+    fontSize: 11,
+    textAlignVertical: 'top',
+  },
+  addIdeaButton: {
+    alignItems: 'center',
+    paddingVertical: 8,
   },
 });
