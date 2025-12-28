@@ -158,7 +158,7 @@ export default function MainScreen() {
           style={styles.scrollView}
           contentContainerStyle={styles.roadmapContainer}
         >
-          {this.renderPlanets()}
+          {renderPlanets()}
         </ScrollView>
 
         {/* Mission Modal */}
