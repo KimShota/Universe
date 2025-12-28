@@ -290,33 +290,29 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
     paddingHorizontal: 20,
   },
-  planetRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 20,
+  planetWrapper: {
     position: 'relative',
+    width: '100%',
   },
-  planetRowLeft: {
-    justifyContent: 'flex-start',
-  },
-  planetRowRight: {
-    justifyContent: 'flex-end',
-  },
-  connectionLine: {
+  pathLine: {
     position: 'absolute',
-    width: 2,
-    height: 60,
+    width: 3,
+    height: 80,
     backgroundColor: 'rgba(255, 215, 0, 0.4)',
-  },
-  connectionLineRight: {
-    right: 40,
     top: 80,
+  },
+  pathLineRightDown: {
+    left: 40,
     transform: [{ rotate: '45deg' }],
   },
-  connectionLineLeft: {
-    left: 40,
-    top: 80,
+  pathLineLeftDown: {
+    right: 40,
     transform: [{ rotate: '-45deg' }],
+  },
+  planetContainer: {
+    width: 80,
+    alignItems: 'center',
+    position: 'relative',
   },
   planet: {
     width: 80,
@@ -333,6 +329,7 @@ const styles = StyleSheet.create({
   planetCurrent: {
     backgroundColor: 'rgba(255, 215, 0, 0.3)',
     borderColor: '#FFD700',
+    elevation: 8,
   },
   planetFuture: {
     backgroundColor: 'rgba(100, 100, 100, 0.2)',
@@ -345,12 +342,13 @@ const styles = StyleSheet.create({
   },
   starCharacterOnPlanet: {
     position: 'absolute',
+    top: -10,
   },
-  starCharacterLeft: {
-    left: -50,
-  },
-  starCharacterRight: {
+  starLeft: {
     right: -50,
+  },
+  starRight: {
+    left: -50,
   },
   starEmoji: {
     fontSize: 40,
