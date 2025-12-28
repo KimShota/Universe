@@ -314,26 +314,148 @@ export default function SOSFlowScreen() {
         )}
 
         {step === 3 && (
-          <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
-            <Text style={styles.affirmationTitle}>Write Your Affirmations</Text>
-            <View style={styles.starsContainer}>
-              {affirmations.map((affirmation, index) => (
-                <View key={index} style={styles.starInput}>
-                  <Text style={styles.starEmoji}>⭐</Text>
-                  <TextInput
-                    style={styles.affirmationText}
-                    value={affirmation}
-                    onChangeText={(text) => {
-                      const newAffirmations = [...affirmations];
-                      newAffirmations[index] = text;
-                      setAffirmations(newAffirmations);
-                    }}
-                    placeholder="Positive affirmation..."
-                    placeholderTextColor="#666"
-                    multiline
-                  />
+          <View style={styles.affirmationsContainer}>
+            {/* Star positions in diamond/square formation */}
+            <View style={styles.starsLayout}>
+              {/* Top Star */}
+              <View style={[styles.starPosition, styles.starTop]}>
+                <View style={[
+                  styles.starCircle,
+                  affirmations[0].trim() !== '' && styles.starCircleActive
+                ]}>
+                  <Text style={[
+                    styles.starIcon,
+                    affirmations[0].trim() !== '' && styles.starIconActive
+                  ]}>⭐</Text>
                 </View>
-              ))}
+                <TextInput
+                  style={styles.starAffirmationInput}
+                  value={affirmations[0]}
+                  onChangeText={(text) => {
+                    const newAffirmations = [...affirmations];
+                    newAffirmations[0] = text;
+                    setAffirmations(newAffirmations);
+                  }}
+                  placeholder="Affirmation 1"
+                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                  multiline
+                />
+              </View>
+
+              {/* Left Star */}
+              <View style={[styles.starPosition, styles.starLeft]}>
+                <View style={[
+                  styles.starCircle,
+                  affirmations[1].trim() !== '' && styles.starCircleActive
+                ]}>
+                  <Text style={[
+                    styles.starIcon,
+                    affirmations[1].trim() !== '' && styles.starIconActive
+                  ]}>⭐</Text>
+                </View>
+                <TextInput
+                  style={styles.starAffirmationInput}
+                  value={affirmations[1]}
+                  onChangeText={(text) => {
+                    const newAffirmations = [...affirmations];
+                    newAffirmations[1] = text;
+                    setAffirmations(newAffirmations);
+                  }}
+                  placeholder="Affirmation 2"
+                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                  multiline
+                />
+              </View>
+
+              {/* Right Star */}
+              <View style={[styles.starPosition, styles.starRight]}>
+                <View style={[
+                  styles.starCircle,
+                  affirmations[2].trim() !== '' && styles.starCircleActive
+                ]}>
+                  <Text style={[
+                    styles.starIcon,
+                    affirmations[2].trim() !== '' && styles.starIconActive
+                  ]}>⭐</Text>
+                </View>
+                <TextInput
+                  style={styles.starAffirmationInput}
+                  value={affirmations[2]}
+                  onChangeText={(text) => {
+                    const newAffirmations = [...affirmations];
+                    newAffirmations[2] = text;
+                    setAffirmations(newAffirmations);
+                  }}
+                  placeholder="Affirmation 3"
+                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                  multiline
+                />
+              </View>
+
+              {/* Bottom Star */}
+              <View style={[styles.starPosition, styles.starBottom]}>
+                <View style={[
+                  styles.starCircle,
+                  affirmations[3].trim() !== '' && styles.starCircleActive
+                ]}>
+                  <Text style={[
+                    styles.starIcon,
+                    affirmations[3].trim() !== '' && styles.starIconActive
+                  ]}>⭐</Text>
+                </View>
+                <TextInput
+                  style={styles.starAffirmationInput}
+                  value={affirmations[3]}
+                  onChangeText={(text) => {
+                    const newAffirmations = [...affirmations];
+                    newAffirmations[3] = text;
+                    setAffirmations(newAffirmations);
+                  }}
+                  placeholder="Affirmation 4"
+                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                  multiline
+                />
+              </View>
+
+              {/* Connecting Lines (SVG) */}
+              <Svg height="100%" width="100%" style={styles.linesContainer}>
+                {/* Top to Left */}
+                <Line
+                  x1="50%"
+                  y1="15%"
+                  x2="20%"
+                  y2="50%"
+                  stroke={affirmations[0].trim() !== '' && affirmations[1].trim() !== '' ? '#FFD700' : 'rgba(255, 215, 0, 0.2)'}
+                  strokeWidth="2"
+                />
+                {/* Top to Right */}
+                <Line
+                  x1="50%"
+                  y1="15%"
+                  x2="80%"
+                  y2="50%"
+                  stroke={affirmations[0].trim() !== '' && affirmations[2].trim() !== '' ? '#FFD700' : 'rgba(255, 215, 0, 0.2)'}
+                  strokeWidth="2"
+                />
+                {/* Left to Bottom */}
+                <Line
+                  x1="20%"
+                  y1="50%"
+                  x2="50%"
+                  y2="85%"
+                  stroke={affirmations[1].trim() !== '' && affirmations[3].trim() !== '' ? '#FFD700' : 'rgba(255, 215, 0, 0.2)'}
+                  strokeWidth="2"
+                />
+                {/* Right to Bottom */}
+                <Line
+                  x1="80%"
+                  y1="50%"
+                  x2="50%"
+                  y2="85%"
+                  stroke={affirmations[2].trim() !== '' && affirmations[3].trim() !== '' ? '#FFD700' : 'rgba(255, 215, 0, 0.2)'}
+                  strokeWidth="2"
+                />
+              </Svg>
             </View>
 
             {affirmations.every((a) => a.trim() !== '') && (
@@ -344,14 +466,16 @@ export default function SOSFlowScreen() {
               </View>
             )}
 
-            <TouchableOpacity
-              style={styles.homeButton}
-              onPress={handleComplete}
-              disabled={!affirmations.every((a) => a.trim() !== '')}
-            >
-              <Text style={styles.homeButtonText}>Home</Text>
-            </TouchableOpacity>
-          </ScrollView>
+            <View style={styles.homeButtonContainer}>
+              <TouchableOpacity
+                style={styles.homeButton}
+                onPress={handleComplete}
+                disabled={!affirmations.every((a) => a.trim() !== '')}
+              >
+                <Text style={styles.homeButtonText}>Home</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         )}
       </SafeAreaView>
     </UniverseBackground>
