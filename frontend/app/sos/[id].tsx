@@ -448,8 +448,34 @@ const styles = StyleSheet.create({
     height: 140,
     borderRadius: 70,
     backgroundColor: '#000',
-    borderWidth: 4,
-    borderColor: 'rgba(138, 43, 226, 0.6)',
+  },
+  blackHoleOuter: {
+    width: 300,
+    height: 300,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    zIndex: 9,
+  },
+  accretionDisk: {
+    position: 'absolute',
+    borderRadius: 1000,
+    borderWidth: 3,
+  },
+  accretionDisk1: {
+    width: 250,
+    height: 250,
+    borderColor: 'rgba(138, 43, 226, 0.7)',
+  },
+  accretionDisk2: {
+    width: 210,
+    height: 210,
+    borderColor: 'rgba(255, 0, 255, 0.5)',
+  },
+  accretionDisk3: {
+    width: 180,
+    height: 180,
+    borderColor: 'rgba(148, 0, 211, 0.6)',
   },
   asteroidOrbit: {
     position: 'absolute',
