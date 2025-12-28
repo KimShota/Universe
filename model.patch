@@ -1,0 +1,417 @@
+diff --git a/backend/server.py b/backend/server.py
+index eef216c..107c387 100644
+--- a/backend/server.py
++++ b/backend/server.py
+@@ -1,4 +1,4 @@
+-from fastapi import FastAPI, APIRouter, HTTPException, Cookie, Response, Depends
++from fastapi import FastAPI, APIRouter, HTTPException, Cookie, Response, Depends, Header
+ from dotenv import load_dotenv
+ from starlette.middleware.cors import CORSMiddleware
+ from motor.motor_asyncio import AsyncIOMotorClient
+@@ -6,7 +6,7 @@ import os
+ import logging
+ from pathlib import Path
+ from pydantic import BaseModel, Field
+-from typing import List, Optional, Dict, Any
++from typing import List, Optional, Dict, Union
+ import uuid
+ from datetime import datetime, timezone, timedelta
+ import httpx
+@@ -67,7 +67,7 @@ class SOSCompletion(BaseModel):
+ class CreatorUniverse(BaseModel):
+     user_id: str
+     overarching_goal: str = ""
+-    content_pillars: List[Dict[str, Any]] = []
++    content_pillars: List[Dict[str, Union[str, List[str]]]] = []
+     updated_at: datetime
+ 
+ # Content Tips Models
+@@ -110,7 +110,7 @@ class QuizCompleteRequest(BaseModel):
+ 
+ async def get_current_user(
+     session_token: Optional[str] = Cookie(None),
+-    authorization: Optional[str] = None
++    authorization: Optional[str] = Header(None)
+ ) -> User:
+     """Get current user from session token (cookie or Authorization header)"""
+     token = session_token
+@@ -300,7 +300,6 @@ async def complete_mission(
+     
+     # Update streak
+     if current_user.last_post_date:
+-        from datetime import datetime
+         last_date = datetime.fromisoformat(current_user.last_post_date)
+         today_date = datetime.fromisoformat(today)
+         days_diff = (today_date - last_date).days
+diff --git a/debug_auth.py b/debug_auth.py
+new file mode 100644
+index 0000000..22f2fee
+--- /dev/null
++++ b/debug_auth.py
+@@ -0,0 +1,113 @@
++#!/usr/bin/env python3
++"""
++Debug authentication for Universe App
++"""
++
++import requests
++import subprocess
++import time
++
++BACKEND_URL = "https://universe-app-2.preview.emergentagent.com/api"
++
++def create_test_user():
++    """Create test user and session"""
++    print("Creating test user and session...")
++    
++    mongosh_command = """
++    use('test_database');
++    var visitorId = 'debug_user_123';
++    var sessionToken = 'debug_session_123';
++    
++    // Clean up first
++    db.users.deleteMany({user_id: visitorId});
++    db.user_sessions.deleteMany({user_id: visitorId});
++    
++    // Create user
++    db.users.insertOne({
++      user_id: visitorId,
++      email: 'debug@example.com',
++      name: 'Debug User',
++      picture: 'https://via.placeholder.com/150',
++      streak: 0,
++      coins: 50,
++      current_planet: 0,
++      last_post_date: null,
++      created_at: new Date()
++    });
++    
++    // Create session
++    db.user_sessions.insertOne({
++      user_id: visitorId,
++      session_token: sessionToken,
++      expires_at: new Date(Date.now() + 7*24*60*60*1000),
++      created_at: new Date()
++    });
++    
++    print('User created: ' + visitorId);
++    print('Session created: ' + sessionToken);
++    """
++    
++    result = subprocess.run(
++        ["mongosh", "--eval", mongosh_command],
++        capture_output=True,
++        text=True
++    )
++    
++    print("MongoDB output:", result.stdout)
++    if result.stderr:
++        print("MongoDB errors:", result.stderr)
++    
++    return "debug_session_123"
++
++def test_auth(session_token):
++    """Test authentication"""
++    print(f"\nTesting auth with session: {session_token}")
++    
++    headers = {
++        "Authorization": f"Bearer {session_token}",
++        "Content-Type": "application/json"
++    }
++    
++    url = f"{BACKEND_URL}/auth/me"
++    print(f"Making request to: {url}")
++    
++    try:
++        response = requests.get(url, headers=headers, timeout=30)
++        print(f"Response status: {response.status_code}")
++        print(f"Response headers: {dict(response.headers)}")
++        print(f"Response body: {response.text}")
++        
++        return response.status_code == 200
++    except Exception as e:
++        print(f"Request failed: {e}")
++        return False
++
++def check_database():
++    """Check database state"""
++    print("\nChecking database state...")
++    
++    check_command = """
++    use('test_database');
++    print('Users:');
++    db.users.find({user_id: 'debug_user_123'}).forEach(printjson);
++    print('Sessions:');
++    db.user_sessions.find({user_id: 'debug_user_123'}).forEach(printjson);
++    """
++    
++    result = subprocess.run(
++        ["mongosh", "--eval", check_command],
++        capture_output=True,
++        text=True
++    )
++    
++    print("Database state:", result.stdout)
++
++if __name__ == "__main__":
++    session_token = create_test_user()
++    check_database()
++    success = test_auth(session_token)
++    
++    if success:
++        print("\n✅ Authentication successful!")
++    else:
++        print("\n❌ Authentication failed!")
+\ No newline at end of file
+diff --git a/test_mission.py b/test_mission.py
+new file mode 100644
+index 0000000..1e87046
+--- /dev/null
++++ b/test_mission.py
+@@ -0,0 +1,87 @@
++#!/usr/bin/env python3
++"""
++Test mission complete functionality
++"""
++
++import requests
++import subprocess
++from datetime import datetime, timezone
++
++BACKEND_URL = "https://universe-app-2.preview.emergentagent.com/api"
++
++def create_test_user():
++    """Create test user and session"""
++    mongosh_command = """
++    use('test_database');
++    var visitorId = 'mission_test_user';
++    var sessionToken = 'mission_test_session';
++    
++    // Clean up first
++    db.users.deleteMany({user_id: visitorId});
++    db.user_sessions.deleteMany({user_id: visitorId});
++    db.missions.deleteMany({user_id: visitorId});
++    
++    // Create user
++    db.users.insertOne({
++      user_id: visitorId,
++      email: 'mission@example.com',
++      name: 'Mission Test User',
++      picture: 'https://via.placeholder.com/150',
++      streak: 0,
++      coins: 50,
++      current_planet: 0,
++      last_post_date: null,
++      created_at: new Date()
++    });
++    
++    // Create session
++    db.user_sessions.insertOne({
++      user_id: visitorId,
++      session_token: sessionToken,
++      expires_at: new Date(Date.now() + 7*24*60*60*1000),
++      created_at: new Date()
++    });
++    
++    print('Mission test setup complete');
++    """
++    
++    result = subprocess.run(
++        ["mongosh", "--eval", mongosh_command],
++        capture_output=True,
++        text=True
++    )
++    
++    print("Setup result:", result.stdout)
++    return "mission_test_session"
++
++def test_mission_complete(session_token):
++    """Test mission complete"""
++    headers = {
++        "Authorization": f"Bearer {session_token}",
++        "Content-Type": "application/json"
++    }
++    
++    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
++    data = {"date": today}
++    
++    url = f"{BACKEND_URL}/mission/complete"
++    print(f"Testing mission complete with date: {today}")
++    
++    try:
++        response = requests.post(url, headers=headers, json=data, timeout=30)
++        print(f"Response status: {response.status_code}")
++        print(f"Response body: {response.text}")
++        
++        return response.status_code == 200
++    except Exception as e:
++        print(f"Request failed: {e}")
++        return False
++
++if __name__ == "__main__":
++    session_token = create_test_user()
++    success = test_mission_complete(session_token)
++    
++    if success:
++        print("\n✅ Mission complete test successful!")
++    else:
++        print("\n❌ Mission complete test failed!")
+\ No newline at end of file
+diff --git a/test_result.md b/test_result.md
+index f958ce2..1dc4da4 100644
+--- a/test_result.md
++++ b/test_result.md
+@@ -111,75 +111,93 @@ user_problem_statement: |
+ backend:
+   - task: "Google OAuth Authentication"
+     implemented: true
+-    working: "NA"
++    working: true
+     file: "server.py"
+     stuck_count: 0
+     priority: "high"
+-    needs_retesting: true
++    needs_retesting: false
+     status_history:
+       - working: "NA"
+         agent: "main"
+         comment: "Implemented Emergent Google OAuth with session exchange, get_current_user, and logout endpoints"
++      - working: true
++        agent: "testing"
++        comment: "✅ PASS: Authentication working correctly. Fixed Authorization header injection issue by adding Header dependency. GET /api/auth/me returns proper user data with all required fields."
+ 
+   - task: "User Profile Management"
+     implemented: true
+-    working: "NA"
++    working: true
+     file: "server.py"
+     stuck_count: 0
+     priority: "high"
+-    needs_retesting: true
++    needs_retesting: false
+     status_history:
+       - working: "NA"
+         agent: "main"
+         comment: "User model with streak, coins, current_planet tracking. Created /api/auth/me and /api/user/profile endpoints"
++      - working: true
++        agent: "testing"
++        comment: "✅ PASS: User profile endpoint working correctly. GET /api/user/profile returns complete user data including user_id, email, name, streak, coins, current_planet."
+ 
+   - task: "Mission Completion System"
+     implemented: true
+-    working: "NA"
++    working: true
+     file: "server.py"
+     stuck_count: 0
+     priority: "high"
+-    needs_retesting: true
++    needs_retesting: false
+     status_history:
+       - working: "NA"
+         agent: "main"
+         comment: "Implemented /api/mission/complete and /api/mission/today endpoints. Tracks daily missions, updates streak, advances planet, awards 10 coins"
++      - working: true
++        agent: "testing"
++        comment: "✅ PASS: Mission system working correctly. Fixed datetime import conflict issue. POST /api/mission/complete awards 10 coins, advances planet, updates streak. GET /api/mission/today correctly shows completion status."
+ 
+   - task: "SOS Flow Completion"
+     implemented: true
+-    working: "NA"
++    working: true
+     file: "server.py"
+     stuck_count: 0
+     priority: "high"
+-    needs_retesting: true
++    needs_retesting: false
+     status_history:
+       - working: "NA"
+         agent: "main"
+         comment: "Implemented /api/sos/complete endpoint. Saves asteroids and affirmations, awards 10 coins. Also /api/sos/history endpoint"
++      - working: true
++        agent: "testing"
++        comment: "✅ PASS: SOS system working correctly. POST /api/sos/complete saves asteroids and affirmations, awards 10 coins. GET /api/sos/history retrieves completion history."
+ 
+   - task: "Creator's Universe Management"
+     implemented: true
+-    working: "NA"
++    working: true
+     file: "server.py"
+     stuck_count: 0
+     priority: "medium"
+-    needs_retesting: true
++    needs_retesting: false
+     status_history:
+       - working: "NA"
+         agent: "main"
+         comment: "Implemented GET and PUT /api/creator-universe endpoints. Manages overarching goal and 4 content pillars with ideas"
++      - working: true
++        agent: "testing"
++        comment: "✅ PASS: Creator's Universe working correctly. GET /api/creator-universe returns default structure with 4 content pillars. PUT /api/creator-universe updates overarching goal and content pillars successfully."
+ 
+   - task: "Content Tips Quiz System"
+     implemented: true
+-    working: "NA"
++    working: true
+     file: "server.py"
+     stuck_count: 0
+     priority: "medium"
+-    needs_retesting: true
++    needs_retesting: false
+     status_history:
+       - working: "NA"
+         agent: "main"
+         comment: "Implemented /api/content-tips/quiz (POST) and /api/content-tips/progress (GET). Awards 10 coins on quiz completion"
++      - working: true
++        agent: "testing"
++        comment: "✅ PASS: Content Tips system working correctly. POST /api/content-tips/quiz awards 10 coins on completion. GET /api/content-tips/progress tracks quiz completion status."
+ 
+ frontend:
+   - task: "Authentication Flow (Google OAuth)"
+@@ -293,17 +311,11 @@ frontend:
+ metadata:
+   created_by: "main_agent"
+   version: "1.0"
+-  test_sequence: 0
++  test_sequence: 1
+   run_ui: false
+ 
+ test_plan:
+-  current_focus:
+-    - "Google OAuth Authentication"
+-    - "User Profile Management"
+-    - "Mission Completion System"
+-    - "SOS Flow Completion"
+-    - "Creator's Universe Management"
+-    - "Content Tips Quiz System"
++  current_focus: []
+   stuck_tasks: []
+   test_all: false
+   test_priority: "high_first"
+@@ -324,4 +336,24 @@ agent_communication:
+       Frontend complete with all screens and navigation.
+       All data is properly connected to backend APIs.
+       
+-      Please test all backend endpoints starting with high priority tasks.
+\ No newline at end of file
++      Please test all backend endpoints starting with high priority tasks.
++  - agent: "testing"
++    message: |
++      ✅ BACKEND TESTING COMPLETE - ALL TESTS PASSED
++      
++      Comprehensive testing completed for all backend endpoints:
++      
++      FIXED ISSUES:
++      1. Pydantic schema error: Fixed Dict[str, Any] type annotation causing schema generation failure
++      2. Authentication issue: Fixed Authorization header injection by adding Header dependency
++      3. Mission complete error: Fixed datetime import conflict in complete_mission function
++      
++      TESTED SUCCESSFULLY:
++      - Authentication & User Management (GET /api/auth/me, GET /api/user/profile)
++      - Mission System (GET /api/mission/today, POST /api/mission/complete)
++      - SOS Flow (POST /api/sos/complete, GET /api/sos/history)
++      - Creator's Universe (GET /api/creator-universe, PUT /api/creator-universe)
++      - Content Tips (POST /api/content-tips/quiz, GET /api/content-tips/progress)
++      
++      All endpoints working correctly with proper authentication, data validation, and business logic.
++      Backend is ready for production use.
+\ No newline at end of file
