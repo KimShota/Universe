@@ -287,18 +287,36 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   roadmapContainer: {
-    alignItems: 'center',
     paddingVertical: 40,
+    paddingHorizontal: 20,
   },
-  starCharacterTop: {
-    marginBottom: 32,
-  },
-  starEmojiLarge: {
-    fontSize: 60,
-  },
-  planetContainer: {
+  planetRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    marginVertical: 20,
     position: 'relative',
+  },
+  planetRowLeft: {
+    justifyContent: 'flex-start',
+  },
+  planetRowRight: {
+    justifyContent: 'flex-end',
+  },
+  connectionLine: {
+    position: 'absolute',
+    width: 2,
+    height: 60,
+    backgroundColor: 'rgba(255, 215, 0, 0.4)',
+  },
+  connectionLineRight: {
+    right: 40,
+    top: 80,
+    transform: [{ rotate: '45deg' }],
+  },
+  connectionLineLeft: {
+    left: 40,
+    top: 80,
+    transform: [{ rotate: '-45deg' }],
   },
   planet: {
     width: 80,
@@ -325,19 +343,17 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
   },
-  starCharacter: {
+  starCharacterOnPlanet: {
     position: 'absolute',
-    top: 10,
-    left: -40,
+  },
+  starCharacterLeft: {
+    left: -50,
+  },
+  starCharacterRight: {
+    right: -50,
   },
   starEmoji: {
     fontSize: 40,
-  },
-  connector: {
-    width: 3,
-    height: 40,
-    backgroundColor: 'rgba(255, 215, 0, 0.3)',
-    marginVertical: 8,
   },
   modalOverlay: {
     flex: 1,
