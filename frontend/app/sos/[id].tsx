@@ -219,48 +219,140 @@ export default function SOSFlowScreen() {
 
         {step === 2 && (
           <View style={styles.blackHoleContainer}>
-            {/* Central Black Hole */}
+            {/* Swirling Vortex Background */}
+            <Animated.View style={[styles.vortexContainer, { transform: [{ rotate: vortexRotateInterpolate }] }]}>
+              {[...Array(20)].map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.vortexRing,
+                    {
+                      width: 100 + i * 40,
+                      height: 100 + i * 40,
+                      borderRadius: (100 + i * 40) / 2,
+                      opacity: 0.6 - i * 0.03,
+                    },
+                  ]}
+                />
+              ))}
+            </Animated.View>
+
+            {/* Central Black Hole with Swirling Accretion Disk */}
+            <Animated.View style={[styles.blackHoleOuter, { transform: [{ rotate: blackHoleRotateInterpolate }] }]}>
+              {/* Accretion disk rings */}
+              <View style={[styles.accretionDisk, styles.accretionDisk1]} />
+              <View style={[styles.accretionDisk, styles.accretionDisk2]} />
+              <View style={[styles.accretionDisk, styles.accretionDisk3]} />
+            </Animated.View>
+            
+            {/* Event Horizon (center) */}
             <View style={styles.blackHole}>
               <View style={styles.blackHoleCore} />
             </View>
 
-            {/* Three Asteroids */}
-            <View style={styles.asteroidsContainer}>
-              {asteroids.map((asteroid, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.asteroidInput,
-                    isVacuuming && styles.asteroidVacuuming,
-                  ]}
-                >
-                  <TextInput
-                    style={styles.asteroidText}
-                    value={asteroid}
-                    onChangeText={(text) => {
-                      const newAsteroids = [...asteroids];
-                      newAsteroids[index] = text;
-                      setAsteroids(newAsteroids);
-                    }}
-                    placeholder={`Negative thought ${index + 1}...`}
-                    placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                    multiline
-                    editable={!isVacuuming}
-                  />
-                </View>
-              ))}
-            </View>
+            {/* Three Asteroids in Circular Orbit with Animation */}
+            <Animated.View 
+              style={[
+                styles.asteroidOrbit, 
+                styles.asteroid1Position,
+                {
+                  transform: [
+                    { translateX: asteroid1Position.x },
+                    { translateY: asteroid1Position.y },
+                    { scale: asteroid1Scale },
+                  ],
+                },
+              ]}
+            >
+              <View style={styles.asteroidContainer}>
+                <TextInput
+                  style={styles.asteroidInput}
+                  value={asteroids[0]}
+                  onChangeText={(text) => {
+                    const newAsteroids = [...asteroids];
+                    newAsteroids[0] = text;
+                    setAsteroids(newAsteroids);
+                  }}
+                  placeholder="Negative thought..."
+                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                  multiline
+                  editable={!isVacuuming}
+                />
+              </View>
+            </Animated.View>
+
+            <Animated.View 
+              style={[
+                styles.asteroidOrbit, 
+                styles.asteroid2Position,
+                {
+                  transform: [
+                    { translateX: asteroid2Position.x },
+                    { translateY: asteroid2Position.y },
+                    { scale: asteroid2Scale },
+                  ],
+                },
+              ]}
+            >
+              <View style={styles.asteroidContainer}>
+                <TextInput
+                  style={styles.asteroidInput}
+                  value={asteroids[1]}
+                  onChangeText={(text) => {
+                    const newAsteroids = [...asteroids];
+                    newAsteroids[1] = text;
+                    setAsteroids(newAsteroids);
+                  }}
+                  placeholder="Negative thought..."
+                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                  multiline
+                  editable={!isVacuuming}
+                />
+              </View>
+            </Animated.View>
+
+            <Animated.View 
+              style={[
+                styles.asteroidOrbit, 
+                styles.asteroid3Position,
+                {
+                  transform: [
+                    { translateX: asteroid3Position.x },
+                    { translateY: asteroid3Position.y },
+                    { scale: asteroid3Scale },
+                  ],
+                },
+              ]}
+            >
+              <View style={styles.asteroidContainer}>
+                <TextInput
+                  style={styles.asteroidInput}
+                  value={asteroids[2]}
+                  onChangeText={(text) => {
+                    const newAsteroids = [...asteroids];
+                    newAsteroids[2] = text;
+                    setAsteroids(newAsteroids);
+                  }}
+                  placeholder="Negative thought..."
+                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                  multiline
+                  editable={!isVacuuming}
+                />
+              </View>
+            </Animated.View>
 
             {/* Let Go Button */}
-            <TouchableOpacity
-              style={styles.letGoButton}
-              onPress={handleLetGo}
-              disabled={isVacuuming}
-            >
-              <Text style={styles.letGoButtonText}>
-                {isVacuuming ? 'Releasing...' : 'Let Go'}
-              </Text>
-            </TouchableOpacity>
+            <View style={styles.letGoButtonContainer}>
+              <TouchableOpacity
+                style={styles.letGoButton}
+                onPress={handleLetGo}
+                disabled={isVacuuming}
+              >
+                <Text style={styles.letGoButtonText}>
+                  {isVacuuming ? 'Releasing...' : 'Let Go'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
 
