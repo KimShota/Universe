@@ -70,17 +70,36 @@ export default function MainScreen() {
     }
   };
 
-  const renderPlanets = () => {
+  renderPlanets() {
     const planets = [];
     const currentPlanet = user?.current_planet || 0;
 
+    // Create roadmap-style layout with connections
+    const rows = [];
+    let rowIndex = 0;
+    
     for (let i = 0; i < 10; i++) {
       const isPast = i < currentPlanet;
       const isCurrent = i === currentPlanet;
       const isFuture = i > currentPlanet;
-
-      planets.push(
-        <View key={i} style={styles.planetContainer}>
+      
+      // Alternate between left and right positioning
+      const isLeftSide = i % 2 === 0;
+      
+      rows.push(
+        <View key={i} style={[
+          styles.planetRow, 
+          isLeftSide ? styles.planetRowLeft : styles.planetRowRight
+        ]}>
+          {/* Connection line to next planet */}
+          {i < 9 && (
+            <View style={[
+              styles.connectionLine,
+              isLeftSide ? styles.connectionLineRight : styles.connectionLineLeft
+            ]} />
+          )}
+          
+          {/* Planet */}
           <TouchableOpacity
             style={[
               styles.planet,
@@ -94,18 +113,20 @@ export default function MainScreen() {
             <Text style={styles.planetText}>{i + 1}</Text>
           </TouchableOpacity>
           
+          {/* Star character on current planet */}
           {isCurrent && (
-            <View style={styles.starCharacter}>
+            <View style={[
+              styles.starCharacterOnPlanet,
+              isLeftSide ? styles.starCharacterLeft : styles.starCharacterRight
+            ]}>
               <Text style={styles.starEmoji}>⭐</Text>
             </View>
           )}
-          
-          {i < 9 && <View style={styles.connector} />}
         </View>
       );
     }
 
-    return planets;
+    return rows;
   };
 
   return (
