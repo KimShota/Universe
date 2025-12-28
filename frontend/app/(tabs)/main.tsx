@@ -189,10 +189,14 @@ export default function MainScreen() {
               </View>
 
               <TouchableOpacity
-                style={styles.menuButton}
-                onPress={() => router.push('/sos')}
+                style={styles.sosMenuButton}
+                onPress={() => {
+                  setShowMenu(false);
+                  router.push('/sos');
+                }}
               >
-                <Text style={styles.menuButtonText}>SOS</Text>
+                <Ionicons name="alert-circle" size={24} color="#ff4444" />
+                <Text style={styles.sosMenuButtonText}>SOS</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
