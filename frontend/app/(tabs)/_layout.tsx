@@ -31,11 +31,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="main"
         options={{
-          title: 'SOS',
+          title: 'Home',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="alert-circle" size={size + 8} color="#ff4444" />
+            <Ionicons name="planet-outline" size={size + 4} color={color} />
           ),
-          tabBarLabel: 'SOS',
         }}
       />
       <Tabs.Screen
@@ -43,7 +42,7 @@ export default function TabLayout() {
         options={{
           title: 'Universe',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="planet-outline" size={size} color={color} />
+            <Ionicons name="telescope-outline" size={size} color={color} />
           ),
         }}
       />
