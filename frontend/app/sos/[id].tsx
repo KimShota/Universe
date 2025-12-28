@@ -32,22 +32,22 @@ export default function SOSFlowScreen() {
   const [isVacuuming, setIsVacuuming] = useState(false);
   
   // Vortex rotation animation
-  const vortexRotation = useRef(new Animated.Value(0)).current;
+  const vortexRotation = useRef(new Animated.Value(0));
 
   useEffect(() => {
     if (step === 2) {
       // Start infinite rotation
       Animated.loop(
-        Animated.timing(vortexRotation, {
+        Animated.timing(vortexRotation.current, {
           toValue: 1,
           duration: 20000,
           useNativeDriver: true,
         })
       ).start();
     }
-  }, [step, vortexRotation]);
+  }, [step]);
 
-  const rotateInterpolate = vortexRotation.interpolate({
+  const rotateInterpolate = vortexRotation.current.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
   });
