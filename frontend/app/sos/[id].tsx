@@ -120,7 +120,7 @@ export default function SOSFlowScreen() {
         {step === 2 && (
           <View style={styles.blackHoleContainer}>
             {/* Swirling Vortex Background */}
-            <Animated.View style={[styles.vortexContainer, { transform: [{ rotate: rotateInterpolate }] }]}>
+            <Animated.View style={[styles.vortexContainer, rotateInterpolate && { transform: [{ rotate: rotateInterpolate }] }]}>
               {[...Array(20)].map((_, i) => (
                 <View
                   key={i}
