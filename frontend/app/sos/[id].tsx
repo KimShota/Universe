@@ -435,17 +435,15 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   letGoButton: {
-    backgroundColor: 'rgba(138, 43, 226, 0.8)',
-    paddingVertical: 18,
-    paddingHorizontal: 60,
+    backgroundColor: '#FFD700',
+    paddingVertical: 16,
     borderRadius: 30,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    alignItems: 'center',
   },
   letGoButtonText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#0a0e27',
   },
   blackHoleContainer: {
     flex: 1,
