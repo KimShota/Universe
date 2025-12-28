@@ -110,7 +110,7 @@ class QuizCompleteRequest(BaseModel):
 
 async def get_current_user(
     session_token: Optional[str] = Cookie(None),
-    authorization: Optional[str] = None
+    authorization: Optional[str] = Header(None)
 ) -> User:
     """Get current user from session token (cookie or Authorization header)"""
     token = session_token
