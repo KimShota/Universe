@@ -95,45 +95,96 @@ export default function SOSFlowScreen() {
 
         {step === 2 && (
           <View style={styles.blackHoleContainer}>
-            <View style={styles.blackHole}>
-              {isVacuuming && <Text style={styles.blackHoleEmoji}>🕳️</Text>}
-            </View>
-
-            <View style={styles.asteroidsContainer}>
-              {asteroids.map((asteroid, index) => (
+            {/* Swirling Vortex Background */}
+            <Animated.View style={[styles.vortexContainer, { transform: [{ rotate: vortexRotation }] }]}>
+              {[...Array(20)].map((_, i) => (
                 <View
-                  key={index}
+                  key={i}
                   style={[
-                    styles.asteroidInput,
-                    isVacuuming && styles.asteroidVacuuming,
+                    styles.vortexRing,
+                    {
+                      width: 100 + i * 40,
+                      height: 100 + i * 40,
+                      borderRadius: (100 + i * 40) / 2,
+                      opacity: 0.6 - i * 0.03,
+                    },
                   ]}
-                >
-                  <TextInput
-                    style={styles.asteroidText}
-                    value={asteroid}
-                    onChangeText={(text) => {
-                      const newAsteroids = [...asteroids];
-                      newAsteroids[index] = text;
-                      setAsteroids(newAsteroids);
-                    }}
-                    placeholder={`Negative thought ${index + 1}...`}
-                    placeholderTextColor="#666"
-                    multiline
-                    editable={!isVacuuming}
-                  />
-                </View>
+                />
               ))}
+            </Animated.View>
+
+            {/* Central Black Hole */}
+            <View style={styles.blackHole}>
+              <View style={styles.blackHoleCore} />
             </View>
 
-            <TouchableOpacity
-              style={styles.letGoButton}
-              onPress={handleLetGo}
-              disabled={isVacuuming}
-            >
-              <Text style={styles.letGoButtonText}>
-                {isVacuuming ? 'Letting go...' : 'Let Go'}
-              </Text>
-            </TouchableOpacity>
+            {/* Three Asteroids in Circular Orbit */}
+            <View style={[styles.asteroidOrbit, styles.asteroid1Position]}>
+              <View style={styles.asteroidContainer}>
+                <TextInput
+                  style={styles.asteroidInput}
+                  value={asteroids[0]}
+                  onChangeText={(text) => {
+                    const newAsteroids = [...asteroids];
+                    newAsteroids[0] = text;
+                    setAsteroids(newAsteroids);
+                  }}
+                  placeholder="Negative thought..."
+                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                  multiline
+                  editable={!isVacuuming}
+                />
+              </View>
+            </View>
+
+            <View style={[styles.asteroidOrbit, styles.asteroid2Position]}>
+              <View style={styles.asteroidContainer}>
+                <TextInput
+                  style={styles.asteroidInput}
+                  value={asteroids[1]}
+                  onChangeText={(text) => {
+                    const newAsteroids = [...asteroids];
+                    newAsteroids[1] = text;
+                    setAsteroids(newAsteroids);
+                  }}
+                  placeholder="Negative thought..."
+                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                  multiline
+                  editable={!isVacuuming}
+                />
+              </View>
+            </View>
+
+            <View style={[styles.asteroidOrbit, styles.asteroid3Position]}>
+              <View style={styles.asteroidContainer}>
+                <TextInput
+                  style={styles.asteroidInput}
+                  value={asteroids[2]}
+                  onChangeText={(text) => {
+                    const newAsteroids = [...asteroids];
+                    newAsteroids[2] = text;
+                    setAsteroids(newAsteroids);
+                  }}
+                  placeholder="Negative thought..."
+                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                  multiline
+                  editable={!isVacuuming}
+                />
+              </View>
+            </View>
+
+            {/* Let Go Button */}
+            <View style={styles.letGoButtonContainer}>
+              <TouchableOpacity
+                style={styles.letGoButton}
+                onPress={handleLetGo}
+                disabled={isVacuuming}
+              >
+                <Text style={styles.letGoButtonText}>
+                  {isVacuuming ? 'Releasing...' : 'Let Go'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
 
