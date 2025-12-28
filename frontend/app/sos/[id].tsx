@@ -177,7 +177,7 @@ export default function SOSFlowScreen() {
         {step === 2 && (
           <View style={styles.blackHoleContainer}>
             {/* Swirling Vortex Background */}
-            <Animated.View style={[styles.vortexContainer, rotateInterpolate && { transform: [{ rotate: rotateInterpolate }] }]}>
+            <Animated.View style={[styles.vortexContainer, { transform: [{ rotate: vortexRotateInterpolate }] }]}>
               {[...Array(20)].map((_, i) => (
                 <View
                   key={i}
@@ -194,13 +194,33 @@ export default function SOSFlowScreen() {
               ))}
             </Animated.View>
 
-            {/* Central Black Hole */}
+            {/* Central Black Hole with Swirling Accretion Disk */}
+            <Animated.View style={[styles.blackHoleOuter, { transform: [{ rotate: blackHoleRotateInterpolate }] }]}>
+              {/* Accretion disk rings */}
+              <View style={[styles.accretionDisk, styles.accretionDisk1]} />
+              <View style={[styles.accretionDisk, styles.accretionDisk2]} />
+              <View style={[styles.accretionDisk, styles.accretionDisk3]} />
+            </Animated.View>
+            
+            {/* Event Horizon (center) */}
             <View style={styles.blackHole}>
               <View style={styles.blackHoleCore} />
             </View>
 
-            {/* Three Asteroids in Circular Orbit */}
-            <View style={[styles.asteroidOrbit, styles.asteroid1Position]}>
+            {/* Three Asteroids in Circular Orbit with Animation */}
+            <Animated.View 
+              style={[
+                styles.asteroidOrbit, 
+                styles.asteroid1Position,
+                {
+                  transform: [
+                    { translateX: asteroid1Position.x },
+                    { translateY: asteroid1Position.y },
+                    { scale: asteroid1Scale },
+                  ],
+                },
+              ]}
+            >
               <View style={styles.asteroidContainer}>
                 <TextInput
                   style={styles.asteroidInput}
@@ -216,9 +236,21 @@ export default function SOSFlowScreen() {
                   editable={!isVacuuming}
                 />
               </View>
-            </View>
+            </Animated.View>
 
-            <View style={[styles.asteroidOrbit, styles.asteroid2Position]}>
+            <Animated.View 
+              style={[
+                styles.asteroidOrbit, 
+                styles.asteroid2Position,
+                {
+                  transform: [
+                    { translateX: asteroid2Position.x },
+                    { translateY: asteroid2Position.y },
+                    { scale: asteroid2Scale },
+                  ],
+                },
+              ]}
+            >
               <View style={styles.asteroidContainer}>
                 <TextInput
                   style={styles.asteroidInput}
@@ -234,9 +266,21 @@ export default function SOSFlowScreen() {
                   editable={!isVacuuming}
                 />
               </View>
-            </View>
+            </Animated.View>
 
-            <View style={[styles.asteroidOrbit, styles.asteroid3Position]}>
+            <Animated.View 
+              style={[
+                styles.asteroidOrbit, 
+                styles.asteroid3Position,
+                {
+                  transform: [
+                    { translateX: asteroid3Position.x },
+                    { translateY: asteroid3Position.y },
+                    { scale: asteroid3Scale },
+                  ],
+                },
+              ]}
+            >
               <View style={styles.asteroidContainer}>
                 <TextInput
                   style={styles.asteroidInput}
@@ -252,7 +296,7 @@ export default function SOSFlowScreen() {
                   editable={!isVacuuming}
                 />
               </View>
-            </View>
+            </Animated.View>
 
             {/* Let Go Button */}
             <View style={styles.letGoButtonContainer}>
