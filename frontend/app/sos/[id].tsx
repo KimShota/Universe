@@ -612,25 +612,25 @@ const styles = StyleSheet.create({
     zIndex: 20,
   },
   asteroid1Position: {
-    top: '25%',
-    left: '10%',
+    top: '18%',
+    left: '8%',
   },
   asteroid2Position: {
-    top: '30%',
+    top: '20%',
     right: '8%',
   },
   asteroid3Position: {
-    bottom: '28%',
-    left: '12%',
+    bottom: '22%',
+    left: '50%',
+    transform: [{ translateX: -100 }],
   },
   asteroidContainer: {
     backgroundColor: 'rgba(139, 69, 19, 0.3)',
     borderRadius: 16,
     borderWidth: 2,
     borderColor: 'rgba(255, 107, 107, 0.6)',
-    padding: 12,
-    minWidth: 200,
-    maxWidth: 250,
+    padding: 10,
+    width: 180,
   },
   asteroidInput: {
     color: '#fff',
