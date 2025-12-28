@@ -183,7 +183,7 @@ async def exchange_session(session_id: str, response: Response):
     if existing_user:
         user = User(**existing_user)
     else:
-        # Create new user
+        # Create new user (map id to user_id)
         user_id = f"user_{uuid.uuid4().hex[:12]}"
         user = User(
             user_id=user_id,
