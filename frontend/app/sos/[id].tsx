@@ -654,12 +654,23 @@ const styles = StyleSheet.create({
   },
   affirmationsContainer: {
     flex: 1,
-    justifyContent: 'space-between',
-    paddingVertical: 40,
+    paddingVertical: 20,
+  },
+  affirmationHeader: {
+    paddingTop: 20,
+    paddingBottom: 10,
+    alignItems: 'center',
+  },
+  affirmationTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    textAlign: 'center',
   },
   starsLayout: {
     flex: 1,
     position: 'relative',
+    marginTop: 20,
   },
   linesContainer: {
     position: 'absolute',
@@ -673,22 +684,20 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   starTop: {
-    top: '10%',
+    top: '5%',
     left: '50%',
     transform: [{ translateX: -80 }],
   },
   starLeft: {
-    top: '45%',
-    left: '10%',
-    transform: [{ translateY: -50 }],
+    top: '42%',
+    left: '5%',
   },
   starRight: {
-    top: '45%',
-    right: '10%',
-    transform: [{ translateY: -50 }],
+    top: '42%',
+    right: '5%',
   },
   starBottom: {
-    bottom: '15%',
+    bottom: '8%',
     left: '50%',
     transform: [{ translateX: -80 }],
   },
@@ -706,10 +715,6 @@ const styles = StyleSheet.create({
   starCircleActive: {
     backgroundColor: 'rgba(255, 215, 0, 0.4)',
     borderColor: '#FFD700',
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 12,
     elevation: 8,
   },
   starIcon: {
@@ -724,9 +729,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     color: '#fff',
-    fontSize: 14,
-    width: 160,
-    minHeight: 60,
+    fontSize: 13,
+    width: 150,
+    minHeight: 55,
     textAlignVertical: 'top',
     borderWidth: 1,
     borderColor: 'rgba(255, 215, 0, 0.3)',
