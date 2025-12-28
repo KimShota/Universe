@@ -67,7 +67,7 @@ class SOSCompletion(BaseModel):
 class CreatorUniverse(BaseModel):
     user_id: str
     overarching_goal: str = ""
-    content_pillars: List[Dict[str, Any]] = []
+    content_pillars: List[Dict[str, Union[str, List[str]]]] = []
     updated_at: datetime
 
 # Content Tips Models
