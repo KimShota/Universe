@@ -189,6 +189,16 @@ export default function MainScreen() {
               </View>
 
               <TouchableOpacity
+                style={styles.homeMenuButton}
+                onPress={() => {
+                  setShowMenu(false);
+                }}
+              >
+                <Ionicons name="home-outline" size={24} color="#FFD700" />
+                <Text style={styles.homeMenuButtonText}>Home</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
                 style={styles.sosMenuButton}
                 onPress={() => {
                   setShowMenu(false);
