@@ -45,7 +45,7 @@ export default function SOSFlowScreen() {
         })
       ).start();
     }
-  }, [step]);
+  }, [step, vortexRotation]);
 
   const rotateInterpolate = vortexRotation.interpolate({
     inputRange: [0, 1],
