@@ -7,20 +7,23 @@ import {
   TextInput,
   TouchableOpacity,
   SafeAreaView,
+  Dimensions,
 } from 'react-native';
 import { UniverseBackground } from '../../components/UniverseBackground';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import Svg, { Line } from 'react-native-svg';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+const { width } = Dimensions.get('window');
 
 export default function CreatorUniverseScreen() {
   const [goal, setGoal] = useState('');
   const [pillars, setPillars] = useState([
-    { title: 'Content Pillar 1', ideas: [] },
-    { title: 'Content Pillar 2', ideas: [] },
-    { title: 'Content Pillar 3', ideas: [] },
-    { title: 'Content Pillar 4', ideas: [] },
+    { title: 'Content Pillar 1', ideas: [''] },
+    { title: 'Content Pillar 2', ideas: [''] },
+    { title: 'Content Pillar 3', ideas: [''] },
+    { title: 'Content Pillar 4', ideas: [''] },
   ]);
 
   useEffect(() => {
@@ -68,62 +71,105 @@ export default function CreatorUniverseScreen() {
     setPillars(newPillars);
   };
 
+  const updateIdea = (pillarIndex: number, ideaIndex: number, text: string) => {
+    const newPillars = [...pillars];
+    newPillars[pillarIndex].ideas[ideaIndex] = text;
+    setPillars(newPillars);
+  };
+
   const addIdea = (pillarIndex: number) => {
     const newPillars = [...pillars];
-    newPillars[pillarIndex].ideas.push(`Idea ${newPillars[pillarIndex].ideas.length + 1}`);
+    newPillars[pillarIndex].ideas.push('');
     setPillars(newPillars);
   };
 
   return (
     <UniverseBackground>
       <SafeAreaView style={styles.container}>
+        {/* Header */}
         <View style={styles.header}>
           <Text style={styles.starCharacter}>⭐</Text>
-          <Text style={styles.title}>Creator's Universe</Text>
         </View>
 
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
           {/* Overarching Goal */}
           <View style={styles.goalContainer}>
-            <Text style={styles.sectionTitle}>Overarching Goal</Text>
+            <Text style={styles.goalLabel}>Overarching Goal</Text>
             <TextInput
               style={styles.goalInput}
               value={goal}
               onChangeText={setGoal}
               onBlur={saveUniverse}
               placeholder="What's your main goal?"
-              placeholderTextColor="#666"
+              placeholderTextColor="rgba(255, 255, 255, 0.4)"
               multiline
             />
           </View>
 
-          {/* Content Pillars */}
-          <View style={styles.pillarsContainer}>
+          {/* Connection Lines from Goal to Pillars */}
+          <View style={styles.connectionsContainer}>
+            <Svg height="60" width={width - 40} style={styles.svg}>
+              {/* Lines from center top to each pillar */}
+              <Line x1={(width - 40) / 2} y1="0" x2={(width - 40) * 0.125} y2="60" stroke="rgba(255, 215, 0, 0.5)" strokeWidth="2" />
+              <Line x1={(width - 40) / 2} y1="0" x2={(width - 40) * 0.375} y2="60" stroke="rgba(255, 215, 0, 0.5)" strokeWidth="2" />
+              <Line x1={(width - 40) / 2} y1="0" x2={(width - 40) * 0.625} y2="60" stroke="rgba(255, 215, 0, 0.5)" strokeWidth="2" />
+              <Line x1={(width - 40) / 2} y1="0" x2={(width - 40) * 0.875} y2="60" stroke="rgba(255, 215, 0, 0.5)" strokeWidth="2" />
+            </Svg>
+          </View>
+
+          {/* Content Pillars Row */}
+          <View style={styles.pillarsRow}>
             {pillars.map((pillar, index) => (
-              <View key={index} style={styles.pillarCard}>
+              <View key={index} style={styles.pillarBox}>
                 <TextInput
                   style={styles.pillarTitle}
                   value={pillar.title}
                   onChangeText={(text) => updatePillarTitle(index, text)}
                   onBlur={saveUniverse}
-                  placeholderTextColor="#666"
+                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                  multiline
+                  numberOfLines={2}
                 />
-                
+              </View>
+            ))}
+          </View>
+
+          {/* Connection Lines from Pillars to Ideas */}
+          <View style={styles.pillarConnectionsContainer}>
+            <Svg height="40" width={width - 40} style={styles.svg}>
+              {/* Vertical lines from each pillar down */}
+              <Line x1={(width - 40) * 0.125} y1="0" x2={(width - 40) * 0.125} y2="40" stroke="rgba(255, 215, 0, 0.5)" strokeWidth="2" />
+              <Line x1={(width - 40) * 0.375} y1="0" x2={(width - 40) * 0.375} y2="40" stroke="rgba(255, 215, 0, 0.5)" strokeWidth="2" />
+              <Line x1={(width - 40) * 0.625} y1="0" x2={(width - 40) * 0.625} y2="40" stroke="rgba(255, 215, 0, 0.5)" strokeWidth="2" />
+              <Line x1={(width - 40) * 0.875} y1="0" x2={(width - 40) * 0.875} y2="40" stroke="rgba(255, 215, 0, 0.5)" strokeWidth="2" />
+            </Svg>
+          </View>
+
+          {/* Ideas Grid */}
+          <View style={styles.ideasRow}>
+            {pillars.map((pillar, pillarIndex) => (
+              <View key={pillarIndex} style={styles.ideasColumn}>
                 {pillar.ideas.map((idea, ideaIndex) => (
-                  <Text key={ideaIndex} style={styles.ideaText}>
-                    • {idea}
-                  </Text>
+                  <View key={ideaIndex} style={styles.ideaBox}>
+                    <TextInput
+                      style={styles.ideaInput}
+                      value={idea}
+                      onChangeText={(text) => updateIdea(pillarIndex, ideaIndex, text)}
+                      onBlur={saveUniverse}
+                      placeholder="Idea"
+                      placeholderTextColor="rgba(255, 255, 255, 0.3)"
+                      multiline
+                    />
+                  </View>
                 ))}
-                
                 <TouchableOpacity
                   style={styles.addIdeaButton}
                   onPress={() => {
-                    addIdea(index);
+                    addIdea(pillarIndex);
                     saveUniverse();
                   }}
                 >
-                  <Ionicons name="add-circle-outline" size={20} color="#FFD700" />
-                  <Text style={styles.addIdeaText}>Add Idea</Text>
+                  <Ionicons name="add-circle-outline" size={16} color="#FFD700" />
                 </TouchableOpacity>
               </View>
             ))}
