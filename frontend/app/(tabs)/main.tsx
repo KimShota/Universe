@@ -73,60 +73,58 @@ export default function MainScreen() {
   const renderPlanets = () => {
     const planets = [];
     const currentPlanet = user?.current_planet || 0;
+    const screenWidth = width - 40; // padding on sides
 
-    // Create roadmap-style layout with connections
-    const rows = [];
-    let rowIndex = 0;
-    
     for (let i = 0; i < 10; i++) {
       const isPast = i < currentPlanet;
       const isCurrent = i === currentPlanet;
       const isFuture = i > currentPlanet;
       
-      // Alternate between left and right positioning
-      const isLeftSide = i % 2 === 0;
+      // Calculate position for zig-zag pattern
+      // Even numbers go left, odd numbers go right
+      const isLeft = i % 2 === 0;
+      const xPosition = isLeft ? 20 : screenWidth - 60; // 60 is planet size + padding
       
-      rows.push(
-        <View key={i} style={[
-          styles.planetRow, 
-          isLeftSide ? styles.planetRowLeft : styles.planetRowRight
-        ]}>
-          {/* Connection line to next planet */}
+      planets.push(
+        <View key={i} style={[styles.planetWrapper, { marginBottom: 60 }]}>
+          {/* Connecting line to next planet */}
           {i < 9 && (
             <View style={[
-              styles.connectionLine,
-              isLeftSide ? styles.connectionLineRight : styles.connectionLineLeft
+              styles.pathLine,
+              isLeft ? styles.pathLineRightDown : styles.pathLineLeftDown,
             ]} />
           )}
           
-          {/* Planet */}
-          <TouchableOpacity
-            style={[
-              styles.planet,
-              isPast && styles.planetPast,
-              isCurrent && styles.planetCurrent,
-              isFuture && styles.planetFuture,
-            ]}
-            onPress={() => handlePlanetPress(i)}
-            disabled={!isCurrent || missionCompleted}
-          >
-            <Text style={styles.planetText}>{i + 1}</Text>
-          </TouchableOpacity>
-          
-          {/* Star character on current planet */}
-          {isCurrent && (
-            <View style={[
-              styles.starCharacterOnPlanet,
-              isLeftSide ? styles.starCharacterLeft : styles.starCharacterRight
-            ]}>
-              <Text style={styles.starEmoji}>⭐</Text>
-            </View>
-          )}
+          {/* Planet container */}
+          <View style={[styles.planetContainer, { marginLeft: isLeft ? 0 : 'auto' }]}>
+            <TouchableOpacity
+              style={[
+                styles.planet,
+                isPast && styles.planetPast,
+                isCurrent && styles.planetCurrent,
+                isFuture && styles.planetFuture,
+              ]}
+              onPress={() => handlePlanetPress(i)}
+              disabled={!isCurrent || missionCompleted}
+            >
+              <Text style={styles.planetText}>{i + 1}</Text>
+            </TouchableOpacity>
+            
+            {/* Star character on current planet */}
+            {isCurrent && (
+              <View style={[
+                styles.starCharacterOnPlanet,
+                isLeft ? styles.starLeft : styles.starRight
+              ]}>
+                <Text style={styles.starEmoji}>⭐</Text>
+              </View>
+            )}
+          </View>
         </View>
       );
     }
 
-    return rows;
+    return planets;
   };
 
   return (
