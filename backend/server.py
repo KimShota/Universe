@@ -300,7 +300,6 @@ async def complete_mission(
     
     # Update streak
     if current_user.last_post_date:
-        from datetime import datetime
         last_date = datetime.fromisoformat(current_user.last_post_date)
         today_date = datetime.fromisoformat(today)
         days_diff = (today_date - last_date).days
