@@ -158,10 +158,7 @@ export default function MainScreen() {
           style={styles.scrollView}
           contentContainerStyle={styles.roadmapContainer}
         >
-          <View style={styles.starCharacterTop}>
-            <Text style={styles.starEmojiLarge}>⭐</Text>
-          </View>
-          {renderPlanets()}
+          {this.renderPlanets()}
         </ScrollView>
 
         {/* Mission Modal */}
