@@ -15,9 +15,22 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 # MongoDB connection
-mongo_url = os.environ['MONGO_URL']
+mongo_url = os.environ.get('MONGO_URL')
+if not mongo_url:
+    raise ValueError(
+        "MONGO_URL environment variable is not set. "
+        "Please create a .env file in the backend directory with MONGO_URL=mongodb://localhost:27017"
+    )
+
+db_name = os.environ.get('DB_NAME')
+if not db_name:
+    raise ValueError(
+        "DB_NAME environment variable is not set. "
+        "Please create a .env file in the backend directory with DB_NAME=universe"
+    )
+
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+db = client[db_name]
 
 # Create the main app without a prefix
 app = FastAPI()
@@ -105,6 +118,20 @@ class UpdateCreatorUniverseRequest(BaseModel):
 class QuizCompleteRequest(BaseModel):
     tip_id: str
     score: int
+
+class Script(BaseModel):
+    id: str
+    title: Optional[str] = ""
+    mission: Optional[str] = ""
+    footageNeeded: Optional[str] = ""
+    textVisual: Optional[str] = ""
+    audio: Optional[str] = ""
+    caption: Optional[str] = ""
+    callToAction: Optional[str] = ""
+    date: Optional[str] = None
+
+class ScriptRequest(BaseModel):
+    script: Script
 
 # ==================== AUTH HELPERS ====================
 
@@ -518,6 +545,73 @@ async def get_content_tips_progress(current_user: User = Depends(get_current_use
     ).to_list(100)
     
     return {"progress": progress}
+
+# ==================== BATCHING ROUTES ====================
+
+@api_router.get("/batching/scripts")
+async def get_batching_scripts(current_user: User = Depends(get_current_user)):
+    """Get user's batching scripts"""
+    
+    scripts = await db.batching_scripts.find(
+        {"user_id": current_user.user_id},
+        {"_id": 0, "user_id": 0}
+    ).to_list(100)
+    
+    return {"scripts": scripts}
+
+@api_router.post("/batching/scripts")
+async def save_batching_script(
+    request: ScriptRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """Save or update a batching script"""
+    
+    script_dict = request.script.dict()
+    script_dict["user_id"] = current_user.user_id
+    
+    # Update or insert script
+    await db.batching_scripts.update_one(
+        {"user_id": current_user.user_id, "id": request.script.id},
+        {"$set": script_dict},
+        upsert=True
+    )
+    
+    return {"message": "Script saved successfully", "script": request.script}
+
+@api_router.delete("/batching/scripts/{script_id}")
+async def delete_batching_script(
+    script_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Delete a batching script"""
+    
+    # Get all user scripts to find the matching one
+    all_scripts = await db.batching_scripts.find(
+        {"user_id": current_user.user_id}
+    ).to_list(100)
+    
+    # Find script with matching ID (handling type conversion)
+    matching_script = None
+    for s in all_scripts:
+        script_id_in_db = s.get("id")
+        # Try both string and numeric comparison
+        if str(script_id_in_db) == script_id or (script_id.isdigit() and script_id_in_db == int(script_id)):
+            matching_script = s
+            break
+    
+    if not matching_script:
+        raise HTTPException(status_code=404, detail="Script not found")
+    
+    # Delete using the actual ID format from database
+    actual_id = matching_script.get("id")
+    result = await db.batching_scripts.delete_one(
+        {"user_id": current_user.user_id, "id": actual_id}
+    )
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Script not found")
+    
+    return {"message": "Script deleted successfully"}
 
 # ==================== INCLUDE ROUTER ====================
 

@@ -4,7 +4,7 @@ import * as Linking from 'expo-linking';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://192.168.0.15:8000';
 const AUTH_URL = 'https://auth.emergentagent.com';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -51,6 +51,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const checkExistingSession = async () => {
     try {
+      if (!BACKEND_URL) {
+        console.error('BACKEND_URL is not set. Please create a .env file with EXPO_PUBLIC_BACKEND_URL');
+        setLoading(false);
+        return;
+      }
+
       const sessionToken = await AsyncStorage.getItem('session_token');
       
       if (sessionToken) {
@@ -69,6 +75,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error) {
       console.error('Error checking session:', error);
+      if (error instanceof TypeError && error.message === 'Network request failed') {
+        console.error('Network error: Make sure the backend server is running at', BACKEND_URL);
+      }
     } finally {
       setLoading(false);
     }
@@ -85,7 +94,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sessionId = url.split('?session_id=')[1].split('&')[0];
       }
       
-      if (!sessionId) return;
+      if (!sessionId) {
+        console.warn('No session_id found in URL');
+        return;
+      }
+      
+      if (!BACKEND_URL) {
+        console.error('BACKEND_URL is not set. Please create a .env file with EXPO_PUBLIC_BACKEND_URL');
+        return;
+      }
+      
+      console.log('Attempting to connect to:', `${BACKEND_URL}/api/auth/session`);
       
       // Exchange session_id for user data
       const response = await fetch(`${BACKEND_URL}/api/auth/session?session_id=${sessionId}`, {
@@ -95,13 +114,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
       
-      if (response.ok) {
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Auth API error: ${response.status} - ${errorText}`);
+        return;
+      }
+      
         const data = await response.json();
         await AsyncStorage.setItem('session_token', data.session_token);
         setUser(data.user);
-      }
     } catch (error) {
       console.error('Error processing auth redirect:', error);
+      if (error instanceof TypeError && error.message === 'Network request failed') {
+        console.error('Network error: Make sure the backend server is running at', BACKEND_URL);
+        console.error('If using a mobile device/emulator, use your computer\'s IP address instead of localhost');
+      }
     }
   };
 
@@ -151,6 +178,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshUser = async () => {
     try {
+      if (!BACKEND_URL) {
+        console.error('BACKEND_URL is not set. Please create a .env file with EXPO_PUBLIC_BACKEND_URL');
+        return;
+      }
+
       const sessionToken = await AsyncStorage.getItem('session_token');
       
       if (sessionToken) {
@@ -167,6 +199,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error) {
       console.error('Error refreshing user:', error);
+      if (error instanceof TypeError && error.message === 'Network request failed') {
+        console.error('Network error: Make sure the backend server is running at', BACKEND_URL);
+      }
     }
   };
 

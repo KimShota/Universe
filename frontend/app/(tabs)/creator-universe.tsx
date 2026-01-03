@@ -13,11 +13,13 @@ import { UniverseBackground } from '../../components/UniverseBackground';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Line } from 'react-native-svg';
+import { useRouter } from 'expo-router';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 const { width } = Dimensions.get('window');
 
 export default function CreatorUniverseScreen() {
+  const router = useRouter();
   const [goal, setGoal] = useState('');
   const [pillars, setPillars] = useState([
     { title: 'Content Pillar 1', ideas: [''] },
@@ -88,6 +90,9 @@ export default function CreatorUniverseScreen() {
       <SafeAreaView style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.push('/(tabs)/main')} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={28} color="#FFD700" />
+          </TouchableOpacity>
           <Text style={styles.starCharacter}>⭐</Text>
         </View>
 
@@ -187,6 +192,13 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     paddingVertical: 16,
+    position: 'relative',
+  },
+  backButton: {
+    position: 'absolute',
+    left: 20,
+    top: 16,
+    zIndex: 1,
   },
   starCharacter: {
     fontSize: 48,

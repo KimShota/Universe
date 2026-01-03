@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } fr
 import { UniverseBackground } from '../../components/UniverseBackground';
 import { CONTENT_TIPS } from '../../constants/content';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function ContentTipsScreen() {
   const router = useRouter();
@@ -11,6 +12,9 @@ export default function ContentTipsScreen() {
     <UniverseBackground>
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.push('/(tabs)/main')} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={28} color="#FFD700" />
+          </TouchableOpacity>
           <Text style={styles.starCharacter}>⭐</Text>
           <Text style={styles.title}>Content Tips</Text>
         </View>
@@ -38,6 +42,13 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     paddingVertical: 24,
+    position: 'relative',
+  },
+  backButton: {
+    position: 'absolute',
+    left: 20,
+    top: 24,
+    zIndex: 1,
   },
   starCharacter: {
     fontSize: 48,
