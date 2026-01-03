@@ -11,6 +11,7 @@ import {
   SafeAreaView,
   Keyboard,
   TouchableWithoutFeedback,
+  Easing,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -55,7 +56,6 @@ export default function LetGoScreen() {
 
   const blackHoleRotate = useRef(new Animated.Value(0)).current;
   const blackHolePulse = useRef(new Animated.Value(0)).current;
-  const pullPulse = useRef(new Animated.Value(0)).current;
 
   const asteroidsAnim = useRef<AsteroidAnim[]>(
     asteroidOffsets.map(() => ({
@@ -114,10 +114,12 @@ export default function LetGoScreen() {
   }, [restoreAsteroids]);
 
   useEffect(() => {
+    // パフォーマンス最適化: より遅いアニメーション
     const rotateLoop = Animated.loop(
       Animated.timing(blackHoleRotate, {
         toValue: 1,
-        duration: 7000,
+        duration: 15000, // 7秒 → 15秒（約2倍遅く）
+        easing: Easing.linear, // 計算を簡略化
         useNativeDriver: true,
       })
     );
@@ -126,40 +128,27 @@ export default function LetGoScreen() {
       Animated.sequence([
         Animated.timing(blackHolePulse, {
           toValue: 1,
-          duration: 1700,
+          duration: 4000, // 1.7秒 → 4秒（約2.4倍遅く）
+          easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
         Animated.timing(blackHolePulse, {
           toValue: 0,
-          duration: 1700,
+          duration: 4000, // 1.7秒 → 4秒
+          easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
       ])
     );
 
-    const pullLoop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pullPulse, {
-          toValue: 1,
-          duration: 1300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pullPulse, {
-          toValue: 0,
-          duration: 1300,
-          useNativeDriver: true,
-        }),
-      ])
-    );
+    // pullLoopを削除（パフォーマンス最適化）
 
     rotateLoop.start();
     pulseLoop.start();
-    pullLoop.start();
 
     return () => {
       rotateLoop.stop();
       pulseLoop.stop();
-      pullLoop.stop();
     };
   }, []);
 
@@ -171,11 +160,6 @@ export default function LetGoScreen() {
   const pulseScale = blackHolePulse.interpolate({
     inputRange: [0, 1],
     outputRange: [1, 1.05],
-  });
-
-  const pullScale = pullPulse.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 1.02],
   });
 
   const handleLetGo = async () => {
@@ -248,8 +232,8 @@ export default function LetGoScreen() {
         </View>
 
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <Animated.View style={[styles.scene, { transform: [{ scale: pullScale }] }]}>
-            <View style={[styles.blackHoleWrap, { left: center.x - 160, top: center.y - 220 }]}>
+          <View style={styles.scene}>
+            <View style={[styles.blackHoleWrap, { left: center.x - 140, top: center.y - 220 }]}>
               <Animated.View style={[styles.accretionOuter, { transform: [{ rotate }, { scale: pulseScale }] }]}>
                 <View style={[styles.ring, styles.ring1]} />
                 <View style={[styles.ring, styles.ring2]} />
@@ -320,7 +304,7 @@ export default function LetGoScreen() {
                 Type your fears into the asteroids, then release them into the void.
               </Text>
             </View>
-          </Animated.View>
+          </View>
         </TouchableWithoutFeedback>
 
         <Modal visible={showGoodJob} transparent animationType="fade">
@@ -360,16 +344,16 @@ const styles = StyleSheet.create({
   scene: { flex: 1 },
   blackHoleWrap: {
     position: 'absolute',
-    width: 320,
-    height: 320,
+    width: 280,
+    height: 280,
     alignItems: 'center',
     justifyContent: 'center',
   },
   accretionOuter: {
     position: 'absolute',
-    width: 320,
-    height: 320,
-    borderRadius: 160,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -379,39 +363,39 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   ring1: {
-    width: 300,
-    height: 300,
+    width: 260,
+    height: 260,
     borderColor: 'rgba(255, 140, 0, 0.24)',
   },
   ring2: {
-    width: 250,
-    height: 250,
+    width: 220,
+    height: 220,
     borderColor: 'rgba(168, 85, 247, 0.20)',
   },
   ring3: {
-    width: 200,
-    height: 200,
+    width: 180,
+    height: 180,
     borderColor: 'rgba(56, 189, 248, 0.16)',
   },
   glowHalo: {
     position: 'absolute',
-    width: 320,
-    height: 320,
-    borderRadius: 160,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
     backgroundColor: 'rgba(0,0,0,0.35)',
   },
   eventHorizon: {
     position: 'absolute',
-    width: 170,
-    height: 170,
-    borderRadius: 85,
+    width: 150,
+    height: 150,
+    borderRadius: 75,
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.08)',
   },
   blackCore: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
+    width: 130,
+    height: 130,
+    borderRadius: 65,
     backgroundColor: '#050509',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 12 },

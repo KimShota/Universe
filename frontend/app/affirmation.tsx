@@ -36,14 +36,13 @@ const CrackerBurst: React.FC<BurstProps> = ({ side, isActive }) => {
     if (!isActive) return;
 
     progress.setValue(0);
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(progress, { toValue: 1, duration: 520, useNativeDriver: true }),
-        Animated.timing(progress, { toValue: 0, duration: 520, useNativeDriver: true }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
+    // パフォーマンス最適化: ループを削除して1回だけ実行
+    const sequence = Animated.sequence([
+      Animated.timing(progress, { toValue: 1, duration: 1200, useNativeDriver: true }), // 520ms → 1200ms（より遅く）
+      Animated.timing(progress, { toValue: 0, duration: 1200, useNativeDriver: true }), // 520ms → 1200ms
+    ]);
+    sequence.start();
+    return () => sequence.stop();
   }, [isActive]);
 
   const scale = progress.interpolate({
@@ -59,8 +58,9 @@ const CrackerBurst: React.FC<BurstProps> = ({ side, isActive }) => {
   const x = side === 'left' ? -1 : 1;
   const pieces = useMemo(() => {
     const colors = ['#FFD700', '#A855F7', '#38BDF8', '#FB7185', '#4ADE80'];
-    return Array.from({ length: 10 }).map((_, i) => {
-      const rot = i * 36 + (side === 'left' ? 12 : -12);
+    // パフォーマンス最適化: 10個 → 6個に削減
+    return Array.from({ length: 6 }).map((_, i) => {
+      const rot = i * 60 + (side === 'left' ? 12 : -12); // 36度 → 60度（6個に合わせて調整）
       const c = colors[i % colors.length];
       return { rot, color: c };
     });
@@ -109,26 +109,28 @@ export default function AffirmationScreen() {
   
   // Decorative stars animation
   const decorativeStars = useMemo(() => {
-    return Array.from({ length: 15 }).map((_, i) => ({
+    // パフォーマンス最適化: 15個 → 8個に削減
+    return Array.from({ length: 8 }).map((_, i) => ({
       id: i,
       x: Math.random() * SCREEN_WIDTH,
       y: Math.random() * SCREEN_HEIGHT,
       size: Math.random() * 3 + 1,
       opacity: Math.random() * 0.6 + 0.3,
-      twinkleSpeed: Math.random() * 3000 + 2000,
+      twinkleSpeed: Math.random() * 4000 + 3000, // より遅いアニメーション
     }));
   }, []);
 
   const starAnimations = useRef(
     decorativeStars.map((star) => ({
       opacity: new Animated.Value(star.opacity),
-      scale: new Animated.Value(1),
+      // パフォーマンス最適化: scaleアニメーションを削除
     }))
   ).current;
 
   useEffect(() => {
     starAnimations.forEach((anim, i) => {
       const star = decorativeStars[i];
+      // パフォーマンス最適化: scaleアニメーションを削除してopacityのみに
       const twinkle = Animated.loop(
         Animated.sequence([
           Animated.timing(anim.opacity, {
@@ -245,7 +247,7 @@ export default function AffirmationScreen() {
                       height: star.size,
                       borderRadius: star.size / 2,
                       opacity: anim.opacity,
-                      transform: [{ scale: anim.scale }],
+                      // パフォーマンス最適化: scaleアニメーションを削除
                     },
                   ]}
                 />
