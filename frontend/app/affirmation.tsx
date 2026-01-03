@@ -9,6 +9,8 @@ import {
   TouchableOpacity,
   Modal,
   SafeAreaView,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -221,94 +223,100 @@ export default function AffirmationScreen() {
           <View style={{ width: 26 }} />
         </View>
 
-        <View style={styles.body}>
-          <Text style={styles.title}>Write 3 affirmations</Text>
-          <Text style={styles.subtitle}>
-            As you fill each star, it will start to glow.
-          </Text>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.body}>
+            <Text style={styles.title}>Write 3 affirmations</Text>
+            <Text style={styles.subtitle}>
+              As you fill each star, it will start to glow.
+            </Text>
 
-          {/* Decorative stars */}
-          {decorativeStars.map((star, i) => {
-            const anim = starAnimations[i];
-            return (
-              <Animated.View
-                key={`dec-star-${star.id}`}
-                style={[
-                  styles.decorativeStar,
-                  {
-                    left: star.x,
-                    top: star.y,
-                    width: star.size,
-                    height: star.size,
-                    borderRadius: star.size / 2,
-                    opacity: anim.opacity,
-                    transform: [{ scale: anim.scale }],
-                  },
-                ]}
-              />
-            );
-          })}
-
-          <View style={styles.starsStage}>
-            {starPositions.map((p, i) => {
-              const scale = glow[i].interpolate({ inputRange: [0, 1], outputRange: [1, 1.08] });
-              const starOpacity = glow[i].interpolate({ inputRange: [0, 1], outputRange: [0.45, 1] });
-
-              // 3つの星の位置（中心の星の周りに配置）
-              const threeStarsPositions = [
-                { x: 0, y: -25 }, // 上
-                { x: -22, y: 12 }, // 左下
-                { x: 22, y: 12 }, // 右下
-              ];
-
+            {/* Decorative stars */}
+            {decorativeStars.map((star, i) => {
+              const anim = starAnimations[i];
               return (
-                <View key={`star-${i}`} style={[styles.starWrap, { left: p.x - 74, top: p.y - 74 }]}>
-                  <Animated.View style={[styles.starOrb, { opacity: starOpacity, transform: [{ scale }] }]}>
-                    <View style={styles.starCore} />
-                    {/* 3つの小さな星を追加 */}
-                    {threeStarsPositions.map((offset, starIdx) => (
-                      <Animated.View
-                        key={`small-star-${starIdx}`}
-                        style={[
-                          styles.smallStar,
-                          {
-                            left: 74 + offset.x - 4,
-                            top: 74 + offset.y - 4,
-                            opacity: starOpacity,
-                          },
-                        ]}
-                      />
-                    ))}
-                  </Animated.View>
-
-                  <TextInput
-                    style={styles.starInput}
-                    value={affirmations[i]}
-                    onChangeText={(t) => {
-                      const next = [...affirmations];
-                      next[i] = t;
-                      setAffirmations(next);
-                    }}
-                    placeholder={`Affirmation ${i + 1}`}
-                    placeholderTextColor="rgba(255,255,255,0.45)"
-                    multiline
-                  />
-                </View>
+                <Animated.View
+                  key={`dec-star-${star.id}`}
+                  style={[
+                    styles.decorativeStar,
+                    {
+                      left: star.x,
+                      top: star.y,
+                      width: star.size,
+                      height: star.size,
+                      borderRadius: star.size / 2,
+                      opacity: anim.opacity,
+                      transform: [{ scale: anim.scale }],
+                    },
+                  ]}
+                />
               );
             })}
-          </View>
 
-          <View style={styles.footer}>
-            <TouchableOpacity
-              style={[styles.homeButton, !affirmations.every((a) => a.trim()) && styles.homeButtonDisabled]}
-              onPress={handleGoHome}
-              disabled={!affirmations.every((a) => a.trim())}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.homeButtonText}>Go Home</Text>
-            </TouchableOpacity>
+            <View style={styles.starsStage}>
+              {starPositions.map((p, i) => {
+                const scale = glow[i].interpolate({ inputRange: [0, 1], outputRange: [1, 1.08] });
+                const starOpacity = glow[i].interpolate({ inputRange: [0, 1], outputRange: [0.45, 1] });
+
+                // 3つの星の位置（中心の星の周りに配置）
+                const threeStarsPositions = [
+                  { x: 0, y: -25 }, // 上
+                  { x: -22, y: 12 }, // 左下
+                  { x: 22, y: 12 }, // 右下
+                ];
+
+                return (
+                  <View 
+                    key={`star-${i}`} 
+                    style={[styles.starWrap, { left: p.x - 74, top: p.y - 74 }]}
+                    onStartShouldSetResponder={() => true}
+                  >
+                    <Animated.View style={[styles.starOrb, { opacity: starOpacity, transform: [{ scale }] }]}>
+                      <View style={styles.starCore} />
+                      {/* 3つの小さな星を追加 */}
+                      {threeStarsPositions.map((offset, starIdx) => (
+                        <Animated.View
+                          key={`small-star-${starIdx}`}
+                          style={[
+                            styles.smallStar,
+                            {
+                              left: 74 + offset.x - 4,
+                              top: 74 + offset.y - 4,
+                              opacity: starOpacity,
+                            },
+                          ]}
+                        />
+                      ))}
+                    </Animated.View>
+
+                    <TextInput
+                      style={styles.starInput}
+                      value={affirmations[i]}
+                      onChangeText={(t) => {
+                        const next = [...affirmations];
+                        next[i] = t;
+                        setAffirmations(next);
+                      }}
+                      placeholder={`Affirmation ${i + 1}`}
+                      placeholderTextColor="rgba(255,255,255,0.45)"
+                      multiline
+                    />
+                  </View>
+                );
+              })}
+            </View>
+
+            <View style={styles.footer}>
+              <TouchableOpacity
+                style={[styles.homeButton, !affirmations.every((a) => a.trim()) && styles.homeButtonDisabled]}
+                onPress={handleGoHome}
+                disabled={!affirmations.every((a) => a.trim())}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.homeButtonText}>Go Home</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        </TouchableWithoutFeedback>
 
         <Modal visible={showCelebration} transparent animationType="fade">
           <View style={styles.modalOverlay}>

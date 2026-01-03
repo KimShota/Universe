@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,8 +9,11 @@ import {
   TextInput,
   Modal,
   SafeAreaView,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UniverseBackground } from '../components/UniverseBackground';
 import { Ionicons } from '@expo/vector-icons';
@@ -62,6 +65,53 @@ export default function LetGoScreen() {
       opacity: new Animated.Value(1),
     }))
   ).current;
+
+  // 小惑星を復元する関数
+  const restoreAsteroids = useCallback(async () => {
+    try {
+      const savedFears = await AsyncStorage.getItem(FEARS_STORAGE_KEY(resolvedIssueId));
+      if (savedFears) {
+        const parsed = JSON.parse(savedFears);
+        if (Array.isArray(parsed) && parsed.length === 3) {
+          setFears(parsed);
+          // アニメーション値をリセット
+          asteroidsAnim.forEach((anim) => {
+            anim.translateX.setValue(0);
+            anim.translateY.setValue(0);
+            anim.scale.setValue(1);
+            anim.opacity.setValue(1);
+          });
+          setIsVacuuming(false);
+          setShowGoodJob(false);
+        }
+      } else {
+        // データがない場合は初期状態にリセット
+        setFears(['', '', '']);
+        asteroidsAnim.forEach((anim) => {
+          anim.translateX.setValue(0);
+          anim.translateY.setValue(0);
+          anim.scale.setValue(1);
+          anim.opacity.setValue(1);
+        });
+        setIsVacuuming(false);
+        setShowGoodJob(false);
+      }
+    } catch (error) {
+      console.error('Error restoring asteroids:', error);
+    }
+  }, [resolvedIssueId]);
+
+  // ページがフォーカスされたときに小惑星を復元
+  useFocusEffect(
+    useCallback(() => {
+      restoreAsteroids();
+    }, [restoreAsteroids])
+  );
+
+  // 初回マウント時にも復元
+  useEffect(() => {
+    restoreAsteroids();
+  }, [restoreAsteroids]);
 
   useEffect(() => {
     const rotateLoop = Animated.loop(
@@ -197,78 +247,81 @@ export default function LetGoScreen() {
           <View style={{ width: 26 }} />
         </View>
 
-        <Animated.View style={[styles.scene, { transform: [{ scale: pullScale }] }]}>
-          <View style={[styles.blackHoleWrap, { left: center.x - 160, top: center.y - 220 }]}>
-            <Animated.View style={[styles.accretionOuter, { transform: [{ rotate }, { scale: pulseScale }] }]}>
-              <View style={[styles.ring, styles.ring1]} />
-              <View style={[styles.ring, styles.ring2]} />
-              <View style={[styles.ring, styles.ring3]} />
-              <View style={styles.glowHalo} />
-            </Animated.View>
-
-            <View style={styles.blackCore} />
-            <View style={styles.eventHorizon} />
-          </View>
-
-          {asteroidOffsets.map((offset, i) => {
-            const left = center.x + offset.x - asteroidSize / 2;
-            const top = center.y + offset.y - asteroidSize / 2;
-
-            return (
-              <Animated.View
-                key={`asteroid-${i}`}
-                style={[
-                  styles.asteroid,
-                  {
-                    left,
-                    top,
-                    width: asteroidSize,
-                    height: asteroidSize,
-                    opacity: asteroidsAnim[i].opacity,
-                    transform: [
-                      { translateX: asteroidsAnim[i].translateX },
-                      { translateY: asteroidsAnim[i].translateY },
-                      { scale: asteroidsAnim[i].scale },
-                    ],
-                  },
-                ]}
-              >
-                <View style={styles.asteroidShell}>
-                  <View style={styles.asteroidCrater1} />
-                  <View style={styles.asteroidCrater2} />
-                  <TextInput
-                    style={styles.asteroidInput}
-                    value={fears[i]}
-                    onChangeText={(t) => {
-                      const next = [...fears];
-                      next[i] = t;
-                      setFears(next);
-                    }}
-                    placeholder="Write a fear..."
-                    placeholderTextColor="rgba(255,255,255,0.45)"
-                    editable={!isVacuuming}
-                    multiline
-                  />
-                </View>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <Animated.View style={[styles.scene, { transform: [{ scale: pullScale }] }]}>
+            <View style={[styles.blackHoleWrap, { left: center.x - 160, top: center.y - 220 }]}>
+              <Animated.View style={[styles.accretionOuter, { transform: [{ rotate }, { scale: pulseScale }] }]}>
+                <View style={[styles.ring, styles.ring1]} />
+                <View style={[styles.ring, styles.ring2]} />
+                <View style={[styles.ring, styles.ring3]} />
+                <View style={styles.glowHalo} />
               </Animated.View>
-            );
-          })}
 
-          <View style={styles.ctaWrap}>
-            <TouchableOpacity
-              style={[styles.ctaButton, isVacuuming && styles.ctaButtonDisabled]}
-              onPress={handleLetGo}
-              disabled={isVacuuming}
-              activeOpacity={0.85}
-            >
-              <Ionicons name="radio-button-on" size={18} color="#0b0b12" />
-              <Text style={styles.ctaText}>{isVacuuming ? 'Releasing...' : 'Let Go'}</Text>
-            </TouchableOpacity>
-            <Text style={styles.hintText}>
-              Type your fears into the asteroids, then release them into the void.
-            </Text>
-          </View>
-        </Animated.View>
+              <View style={styles.blackCore} />
+              <View style={styles.eventHorizon} />
+            </View>
+
+            {asteroidOffsets.map((offset, i) => {
+              const left = center.x + offset.x - asteroidSize / 2;
+              const top = center.y + offset.y - asteroidSize / 2;
+
+              return (
+                <Animated.View
+                  key={`asteroid-${i}`}
+                  style={[
+                    styles.asteroid,
+                    {
+                      left,
+                      top,
+                      width: asteroidSize,
+                      height: asteroidSize,
+                      opacity: asteroidsAnim[i].opacity,
+                      transform: [
+                        { translateX: asteroidsAnim[i].translateX },
+                        { translateY: asteroidsAnim[i].translateY },
+                        { scale: asteroidsAnim[i].scale },
+                      ],
+                    },
+                  ]}
+                  onStartShouldSetResponder={() => true}
+                >
+                  <View style={styles.asteroidShell}>
+                    <View style={styles.asteroidCrater1} />
+                    <View style={styles.asteroidCrater2} />
+                    <TextInput
+                      style={styles.asteroidInput}
+                      value={fears[i]}
+                      onChangeText={(t) => {
+                        const next = [...fears];
+                        next[i] = t;
+                        setFears(next);
+                      }}
+                      placeholder="Write a fear..."
+                      placeholderTextColor="rgba(255,255,255,0.45)"
+                      editable={!isVacuuming}
+                      multiline
+                    />
+                  </View>
+                </Animated.View>
+              );
+            })}
+
+            <View style={styles.ctaWrap}>
+              <TouchableOpacity
+                style={[styles.ctaButton, isVacuuming && styles.ctaButtonDisabled]}
+                onPress={handleLetGo}
+                disabled={isVacuuming}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="radio-button-on" size={18} color="#0b0b12" />
+                <Text style={styles.ctaText}>{isVacuuming ? 'Releasing...' : 'Let Go'}</Text>
+              </TouchableOpacity>
+              <Text style={styles.hintText}>
+                Type your fears into the asteroids, then release them into the void.
+              </Text>
+            </View>
+          </Animated.View>
+        </TouchableWithoutFeedback>
 
         <Modal visible={showGoodJob} transparent animationType="fade">
           <View style={styles.modalOverlay}>
