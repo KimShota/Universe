@@ -85,6 +85,13 @@ export default function CreatorUniverseScreen() {
     setPillars(newPillars);
   };
 
+  const removeIdea = (pillarIndex: number, ideaIndex: number) => {
+    const newPillars = [...pillars];
+    newPillars[pillarIndex].ideas.splice(ideaIndex, 1);
+    setPillars(newPillars);
+    saveUniverse(); // 自動保存
+  };
+
   return (
     <UniverseBackground>
       <SafeAreaView style={styles.container}>
@@ -155,16 +162,24 @@ export default function CreatorUniverseScreen() {
             {pillars.map((pillar, pillarIndex) => (
               <View key={pillarIndex} style={styles.ideasColumn}>
                 {pillar.ideas.map((idea, ideaIndex) => (
-                  <View key={ideaIndex} style={styles.ideaBox}>
-                    <TextInput
-                      style={styles.ideaInput}
-                      value={idea}
-                      onChangeText={(text) => updateIdea(pillarIndex, ideaIndex, text)}
-                      onBlur={saveUniverse}
-                      placeholder="Idea"
-                      placeholderTextColor="rgba(255, 255, 255, 0.3)"
-                      multiline
-                    />
+                  <View key={ideaIndex} style={styles.ideaBoxWrapper}>
+                    <View style={styles.ideaBox}>
+                      <TextInput
+                        style={styles.ideaInput}
+                        value={idea}
+                        onChangeText={(text) => updateIdea(pillarIndex, ideaIndex, text)}
+                        onBlur={saveUniverse}
+                        placeholder="Idea"
+                        placeholderTextColor="rgba(255, 255, 255, 0.3)"
+                        multiline
+                      />
+                    </View>
+                    <TouchableOpacity
+                      style={styles.deleteIdeaButton}
+                      onPress={() => removeIdea(pillarIndex, ideaIndex)}
+                    >
+                      <Ionicons name="close-circle" size={18} color="#ff4444" />
+                    </TouchableOpacity>
                   </View>
                 ))}
                 <TouchableOpacity
@@ -275,6 +290,9 @@ const styles = StyleSheet.create({
     width: '23%',
     gap: 8,
   },
+  ideaBoxWrapper: {
+    position: 'relative',
+  },
   ideaBox: {
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,
@@ -287,6 +305,15 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 11,
     textAlignVertical: 'top',
+  },
+  deleteIdeaButton: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    borderRadius: 12,
+    padding: 2,
+    zIndex: 10,
   },
   addIdeaButton: {
     alignItems: 'center',

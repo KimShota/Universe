@@ -79,7 +79,7 @@ export default function MainScreen() {
 
   const roadmapSteps = Array.from({ length: totalSteps }, (_, i) => {
     const isLeft = i % 2 === 0;
-    const yPosition = 180 + i * 100;
+    const yPosition = 80 + i * 100;
     const xPosition = isLeft ? width * 0.3 : width * 0.7;
 
     return {
@@ -267,17 +267,6 @@ export default function MainScreen() {
               >
                 <Ionicons name="home-outline" size={24} color="#FFD700" />
                 <Text style={styles.homeMenuButtonText}>Home</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.sosMenuButton}
-                onPress={() => {
-                  setShowMenu(false);
-                  router.push('/sos');
-                }}
-              >
-                <Ionicons name="alert-circle" size={24} color="#ff4444" />
-                <Text style={styles.sosMenuButtonText}>SOS</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -553,24 +542,6 @@ const styles = StyleSheet.create({
   },
   homeMenuButtonText: {
     color: '#FFD700',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  sosMenuButton: {
-    backgroundColor: 'rgba(255, 68, 68, 0.2)',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 12,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 12,
-    borderWidth: 2,
-    borderColor: '#ff4444',
-  },
-  sosMenuButtonText: {
-    color: '#ff4444',
     fontSize: 18,
     fontWeight: 'bold',
   },
