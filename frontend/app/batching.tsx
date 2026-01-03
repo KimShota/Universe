@@ -87,8 +87,7 @@ export default function BatchingScreen() {
     const newScripts = [...scripts, newScript];
     setScripts(newScripts);
     await saveScript(newScript);
-    setSelectedScriptId(newScript.id);
-    setShowScriptDetail(true);
+    // 自動リダイレクトを削除 - ユーザーが手動でスクリプトをタップするまでリストページに留まる
   };
 
   const handleScriptPress = (scriptId: string) => {

@@ -44,9 +44,9 @@ export default function LetGoScreen() {
 
   const asteroidOffsets = useMemo(() => {
     return [
-      { x: -SCREEN_WIDTH * 0.28, y: -SCREEN_HEIGHT * 0.16 },
-      { x: SCREEN_WIDTH * 0.30, y: -SCREEN_HEIGHT * 0.06 },
-      { x: -SCREEN_WIDTH * 0.12, y: SCREEN_HEIGHT * 0.22 },
+      { x: -SCREEN_WIDTH * 0.24, y: -SCREEN_HEIGHT * 0.3 },
+      { x: SCREEN_WIDTH * 0.30, y: -SCREEN_HEIGHT * 0.08 },
+      { x: -SCREEN_WIDTH * 0.24, y: SCREEN_HEIGHT * 0.10 },
     ];
   }, []);
 
