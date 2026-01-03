@@ -103,6 +103,7 @@ export default function BatchingScreen() {
   };
 
   const handleDeleteScript = async (scriptId: string) => {
+    if (!scriptId) return;
     try {
       const sessionToken = await AsyncStorage.getItem('session_token');
       const response = await fetch(`${BACKEND_URL}/api/batching/scripts/${scriptId}`, {
@@ -187,7 +188,8 @@ export default function BatchingScreen() {
                 <View style={styles.scriptBox}>
                   <TouchableOpacity
                     style={styles.scriptBoxContent}
-                    onPress={() => handleScriptPress(script.id)}
+                    onPress={() => script.id && handleScriptPress(script.id)}
+                    disabled={!script.id}
                     activeOpacity={0.7}
                   >
                     <View style={styles.scriptBoxTextContainer}>
@@ -201,7 +203,8 @@ export default function BatchingScreen() {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.deleteButton}
-                    onPress={() => handleDeleteScript(script.id)}
+                    onPress={() => script.id && handleDeleteScript(script.id)}
+                    disabled={!script.id}
                     activeOpacity={0.7}
                   >
                     <Ionicons name="trash-outline" size={20} color="#ff4444" />

@@ -169,8 +169,17 @@ export default function SOSFlowScreen() {
             <View style={styles.explanationBox}>
               <Text style={styles.explanationText}>{issue.explanation}</Text>
             </View>
-            <TouchableOpacity style={styles.letGoButton} onPress={() => setStep(2)}>
-              <Text style={styles.letGoButtonText}>Let go</Text>
+            <TouchableOpacity
+              style={styles.letGoButton}
+              onPress={() =>
+                router.push({
+                  pathname: '/let-go',
+                  params: { issueId: String(issue.id) },
+                })
+              }
+              activeOpacity={0.85}
+            >
+              <Text style={styles.letGoButtonText}>Let Go</Text>
             </TouchableOpacity>
           </ScrollView>
         )}
