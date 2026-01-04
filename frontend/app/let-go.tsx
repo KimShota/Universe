@@ -19,6 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UniverseBackground } from '../components/UniverseBackground';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { playClickSound } from '../utils/soundEffects';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -241,7 +242,10 @@ export default function LetGoScreen() {
     <UniverseBackground>
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity onPress={() => {
+            playClickSound();
+            router.back();
+          }} style={styles.backButton}>
             <Ionicons name="arrow-back" size={26} color="#FFD700" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Let Go</Text>
@@ -364,7 +368,10 @@ export default function LetGoScreen() {
             <View style={styles.ctaWrap}>
               <TouchableOpacity
                 style={[styles.ctaButton, isVacuuming && styles.ctaButtonDisabled]}
-                onPress={handleLetGo}
+                onPress={() => {
+                  playClickSound();
+                  handleLetGo();
+                }}
                 disabled={isVacuuming}
                 activeOpacity={0.85}
               >
@@ -385,7 +392,10 @@ export default function LetGoScreen() {
               <Text style={styles.modalSubtitle}>
                 You let it go. Now write what you want to believe instead.
               </Text>
-              <TouchableOpacity style={styles.modalButton} onPress={handleBecomeConfident} activeOpacity={0.85}>
+              <TouchableOpacity style={styles.modalButton} onPress={() => {
+                playClickSound();
+                handleBecomeConfident();
+              }} activeOpacity={0.85}>
                 <Text style={styles.modalButtonText}>Become Confident</Text>
               </TouchableOpacity>
             </View>

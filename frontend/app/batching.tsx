@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { UniverseBackground } from '../components/UniverseBackground';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { playClickSound } from '../utils/soundEffects';
 
 const { width } = Dimensions.get('window');
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
@@ -165,7 +166,10 @@ export default function BatchingScreen() {
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity
-              onPress={() => router.back()}
+              onPress={() => {
+                playClickSound();
+                router.back();
+              }}
               style={styles.backButton}
             >
               <Ionicons name="arrow-back" size={28} color="#FFD700" />
@@ -187,7 +191,10 @@ export default function BatchingScreen() {
                 <View style={styles.scriptBox}>
                   <TouchableOpacity
                     style={styles.scriptBoxContent}
-                    onPress={() => script.id && handleScriptPress(script.id)}
+                    onPress={() => {
+                      playClickSound();
+                      script.id && handleScriptPress(script.id);
+                    }}
                     disabled={!script.id}
                     activeOpacity={0.7}
                   >
@@ -202,7 +209,10 @@ export default function BatchingScreen() {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.deleteButton}
-                    onPress={() => script.id && handleDeleteScript(script.id)}
+                    onPress={() => {
+                      playClickSound();
+                      script.id && handleDeleteScript(script.id);
+                    }}
                     disabled={!script.id}
                     activeOpacity={0.7}
                   >
@@ -217,7 +227,10 @@ export default function BatchingScreen() {
           <View style={styles.addButtonContainer}>
             <TouchableOpacity
               style={styles.addButton}
-              onPress={handleAddNew}
+              onPress={() => {
+                playClickSound();
+                handleAddNew();
+              }}
             >
               <Ionicons name="add" size={32} color="#FFD700" />
             </TouchableOpacity>
@@ -234,7 +247,10 @@ export default function BatchingScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={handleBackToList}
+            onPress={() => {
+              playClickSound();
+              handleBackToList();
+            }}
             style={styles.backButton}
           >
             <Ionicons name="arrow-back" size={28} color="#FFD700" />

@@ -4,6 +4,7 @@ import { UniverseBackground } from '../../components/UniverseBackground';
 import { SOS_ISSUES } from '../../constants/content';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { playClickSound } from '../../utils/soundEffects';
 
 export default function SOSScreen() {
   const router = useRouter();
@@ -12,7 +13,10 @@ export default function SOSScreen() {
     <UniverseBackground>
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity onPress={() => {
+            playClickSound();
+            router.back();
+          }} style={styles.backButton}>
             <Ionicons name="arrow-back" size={28} color="#FFD700" />
           </TouchableOpacity>
           <Text style={styles.starCharacter}>⭐</Text>
@@ -25,7 +29,10 @@ export default function SOSScreen() {
             <TouchableOpacity
               key={issue.id}
               style={styles.sosButton}
-              onPress={() => router.push(`/sos/${issue.id}`)}
+              onPress={() => {
+                playClickSound();
+                router.push(`/sos/${issue.id}`);
+              }}
             >
               <Text style={styles.sosButtonText}>{issue.title}</Text>
             </TouchableOpacity>

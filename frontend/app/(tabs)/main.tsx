@@ -15,6 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import Svg, { Line, Circle } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { playClickSound } from '../../utils/soundEffects';
 
 const { width } = Dimensions.get('window');
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
@@ -45,12 +46,14 @@ export default function MainScreen() {
   };
 
   const handlePlanetPress = (planetIndex: number) => {
+    playClickSound();
     if (user && planetIndex === user.current_planet && !missionCompleted) {
       setShowMissionModal(true);
     }
   };
 
   const handleMissionComplete = async () => {
+    playClickSound();
     try {
       const sessionToken = await AsyncStorage.getItem('session_token');
       const today = new Date().toISOString().split('T')[0];
@@ -98,7 +101,10 @@ export default function MainScreen() {
           <View style={styles.header}>
             <TouchableOpacity
               style={styles.menuButton}
-              onPress={() => setShowMenu(true)}
+              onPress={() => {
+                playClickSound();
+                setShowMenu(true);
+              }}
             >
               <Ionicons name="menu" size={28} color="#ffffff" />
             </TouchableOpacity>
@@ -181,7 +187,10 @@ export default function MainScreen() {
           <View style={[styles.bottomNav, { paddingBottom: insets.bottom + 20 }]}>
             <TouchableOpacity
               style={styles.navButton}
-              onPress={() => router.push('/(tabs)/content-tips')}
+              onPress={() => {
+                playClickSound();
+                router.push('/(tabs)/content-tips');
+              }}
             >
               <Ionicons name="bulb-outline" color="#ffffff" size={24} />
               <Text style={styles.navText}>Content Tips</Text>
@@ -189,7 +198,10 @@ export default function MainScreen() {
 
             <TouchableOpacity
               style={styles.sosButton}
-              onPress={() => router.push('/sos')}
+              onPress={() => {
+                playClickSound();
+                router.push('/sos');
+              }}
             >
               <Ionicons name="alert-circle" color="#ffffff" size={40} />
               <Text style={styles.sosText}>SOS!</Text>
@@ -197,7 +209,10 @@ export default function MainScreen() {
 
             <TouchableOpacity
               style={styles.navButton}
-              onPress={() => router.push('/(tabs)/creator-universe')}
+              onPress={() => {
+                playClickSound();
+                router.push('/(tabs)/creator-universe');
+              }}
             >
               <Ionicons name="telescope-outline" color="#ffffff" size={24} />
               <Text style={styles.navText}>Creator Universe</Text>
@@ -207,7 +222,10 @@ export default function MainScreen() {
           {/* Batching Button */}
           <TouchableOpacity
             style={[styles.batchingButton, { bottom: insets.bottom + 120 }]}
-            onPress={() => router.push('/batching')}
+            onPress={() => {
+              playClickSound();
+              router.push('/batching');
+            }}
           >
             <Ionicons name="layers-outline" color="#0a0e27" size={20} />
             <Text style={styles.batchingText}>Batching</Text>
@@ -235,7 +253,10 @@ export default function MainScreen() {
 
               <TouchableOpacity
                 style={styles.closeButton}
-                onPress={() => setShowMissionModal(false)}
+                onPress={() => {
+                  playClickSound();
+                  setShowMissionModal(false);
+                }}
               >
                 <Text style={styles.closeButtonText}>Close</Text>
               </TouchableOpacity>
@@ -262,6 +283,7 @@ export default function MainScreen() {
               <TouchableOpacity
                 style={styles.homeMenuButton}
                 onPress={() => {
+                  playClickSound();
                   setShowMenu(false);
                 }}
               >
@@ -271,14 +293,20 @@ export default function MainScreen() {
 
               <TouchableOpacity
                 style={styles.logoutButton}
-                onPress={logout}
+                onPress={() => {
+                  playClickSound();
+                  logout();
+                }}
               >
                 <Text style={styles.logoutButtonText}>Logout</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.closeMenuButton}
-                onPress={() => setShowMenu(false)}
+                onPress={() => {
+                  playClickSound();
+                  setShowMenu(false);
+                }}
               >
                 <Text style={styles.closeButtonText}>Close</Text>
               </TouchableOpacity>
