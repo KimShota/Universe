@@ -56,6 +56,7 @@ export default function LetGoScreen() {
   }, []);
 
   const blackHoleRotate = useRef(new Animated.Value(0)).current;
+  const blackHoleRotateInner = useRef(new Animated.Value(0)).current;
   const blackHolePulse = useRef(new Animated.Value(0)).current;
 
   const asteroidsAnim = useRef<AsteroidAnim[]>(
@@ -119,8 +120,18 @@ export default function LetGoScreen() {
     const rotateLoop = Animated.loop(
       Animated.timing(blackHoleRotate, {
         toValue: 1,
-        duration: 15000, // 7秒 → 15秒（約2倍遅く）
-        easing: Easing.linear, // 計算を簡略化
+        duration: 20000, // 外側の降着円盤：より遅く
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    );
+
+    // 内側の降着円盤：より速く、逆方向に回転
+    const rotateLoopInner = Animated.loop(
+      Animated.timing(blackHoleRotateInner, {
+        toValue: 1,
+        duration: 12000, // 内側はより速く
+        easing: Easing.linear,
         useNativeDriver: true,
       })
     );
@@ -129,26 +140,26 @@ export default function LetGoScreen() {
       Animated.sequence([
         Animated.timing(blackHolePulse, {
           toValue: 1,
-          duration: 4000, // 1.7秒 → 4秒（約2.4倍遅く）
+          duration: 4000,
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
         Animated.timing(blackHolePulse, {
           toValue: 0,
-          duration: 4000, // 1.7秒 → 4秒
+          duration: 4000,
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
       ])
     );
 
-    // pullLoopを削除（パフォーマンス最適化）
-
     rotateLoop.start();
+    rotateLoopInner.start();
     pulseLoop.start();
 
     return () => {
       rotateLoop.stop();
+      rotateLoopInner.stop();
       pulseLoop.stop();
     };
   }, []);
@@ -156,6 +167,11 @@ export default function LetGoScreen() {
   const rotate = blackHoleRotate.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
+  });
+
+  const rotateInner = blackHoleRotateInner.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '-360deg'], // 逆方向に回転
   });
 
   const pulseScale = blackHolePulse.interpolate({
@@ -235,15 +251,41 @@ export default function LetGoScreen() {
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.scene}>
             <View style={[styles.blackHoleWrap, { left: center.x - 175, top: center.y - 175 }]}>
+              {/* 外側の降着円盤（回転） */}
               <Animated.View style={[styles.accretionOuter, { transform: [{ rotate }, { scale: pulseScale }] }]}>
-                <View style={[styles.ring, styles.ring1]} />
-                <View style={[styles.ring, styles.ring2]} />
-                <View style={[styles.ring, styles.ring3]} />
-                <View style={styles.glowHalo} />
+                {/* 外側の降着円盤レイヤー */}
+                <LinearGradient
+                  colors={['rgba(100, 50, 30, 0.25)', 'rgba(80, 40, 20, 0.3)', 'rgba(60, 30, 15, 0.2)', 'rgba(40, 20, 50, 0.15)', 'transparent']}
+                  start={{ x: 0.5, y: 0 }}
+                  end={{ x: 0.5, y: 1 }}
+                  style={styles.accretionDiskOuter}
+                />
+                <LinearGradient
+                  colors={['rgba(90, 45, 25, 0.3)', 'rgba(70, 35, 18, 0.35)', 'rgba(50, 25, 12, 0.25)', 'rgba(30, 15, 40, 0.18)', 'transparent']}
+                  start={{ x: 0, y: 0.5 }}
+                  end={{ x: 1, y: 0.5 }}
+                  style={styles.accretionDiskMiddle}
+                />
               </Animated.View>
 
-              <View style={styles.blackCore} />
+              {/* 内側の降着円盤（より明るい、逆方向に回転） */}
+              <Animated.View style={[styles.accretionInner, { transform: [{ rotate: rotateInner }] }]}>
+                <LinearGradient
+                  colors={['rgba(120, 60, 35, 0.5)', 'rgba(100, 50, 25, 0.6)', 'rgba(80, 40, 20, 0.45)', 'rgba(50, 30, 60, 0.3)', 'transparent']}
+                  start={{ x: 0.5, y: 0 }}
+                  end={{ x: 0.5, y: 1 }}
+                  style={styles.accretionDiskInner}
+                />
+              </Animated.View>
+
+              {/* イベントホライズンのグロー */}
+              <View style={styles.eventHorizonGlow} />
+              
+              {/* イベントホライズン */}
               <View style={styles.eventHorizon} />
+              
+              {/* ブラックホールコア */}
+              <View style={styles.blackCore} />
             </View>
 
             {asteroidOffsets.map((offset, i) => {
@@ -385,51 +427,64 @@ const styles = StyleSheet.create({
     borderRadius: 175,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
-  ring: {
+  accretionInner: {
     position: 'absolute',
-    borderRadius: 999,
-    borderWidth: 2,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
-  ring1: {
-    width: 325,
-    height: 325,
-    borderColor: 'rgba(255, 140, 0, 0.24)',
-  },
-  ring2: {
-    width: 275,
-    height: 275,
-    borderColor: 'rgba(168, 85, 247, 0.20)',
-  },
-  ring3: {
-    width: 225,
-    height: 225,
-    borderColor: 'rgba(56, 189, 248, 0.16)',
-  },
-  glowHalo: {
+  accretionDiskOuter: {
     position: 'absolute',
     width: 350,
     height: 350,
     borderRadius: 175,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  accretionDiskMiddle: {
+    position: 'absolute',
+    width: 350,
+    height: 350,
+    borderRadius: 175,
+  },
+  accretionDiskInner: {
+    position: 'absolute',
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+  },
+  eventHorizonGlow: {
+    position: 'absolute',
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    shadowColor: 'rgba(255, 255, 255, 0.3)',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 15,
   },
   eventHorizon: {
     position: 'absolute',
     width: 188,
     height: 188,
     borderRadius: 94,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: 'rgba(0,0,0,0.3)',
   },
   blackCore: {
     width: 163,
     height: 163,
     borderRadius: 81.5,
-    backgroundColor: '#050509',
+    backgroundColor: '#000000',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.9,
-    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 30,
     elevation: 20,
   },
   asteroid: {
