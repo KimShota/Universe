@@ -18,6 +18,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UniverseBackground } from '../components/UniverseBackground';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -42,15 +43,15 @@ export default function LetGoScreen() {
   const center = useMemo(() => {
     return {
       x: SCREEN_WIDTH / 2,
-      y: SCREEN_HEIGHT / 2 - 40, // Adjust for header
+      y: SCREEN_HEIGHT / 2 - 120, // Adjust for header
     };
   }, []);
 
   const asteroidOffsets = useMemo(() => {
     return [
-      { x: -SCREEN_WIDTH * 0.24, y: -SCREEN_HEIGHT * 0.3 },
-      { x: SCREEN_WIDTH * 0.30, y: -SCREEN_HEIGHT * 0.08 },
-      { x: -SCREEN_WIDTH * 0.24, y: SCREEN_HEIGHT * 0.10 },
+      { x: -SCREEN_WIDTH * 0.24, y: -SCREEN_HEIGHT * 0.2 },
+      { x: SCREEN_WIDTH * 0.30, y: -SCREEN_HEIGHT * 0.02 },
+      { x: -SCREEN_WIDTH * 0.24, y: SCREEN_HEIGHT * 0.15 },
     ];
   }, []);
 
@@ -233,7 +234,7 @@ export default function LetGoScreen() {
 
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.scene}>
-            <View style={[styles.blackHoleWrap, { left: center.x - 140, top: center.y - 220 }]}>
+            <View style={[styles.blackHoleWrap, { left: center.x - 175, top: center.y - 175 }]}>
               <Animated.View style={[styles.accretionOuter, { transform: [{ rotate }, { scale: pulseScale }] }]}>
                 <View style={[styles.ring, styles.ring1]} />
                 <View style={[styles.ring, styles.ring2]} />
@@ -248,6 +249,8 @@ export default function LetGoScreen() {
             {asteroidOffsets.map((offset, i) => {
               const left = center.x + offset.x - asteroidSize / 2;
               const top = center.y + offset.y - asteroidSize / 2;
+              // 各小惑星に異なる回転角度を適用（-5deg, 0deg, 5deg）
+              const rotationAngle = (i - 1) * 5;
 
               return (
                 <Animated.View
@@ -264,27 +267,53 @@ export default function LetGoScreen() {
                         { translateX: asteroidsAnim[i].translateX },
                         { translateY: asteroidsAnim[i].translateY },
                         { scale: asteroidsAnim[i].scale },
+                        { rotate: `${rotationAngle}deg` },
                       ],
                     },
                   ]}
                   onStartShouldSetResponder={() => true}
                 >
-                  <View style={styles.asteroidShell}>
-                    <View style={styles.asteroidCrater1} />
-                    <View style={styles.asteroidCrater2} />
-                    <TextInput
-                      style={styles.asteroidInput}
-                      value={fears[i]}
-                      onChangeText={(t) => {
-                        const next = [...fears];
-                        next[i] = t;
-                        setFears(next);
-                      }}
-                      placeholder="Write a fear..."
-                      placeholderTextColor="rgba(255,255,255,0.45)"
-                      editable={!isVacuuming}
-                      multiline
-                    />
+                  <View style={styles.asteroidContainer}>
+                    {/* 赤いオーラ/グロー効果 */}
+                    <View style={styles.asteroidGlow} />
+                    
+                    {/* 小惑星本体 */}
+                    <LinearGradient
+                      colors={['rgba(180, 70, 50, 0.95)', 'rgba(160, 50, 35, 0.95)', 'rgba(140, 40, 25, 0.95)']}
+                      start={{ x: 0.3, y: 0.3 }}
+                      end={{ x: 0.7, y: 0.7 }}
+                      style={styles.asteroidShell}
+                    >
+                      {/* ハイライト効果 */}
+                      <View style={styles.asteroidHighlight} />
+                      
+                      {/* クレーター */}
+                      <View style={[styles.asteroidCrater, styles.asteroidCrater1]} />
+                      <View style={[styles.asteroidCrater, styles.asteroidCrater2]} />
+                      <View style={[styles.asteroidCrater, styles.asteroidCrater3]} />
+                      <View style={[styles.asteroidCrater, styles.asteroidCrater4]} />
+                      <View style={[styles.asteroidCrater, styles.asteroidCrater5]} />
+                      
+                      {/* テクスチャの斑点 */}
+                      <View style={styles.asteroidTexture1} />
+                      <View style={styles.asteroidTexture2} />
+                      <View style={styles.asteroidTexture3} />
+                      
+                      {/* 入力フィールド */}
+                      <TextInput
+                        style={styles.asteroidInput}
+                        value={fears[i]}
+                        onChangeText={(t) => {
+                          const next = [...fears];
+                          next[i] = t;
+                          setFears(next);
+                        }}
+                        placeholder="Write a fear..."
+                        placeholderTextColor="rgba(255,255,255,0.6)"
+                        editable={!isVacuuming}
+                        multiline
+                      />
+                    </LinearGradient>
                   </View>
                 </Animated.View>
               );
@@ -344,16 +373,16 @@ const styles = StyleSheet.create({
   scene: { flex: 1 },
   blackHoleWrap: {
     position: 'absolute',
-    width: 280,
-    height: 280,
+    width: 350,
+    height: 350,
     alignItems: 'center',
     justifyContent: 'center',
   },
   accretionOuter: {
     position: 'absolute',
-    width: 280,
-    height: 280,
-    borderRadius: 140,
+    width: 350,
+    height: 350,
+    borderRadius: 175,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -363,39 +392,39 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   ring1: {
-    width: 260,
-    height: 260,
+    width: 325,
+    height: 325,
     borderColor: 'rgba(255, 140, 0, 0.24)',
   },
   ring2: {
-    width: 220,
-    height: 220,
+    width: 275,
+    height: 275,
     borderColor: 'rgba(168, 85, 247, 0.20)',
   },
   ring3: {
-    width: 180,
-    height: 180,
+    width: 225,
+    height: 225,
     borderColor: 'rgba(56, 189, 248, 0.16)',
   },
   glowHalo: {
     position: 'absolute',
-    width: 280,
-    height: 280,
-    borderRadius: 140,
+    width: 350,
+    height: 350,
+    borderRadius: 175,
     backgroundColor: 'rgba(0,0,0,0.35)',
   },
   eventHorizon: {
     position: 'absolute',
-    width: 150,
-    height: 150,
-    borderRadius: 75,
+    width: 188,
+    height: 188,
+    borderRadius: 94,
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.08)',
   },
   blackCore: {
-    width: 130,
-    height: 130,
-    borderRadius: 65,
+    width: 163,
+    height: 163,
+    borderRadius: 81.5,
     backgroundColor: '#050509',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 12 },
@@ -406,36 +435,116 @@ const styles = StyleSheet.create({
   asteroid: {
     position: 'absolute',
   },
+  asteroidContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  asteroidGlow: {
+    position: 'absolute',
+    width: '120%',
+    height: '120%',
+    borderRadius: 999,
+    backgroundColor: 'rgba(220, 50, 30, 0.5)',
+    shadowColor: 'rgba(220, 50, 30, 1)',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 25,
+    elevation: 15,
+  },
   asteroidShell: {
     flex: 1,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.14)',
+    width: '100%',
+    height: '100%',
+    // より球体に近い形状
+    borderRadius: 66, // 132/2 = 66 (asteroidSize/2)
+    borderWidth: 2,
+    borderColor: 'rgba(150, 40, 25, 0.7)',
     padding: 12,
+    overflow: 'hidden',
+    // 立体感のある影
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.35,
-    shadowRadius: 18,
-    elevation: 10,
+    shadowOffset: { width: 4, height: 8 },
+    shadowOpacity: 0.7,
+    shadowRadius: 16,
+    elevation: 15,
+  },
+  asteroidHighlight: {
+    position: 'absolute',
+    top: 8,
+    left: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 150, 100, 0.3)',
+    shadowColor: 'rgba(255, 150, 100, 0.6)',
+    shadowOffset: { width: -2, height: -2 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+  },
+  asteroidCrater: {
+    position: 'absolute',
+    borderRadius: 999,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.3)',
   },
   asteroidCrater1: {
-    position: 'absolute',
     left: 12,
     top: 14,
     width: 28,
     height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(0,0,0,0.18)',
   },
   asteroidCrater2: {
-    position: 'absolute',
     right: 14,
     bottom: 18,
     width: 22,
     height: 22,
-    borderRadius: 11,
-    backgroundColor: 'rgba(0,0,0,0.16)',
+  },
+  asteroidCrater3: {
+    left: 20,
+    top: 50,
+    width: 18,
+    height: 18,
+  },
+  asteroidCrater4: {
+    right: 20,
+    top: 30,
+    width: 16,
+    height: 16,
+  },
+  asteroidCrater5: {
+    left: 50,
+    bottom: 20,
+    width: 20,
+    height: 20,
+  },
+  asteroidTexture1: {
+    position: 'absolute',
+    top: 30,
+    right: 25,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(60, 40, 25, 0.4)',
+  },
+  asteroidTexture2: {
+    position: 'absolute',
+    bottom: 35,
+    left: 30,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(50, 35, 20, 0.35)',
+  },
+  asteroidTexture3: {
+    position: 'absolute',
+    top: 60,
+    left: 45,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(70, 45, 30, 0.3)',
   },
   asteroidInput: {
     flex: 1,
@@ -443,6 +552,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     textAlignVertical: 'top',
+    zIndex: 10,
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+    marginTop: 20,
   },
   ctaWrap: {
     position: 'absolute',
