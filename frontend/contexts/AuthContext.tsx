@@ -60,25 +60,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const sessionToken = await AsyncStorage.getItem('session_token');
       
       if (sessionToken) {
-        const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
-          headers: {
-            'Authorization': `Bearer ${sessionToken}`
-          }
-        });
+        // タイムアウトを3秒に設定
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
         
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-        } else {
-          await AsyncStorage.removeItem('session_token');
+        try {
+          const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
+            headers: {
+              'Authorization': `Bearer ${sessionToken}`
+            },
+            signal: controller.signal
+          });
+          
+          clearTimeout(timeoutId);
+          
+          if (response.ok) {
+            const userData = await response.json();
+            setUser(userData);
+          } else {
+            await AsyncStorage.removeItem('session_token');
+          }
+        } catch (fetchError: any) {
+          clearTimeout(timeoutId);
+          
+          // タイムアウトエラーの処理
+          if (fetchError.name === 'AbortError' || 
+              fetchError.message === 'Network request timed out' ||
+              fetchError.message?.includes('timeout')) {
+            console.warn('Request timeout: Backend server may be unreachable at', BACKEND_URL);
+            console.warn('Please check:');
+            console.warn('1. Backend server is running');
+            console.warn('2. Correct IP address in .env file (current network)');
+            console.warn('3. Both devices are on the same network');
+            // タイムアウト時はセッショントークンを削除してログイン画面に戻す
+            await AsyncStorage.removeItem('session_token').catch(() => {});
+          } else {
+            console.error('Fetch error:', fetchError);
+          }
         }
+      } else {
+        // セッショントークンがない場合は即座にローディングを停止
+        setLoading(false);
+        return;
       }
     } catch (error) {
       console.error('Error checking session:', error);
-      if (error instanceof TypeError && error.message === 'Network request failed') {
-        console.error('Network error: Make sure the backend server is running at', BACKEND_URL);
-      }
+      // エラーが発生しても必ずローディングを停止
+      await AsyncStorage.removeItem('session_token').catch(() => {});
     } finally {
+      // 必ずローディングを停止
       setLoading(false);
     }
   };
@@ -106,23 +136,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       console.log('Attempting to connect to:', `${BACKEND_URL}/api/auth/session`);
       
-      // Exchange session_id for user data
-      const response = await fetch(`${BACKEND_URL}/api/auth/session?session_id=${sessionId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
+      // Exchange session_id for user data with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒タイムアウト
+      
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/auth/session?session_id=${sessionId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          let errorText = '';
+          try {
+            errorText = await response.text();
+          } catch (e) {
+            errorText = 'Could not read error message';
+          }
+          
+          console.error(`Auth API error: ${response.status} - ${errorText}`);
+          
+          // 500エラーの場合は詳細な情報を表示
+          if (response.status === 500) {
+            console.error('Server error (500): The backend server encountered an internal error.');
+            console.error('Possible causes:');
+            console.error('1. MongoDB connection issue');
+            console.error('2. Emergent Auth API connection issue');
+            console.error('3. Database operation failed');
+            console.error('Error details:', errorText);
+          }
+          
+          // エラーが発生した場合でも、ユーザーに通知してログイン画面に戻す
+          return;
         }
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`Auth API error: ${response.status} - ${errorText}`);
-        return;
-      }
-      
+        
         const data = await response.json();
         await AsyncStorage.setItem('session_token', data.session_token);
         setUser(data.user);
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        
+        if (fetchError.name === 'AbortError') {
+          console.error('Request timeout: Backend server took too long to respond');
+        } else {
+          console.error('Error processing auth redirect:', fetchError);
+        }
+      }
     } catch (error) {
       console.error('Error processing auth redirect:', error);
       if (error instanceof TypeError && error.message === 'Network request failed') {

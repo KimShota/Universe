@@ -184,72 +184,109 @@ async def get_current_user(
 async def exchange_session(session_id: str, response: Response):
     """Exchange session_id for user data and session_token"""
     
-    # Call Emergent Auth API
-    async with httpx.AsyncClient() as client:
+    try:
+        # Call Emergent Auth API
+        async with httpx.AsyncClient() as client:
+            try:
+                auth_response = await client.get(
+                    EMERGENT_AUTH_URL,
+                    headers={"X-Session-ID": session_id},
+                    timeout=10.0
+                )
+                auth_response.raise_for_status()
+                user_data = auth_response.json()
+            except httpx.HTTPStatusError as e:
+                logging.error(f"Emergent Auth API returned error: {e.response.status_code} - {e.response.text}")
+                raise HTTPException(status_code=400, detail=f"Invalid session_id: Auth API returned {e.response.status_code}")
+            except httpx.RequestError as e:
+                logging.error(f"Failed to connect to Emergent Auth API: {e}")
+                raise HTTPException(status_code=503, detail="Auth service unavailable")
+            except Exception as e:
+                logging.error(f"Unexpected error calling Emergent Auth API: {e}")
+                raise HTTPException(status_code=400, detail="Invalid session_id")
+        
+        # Parse response
         try:
-            auth_response = await client.get(
-                EMERGENT_AUTH_URL,
-                headers={"X-Session-ID": session_id},
-                timeout=10.0
-            )
-            auth_response.raise_for_status()
-            user_data = auth_response.json()
+            session_data = SessionDataResponse(**user_data)
         except Exception as e:
-            logging.error(f"Failed to exchange session: {e}")
-            raise HTTPException(status_code=400, detail="Invalid session_id")
+            logging.error(f"Failed to parse auth response: {e}, data: {user_data}")
+            raise HTTPException(status_code=500, detail=f"Failed to parse auth response: {str(e)}")
+    except HTTPException:
+        # Re-raise HTTP exceptions from auth API calls
+        raise
+    except Exception as e:
+        logging.error(f"Unexpected error in auth exchange: {e}")
+        raise HTTPException(status_code=500, detail=f"Auth exchange error: {str(e)}")
     
-    # Parse response
-    session_data = SessionDataResponse(**user_data)
-    
-    # Check if user exists
-    existing_user = await db.users.find_one(
-        {"email": session_data.email},
-        {"_id": 0}
-    )
-    
-    if existing_user:
-        user = User(**existing_user)
-    else:
-        # Create new user (map id to user_id)
-        user_id = f"user_{uuid.uuid4().hex[:12]}"
-        user = User(
-            user_id=user_id,
-            email=session_data.email,
-            name=session_data.name,
-            picture=session_data.picture,
-            streak=0,
-            coins=0,
-            current_planet=0,
-            created_at=datetime.now(timezone.utc)
+    # Database operations with error handling
+    try:
+        # Check if user exists
+        existing_user = await db.users.find_one(
+            {"email": session_data.email},
+            {"_id": 0}
         )
         
-        await db.users.insert_one(user.dict())
+        if existing_user:
+            try:
+                user = User(**existing_user)
+            except Exception as e:
+                logging.error(f"Failed to parse existing user: {e}, data: {existing_user}")
+                raise HTTPException(status_code=500, detail=f"Failed to parse user data: {str(e)}")
+        else:
+            # Create new user (map id to user_id)
+            try:
+                user_id = f"user_{uuid.uuid4().hex[:12]}"
+                user = User(
+                    user_id=user_id,
+                    email=session_data.email,
+                    name=session_data.name,
+                    picture=session_data.picture,
+                    streak=0,
+                    coins=0,
+                    current_planet=0,
+                    created_at=datetime.now(timezone.utc)
+                )
+                
+                await db.users.insert_one(user.dict())
+                
+                # Initialize Creator's Universe
+                creator_universe = CreatorUniverse(
+                    user_id=user_id,
+                    overarching_goal="",
+                    content_pillars=[
+                        {"title": "Content Pillar 1", "ideas": []},
+                        {"title": "Content Pillar 2", "ideas": []},
+                        {"title": "Content Pillar 3", "ideas": []},
+                        {"title": "Content Pillar 4", "ideas": []}
+                    ],
+                    updated_at=datetime.now(timezone.utc)
+                )
+                await db.creator_universe.insert_one(creator_universe.dict())
+            except Exception as e:
+                logging.error(f"Failed to create new user: {e}")
+                raise HTTPException(status_code=500, detail=f"Failed to create user: {str(e)}")
         
-        # Initialize Creator's Universe
-        creator_universe = CreatorUniverse(
-            user_id=user_id,
-            overarching_goal="",
-            content_pillars=[
-                {"title": "Content Pillar 1", "ideas": []},
-                {"title": "Content Pillar 2", "ideas": []},
-                {"title": "Content Pillar 3", "ideas": []},
-                {"title": "Content Pillar 4", "ideas": []}
-            ],
-            updated_at=datetime.now(timezone.utc)
-        )
-        await db.creator_universe.insert_one(creator_universe.dict())
-    
-    # Create or update session
-    await db.user_sessions.delete_many({"user_id": user.user_id})
-    
-    session = UserSession(
-        user_id=user.user_id,
-        session_token=session_data.session_token,
-        expires_at=datetime.now(timezone.utc) + timedelta(days=7),
-        created_at=datetime.now(timezone.utc)
-    )
-    
-    await db.user_sessions.insert_one(session.dict())
+        # Create or update session
+        try:
+            await db.user_sessions.delete_many({"user_id": user.user_id})
+            
+            session = UserSession(
+                user_id=user.user_id,
+                session_token=session_data.session_token,
+                expires_at=datetime.now(timezone.utc) + timedelta(days=7),
+                created_at=datetime.now(timezone.utc)
+            )
+            
+            await db.user_sessions.insert_one(session.dict())
+        except Exception as e:
+            logging.error(f"Failed to create session: {e}")
+            raise HTTPException(status_code=500, detail=f"Failed to create session: {str(e)}")
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        logging.error(f"Database error in exchange_session: {e}")
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
     
     # Set cookie
     response.set_cookie(
