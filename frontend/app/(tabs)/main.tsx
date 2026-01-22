@@ -27,6 +27,7 @@ export default function MainScreen() {
   const [showMissionModal, setShowMissionModal] = useState(false);
   const [missionCompleted, setMissionCompleted] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showAssetsMenu, setShowAssetsMenu] = useState(false);
 
   useEffect(() => {
     checkTodayMission();
@@ -81,7 +82,7 @@ export default function MainScreen() {
   const currentStep = user?.current_planet || 0;
 
   const roadmapSteps = Array.from({ length: totalSteps }, (_, i) => {
-    const isLeft = i % 2 === 0;
+      const isLeft = i % 2 === 0;
     const yPosition = 80 + i * 100;
     const xPosition = isLeft ? width * 0.3 : width * 0.7;
 
@@ -97,17 +98,17 @@ export default function MainScreen() {
   return (
     <UniverseBackground>
       <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.menuButton}
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.menuButton}
               onPress={() => {
                 playClickSound();
                 setShowMenu(true);
               }}
-            >
+          >
               <Ionicons name="menu" size={28} color="#ffffff" />
-            </TouchableOpacity>
+          </TouchableOpacity>
 
             <View style={styles.streakContainer}>
               <Text style={styles.streakText}>🔥 {user?.streak || 0} day streak</Text>
@@ -219,16 +220,16 @@ export default function MainScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Batching Button */}
+          {/* Assets Button */}
           <TouchableOpacity
-            style={[styles.batchingButton, { bottom: insets.bottom + 120 }]}
+            style={[styles.assetsButton, { bottom: insets.bottom + 120 }]}
             onPress={() => {
               playClickSound();
-              router.push('/batching');
+              setShowAssetsMenu(true);
             }}
           >
-            <Ionicons name="layers-outline" color="#0a0e27" size={20} />
-            <Text style={styles.batchingText}>Batching</Text>
+            <Ionicons name="folder-outline" size={24} color="#0a0e27" />
+            <Text style={styles.assetsButtonText}>Assets</Text>
           </TouchableOpacity>
         </View>
 
@@ -313,6 +314,69 @@ export default function MainScreen() {
             </View>
           </View>
         </Modal>
+
+        {/* Assets Menu Modal */}
+        <Modal
+          visible={showAssetsMenu}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowAssetsMenu(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.assetsMenuContent}>
+              <Text style={styles.modalTitle}>Assets</Text>
+              
+              <TouchableOpacity
+                style={styles.assetsMenuItem}
+                onPress={() => {
+                  playClickSound();
+                  setShowAssetsMenu(false);
+                  router.push('/batching');
+                }}
+              >
+                <Ionicons name="layers-outline" size={24} color="#FFD700" />
+                <Text style={styles.assetsMenuItemText}>Batching</Text>
+                <Ionicons name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.5)" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.assetsMenuItem}
+                onPress={() => {
+                  playClickSound();
+                  setShowAssetsMenu(false);
+                  router.push('/analysis');
+                }}
+              >
+                <Ionicons name="analytics-outline" size={24} color="#FFD700" />
+                <Text style={styles.assetsMenuItemText}>Analysis</Text>
+                <Ionicons name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.5)" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.assetsMenuItem}
+                onPress={() => {
+                  playClickSound();
+                  setShowAssetsMenu(false);
+                  router.push('/schedule');
+                }}
+              >
+                <Ionicons name="calendar-outline" size={24} color="#FFD700" />
+                <Text style={styles.assetsMenuItemText}>Schedule</Text>
+                <Ionicons name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.5)" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => {
+                  playClickSound();
+                  setShowAssetsMenu(false);
+                }}
+              >
+                <Text style={styles.closeButtonText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
     </UniverseBackground>
   );
 }
@@ -333,6 +397,27 @@ const styles = StyleSheet.create({
   },
   streakContainer: {
     alignItems: 'flex-end',
+  },
+  assetsButton: {
+    position: 'absolute',
+    right: 20,
+    backgroundColor: '#e5e7eb',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    gap: 8,
+  },
+  assetsButtonText: {
+    color: '#0a0e27',
+    fontSize: 14,
+    fontWeight: '600',
   },
   streakText: {
     color: '#ffffff',
@@ -446,26 +531,32 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginTop: 4,
   },
-  batchingButton: {
-    position: 'absolute',
-    right: 20,
-    backgroundColor: '#e5e7eb',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 25,
+  assetsMenuContent: {
+    backgroundColor: 'rgba(20, 20, 40, 0.95)',
+    borderRadius: 24,
+    padding: 32,
+    width: '85%',
+    maxWidth: 400,
+    borderWidth: 2,
+    borderColor: '#FFD700',
+  },
+  assetsMenuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.2)',
+    gap: 16,
   },
-  batchingText: {
-    color: '#0a0e27',
-    fontSize: 14,
+  assetsMenuItemText: {
+    color: '#fff',
+    fontSize: 18,
     fontWeight: '600',
-    marginLeft: 8,
+    flex: 1,
   },
   modalOverlay: {
     flex: 1,

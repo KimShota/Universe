@@ -81,6 +81,8 @@ class CreatorUniverse(BaseModel):
     user_id: str
     overarching_goal: str = ""
     content_pillars: List[Dict[str, Union[str, List[str]]]] = []
+    audience: Optional[Dict] = None
+    edge: Optional[Dict] = None
     updated_at: datetime
 
 # Content Tips Models
@@ -114,6 +116,26 @@ class SOSCompleteRequest(BaseModel):
 class UpdateCreatorUniverseRequest(BaseModel):
     overarching_goal: Optional[str] = None
     content_pillars: Optional[List[Dict]] = None
+    audience: Optional[Dict] = None
+    edge: Optional[Dict] = None
+
+class AnalysisEntry(BaseModel):
+    id: str
+    title: Optional[str] = None
+    reelLink: str = ""
+    views: str = ""
+    hook: str = ""
+    format: str = ""
+    duration: str = ""
+    audio: str = ""
+    notes: str = ""
+    date: Optional[str] = None
+
+class AnalysisEntryRequest(BaseModel):
+    entry: AnalysisEntry
+
+class UpdateScheduleRequest(BaseModel):
+    schedule: Dict[str, Dict[str, str]]  # { "Monday": { "idea": "", "format": "" }, ... }
 
 class QuizCompleteRequest(BaseModel):
     tip_id: str
@@ -259,6 +281,8 @@ async def exchange_session(session_id: str, response: Response):
                         {"title": "Content Pillar 3", "ideas": []},
                         {"title": "Content Pillar 4", "ideas": []}
                     ],
+                    audience=None,
+                    edge=None,
                     updated_at=datetime.now(timezone.utc)
                 )
                 await db.creator_universe.insert_one(creator_universe.dict())
@@ -482,6 +506,8 @@ async def get_creator_universe(current_user: User = Depends(get_current_user)):
                 {"title": "Content Pillar 3", "ideas": []},
                 {"title": "Content Pillar 4", "ideas": []}
             ],
+            audience=None,
+            edge=None,
             updated_at=datetime.now(timezone.utc)
         )
         await db.creator_universe.insert_one(universe.dict())
@@ -503,6 +529,12 @@ async def update_creator_universe(
     if request.content_pillars is not None:
         update_data["content_pillars"] = request.content_pillars
     
+    if request.audience is not None:
+        update_data["audience"] = request.audience
+    
+    if request.edge is not None:
+        update_data["edge"] = request.edge
+    
     await db.creator_universe.update_one(
         {"user_id": current_user.user_id},
         {"$set": update_data}
@@ -515,6 +547,142 @@ async def update_creator_universe(
     )
     
     return universe
+
+# ==================== ANALYSIS ROUTES ====================
+
+@api_router.get("/analysis/entries")
+async def get_analysis_entries(current_user: User = Depends(get_current_user)):
+    """Get user's analysis entries"""
+    
+    entries = await db.analysis_entries.find(
+        {"user_id": current_user.user_id},
+        {"_id": 0, "user_id": 0}
+    ).to_list(100)
+    
+    return {"entries": entries}
+
+@api_router.post("/analysis/entries")
+async def save_analysis_entry(
+    request: AnalysisEntryRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """Save analysis entry"""
+    
+    entry_dict = request.entry.dict()
+    entry_dict["user_id"] = current_user.user_id
+    
+    # Update or insert entry
+    await db.analysis_entries.update_one(
+        {"user_id": current_user.user_id, "id": request.entry.id},
+        {"$set": entry_dict},
+        upsert=True
+    )
+    
+    return {"message": "Analysis entry saved successfully", "entry": request.entry}
+
+@api_router.delete("/analysis/entries/{entry_id}")
+async def delete_analysis_entry(
+    entry_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Delete analysis entry"""
+    
+    # Get all user entries to find the matching one
+    all_entries = await db.analysis_entries.find(
+        {"user_id": current_user.user_id}
+    ).to_list(100)
+    
+    # Find entry with matching ID (handling type conversion)
+    matching_entry = None
+    for e in all_entries:
+        entry_id_in_db = e.get("id")
+        # Try both string and numeric comparison
+        if str(entry_id_in_db) == entry_id or (entry_id.isdigit() and entry_id_in_db == int(entry_id)):
+            matching_entry = e
+            break
+    
+    if not matching_entry:
+        raise HTTPException(status_code=404, detail="Analysis entry not found")
+    
+    # Delete using the actual ID format from database
+    actual_id = matching_entry.get("id")
+    result = await db.analysis_entries.delete_one(
+        {"user_id": current_user.user_id, "id": actual_id}
+    )
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Analysis entry not found")
+    
+    return {"message": "Analysis entry deleted successfully"}
+
+# ==================== SCHEDULE ROUTES ====================
+
+@api_router.get("/schedule")
+async def get_schedule(current_user: User = Depends(get_current_user)):
+    """Get user's schedule data"""
+    
+    schedule = await db.schedule.find_one(
+        {"user_id": current_user.user_id},
+        {"_id": 0}
+    )
+    
+    if not schedule:
+        # Create default
+        default_schedule = {
+            "user_id": current_user.user_id,
+            "schedule": {
+                "Monday": {"idea": "", "format": ""},
+                "Tuesday": {"idea": "", "format": ""},
+                "Wednesday": {"idea": "", "format": ""},
+                "Thursday": {"idea": "", "format": ""},
+                "Friday": {"idea": "", "format": ""},
+                "Saturday": {"idea": "", "format": ""},
+                "Sunday": {"idea": "", "format": ""},
+            },
+            "updated_at": datetime.now(timezone.utc)
+        }
+        await db.schedule.insert_one(default_schedule)
+        return default_schedule
+    
+    return schedule
+
+@api_router.put("/schedule")
+async def update_schedule(
+    request: UpdateScheduleRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """Update schedule data"""
+    
+    update_data = {
+        "schedule": request.schedule,
+        "updated_at": datetime.now(timezone.utc)
+    }
+    
+    # Check if schedule exists
+    existing = await db.schedule.find_one(
+        {"user_id": current_user.user_id},
+        {"_id": 0}
+    )
+    
+    if existing:
+        await db.schedule.update_one(
+            {"user_id": current_user.user_id},
+            {"$set": update_data}
+        )
+    else:
+        schedule_data = {
+            "user_id": current_user.user_id,
+            **update_data
+        }
+        await db.schedule.insert_one(schedule_data)
+    
+    # Get updated schedule
+    schedule = await db.schedule.find_one(
+        {"user_id": current_user.user_id},
+        {"_id": 0}
+    )
+    
+    return schedule
 
 # ==================== CONTENT TIPS ROUTES ====================
 

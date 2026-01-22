@@ -65,21 +65,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const timeoutId = setTimeout(() => controller.abort(), 3000);
         
         try {
-          const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
-            headers: {
-              'Authorization': `Bearer ${sessionToken}`
+        const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
+          headers: {
+            'Authorization': `Bearer ${sessionToken}`
             },
             signal: controller.signal
-          });
+        });
           
           clearTimeout(timeoutId);
-          
-          if (response.ok) {
-            const userData = await response.json();
-            setUser(userData);
-          } else {
-            await AsyncStorage.removeItem('session_token');
-          }
+        
+        if (response.ok) {
+          const userData = await response.json();
+          setUser(userData);
+        } else {
+          await AsyncStorage.removeItem('session_token');
+        }
         } catch (fetchError: any) {
           clearTimeout(timeoutId);
           
@@ -141,16 +141,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒タイムアウト
       
       try {
-        const response = await fetch(`${BACKEND_URL}/api/auth/session?session_id=${sessionId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
+      const response = await fetch(`${BACKEND_URL}/api/auth/session?session_id=${sessionId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
           },
           signal: controller.signal
-        });
+      });
         
         clearTimeout(timeoutId);
-        
+      
         if (!response.ok) {
           let errorText = '';
           try {
