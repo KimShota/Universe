@@ -24,7 +24,13 @@ export default function ContentTipsScreen() {
             <TouchableOpacity
               key={tip.id}
               style={styles.tipButton}
-              onPress={() => router.push(`/tip/${tip.id}`)}
+              onPress={() => {
+                if (tip.id === 'what-to-post') {
+                  router.push('/what-to-post');
+                } else {
+                  router.push(`/tip/${tip.id}`);
+                }
+              }}
             >
               <Text style={styles.tipButtonText}>{tip.title}</Text>
             </TouchableOpacity>
