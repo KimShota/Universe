@@ -16,10 +16,157 @@ import { SOS_ISSUES } from '../../constants/content';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../contexts/AuthContext';
+import { playClickSound } from '../../utils/soundEffects';
 import Svg, { Line } from 'react-native-svg';
 
 const { width } = Dimensions.get('window');
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+
+// 7-screen flow content for "Hate comments hurt"
+const HATE_FLOW_SCREENS = [
+  {
+    id: 1,
+    message: "Hate comments can really hurt. Especially when you've put your heart into what you share.",
+  },
+  {
+    id: 2,
+    message: "Feeling upset doesn't mean you're weak. It means you care — and that's okay.",
+  },
+  {
+    id: 3,
+    message: "Most hate comments aren't about you. They're often a reflection of someone else's frustration or insecurity.",
+  },
+  {
+    id: 4,
+    message: "You're never judged by someone doing more than you. It's almost always from those doing less.",
+  },
+  {
+    id: 5,
+    message: "You don't need to explain yourself or fight back. Your energy is more valuable than that.",
+  },
+  {
+    id: 6,
+    message: "Your role isn't to please everyone. It's to show up for the people who need what you share.",
+  },
+  {
+    id: 7,
+    message: "You're still here. And one comment doesn't get to decide your future.",
+  },
+];
+
+// 8-screen flow content for "I'm scared of what other people will think"
+const REACTIONS_FLOW_SCREENS = [
+  {
+    id: 1,
+    message: "If you're scared of what others might think, there's nothing wrong with you.\n\nYou're not broken. You're human.",
+  },
+  {
+    id: 2,
+    message: "This fear exists because humans evolved to belong. Caring about others' opinions once helped us survive.\n\nYour brain is trying to protect you.",
+  },
+  {
+    id: 3,
+    message: "Right now, your body reacts as if judgment is dangerous.\n\nBut posting content isn't a threat — even if it feels that way.\n\nYou are safe in this moment.",
+  },
+  {
+    id: 4,
+    message: "Sometimes this fear comes from past moments of rejection.\n\nThose experiences mattered — and it's okay that they still echo.\n\nThey don't define who you are now.",
+  },
+  {
+    id: 5,
+    message: "Fear can make you hesitate, and hesitation can make the fear feel stronger.\n\nThis loop isn't your fault.",
+  },
+  {
+    id: 6,
+    message: "Fear of judgment lives in thoughts, not facts.\n\nAnd thoughts can be questioned — gently, at your own pace.\n\nYou don't have to obey every thought.",
+  },
+  {
+    id: 7,
+    message: "Let's try something small — no pressure, no posting required.",
+    isActionScreen: true,
+    actionOptions: [
+      "Write a post but don't publish it",
+      "Record a video just for yourself",
+      "Share something honest with one trusted person",
+      "Save an idea for later",
+    ],
+    actionNote: "Small actions weaken fear. Avoidance strengthens it.",
+  },
+  {
+    id: 8,
+    message: "You don't need approval to start.\n\nBeing true to yourself is already enough.\n\nYou're allowed to take up space.",
+  },
+];
+
+// 7-screen flow content for "Nothing seems to work"
+const STUCK_FLOW_SCREENS = [
+  {
+    id: 1,
+    message: "When nothing seems to work, it's exhausting.\n\nPutting in effort without seeing results hurts.\n\nYou're not imagining this feeling.",
+  },
+  {
+    id: 2,
+    message: "Almost every creator you admire\nfelt invisible for a long time.\n\nThis phase isn't failure — it's the beginning.",
+  },
+  {
+    id: 3,
+    message: "Low views don't mean your content is bad.\nThey mean you're early.\n\nEvery post is data. Not a verdict.",
+  },
+  {
+    id: 4,
+    message: "Confidence and quality don't come first.\nThey come from doing it many times.\n\nEvery post teaches you something — even the quiet ones.",
+  },
+  {
+    id: 5,
+    message: "The creators you look up to\nweren't built in weeks or months.\n\nIt took one year. Two years. Sometimes five.\nThat time is normal — not a problem.",
+  },
+  {
+    id: 6,
+    message: "When motivation fades, systems carry you.\nThat's why Universe exists.\n\nYou don't need a viral post.\nYou need a process you can return to.",
+  },
+  {
+    id: 7,
+    message: "You don't become a creator after success.\nYou become one by showing up consistently.\n\nDocument your life. Follow the system.\nFuture you is built one post at a time.",
+  },
+];
+
+// 7-screen flow content for "I have no energy to post"
+const TIRED_FLOW_SCREENS = [
+  {
+    id: 1,
+    message: "If you feel like you have no energy to post, you're not lazy.\n\nYou're human — and this happens to every creator.",
+  },
+  {
+    id: 2,
+    message: "Posting doesn't mean creating something high-quality every day.\n\nConsistency is about showing up — not being perfect.",
+  },
+  {
+    id: 3,
+    message: "Every successful creator mixes high-effort and low-effort content.\n\nEasy posts on low-energy days are part of the process — not a failure.",
+  },
+  {
+    id: 4,
+    message: "On days like this, it's enough to:",
+    isActionScreen: true,
+    actionOptions: [
+      "Post a B-roll with one line of text",
+      "Share value in the caption only",
+      "Record a talking head with no script",
+    ],
+  },
+  {
+    id: 5,
+    message: "You can also repost something you shared weeks or months ago.\n\nMost people didn't see it the first time — and it still matters.",
+  },
+  {
+    id: 6,
+    message: "The creators who win aren't the ones who go all-out every day.\n\nThey're the ones who keep showing up — even on low-energy days.",
+  },
+  {
+    id: 7,
+    message: "Today doesn't need your best.\n\nIt just needs you to show up in the smallest way possible.",
+  },
+];
 
 export default function SOSFlowScreen() {
   const { id } = useLocalSearchParams();
@@ -28,6 +175,11 @@ export default function SOSFlowScreen() {
   const issue = SOS_ISSUES.find((i) => i.id === id);
 
   const [step, setStep] = useState(1); // 1: Explanation, 2: Black Hole, 3: Affirmations
+  const [hateFlowStep, setHateFlowStep] = useState(1); // 1-7 for hate flow
+  const [reactionsFlowStep, setReactionsFlowStep] = useState(1); // 1-8 for reactions flow
+  const [stuckFlowStep, setStuckFlowStep] = useState(1); // 1-7 for stuck flow
+  const [tiredFlowStep, setTiredFlowStep] = useState(1); // 1-7 for tired flow
+  const [selectedAction, setSelectedAction] = useState<string | null>(null);
   const [asteroids, setAsteroids] = useState(['', '', '']);
   const [affirmations, setAffirmations] = useState(['', '', '', '']);
   const [isVacuuming, setIsVacuuming] = useState(false);
@@ -152,6 +304,345 @@ export default function SOSFlowScreen() {
       console.error('Error completing SOS:', error);
     }
   };
+
+  // Special 7-screen flow for "tired" issue
+  if (id === 'tired') {
+    const currentScreen = TIRED_FLOW_SCREENS[tiredFlowStep - 1];
+    const isLastScreen = tiredFlowStep === 7;
+    const isActionScreen = currentScreen.isActionScreen || false;
+
+    return (
+      <UniverseBackground>
+        <SafeAreaView style={styles.container}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={28} color="#FFD700" />
+            </TouchableOpacity>
+            <View style={styles.progressContainer}>
+              {TIRED_FLOW_SCREENS.map((_, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.progressDot,
+                    index + 1 <= tiredFlowStep && styles.progressDotActive,
+                  ]}
+                />
+              ))}
+            </View>
+            <View style={styles.headerSpacer} />
+          </View>
+
+          <View style={styles.hateFlowContainer}>
+            <View style={styles.hateFlowContent}>
+              <Text style={styles.hateFlowMessage}>{currentScreen.message}</Text>
+              
+              {isActionScreen && (
+                <View style={styles.actionOptionsContainer}>
+                  {currentScreen.actionOptions?.map((option, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.actionOption,
+                        selectedAction === option && styles.actionOptionSelected,
+                      ]}
+                      onPress={() => {
+                        playClickSound();
+                        setSelectedAction(option);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[
+                        styles.actionOptionText,
+                        selectedAction === option && styles.actionOptionTextSelected,
+                      ]}>
+                        {option}
+                      </Text>
+                      {selectedAction === option && (
+                        <Ionicons name="checkmark-circle" size={24} color="#FFD700" />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            <View style={styles.hateFlowButtonContainer}>
+              {isLastScreen ? (
+                <TouchableOpacity
+                  style={styles.letGoRitualButton}
+                  onPress={() => {
+                    playClickSound();
+                    router.push({
+                      pathname: '/let-go',
+                      params: { issueId: 'tired' },
+                    });
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.letGoRitualButtonText}>Let Go Ritual</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[
+                    styles.continueButton,
+                    isActionScreen && !selectedAction && styles.continueButtonDisabled,
+                  ]}
+                  onPress={() => {
+                    if (isActionScreen && !selectedAction) return;
+                    playClickSound();
+                    setTiredFlowStep(tiredFlowStep + 1);
+                    setSelectedAction(null);
+                  }}
+                  activeOpacity={0.85}
+                  disabled={isActionScreen && !selectedAction}
+                >
+                  <Text style={styles.continueButtonText}>Continue</Text>
+                  <Ionicons name="arrow-forward" size={20} color="#0a0e27" style={styles.continueIcon} />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </SafeAreaView>
+      </UniverseBackground>
+    );
+  }
+
+  // Special 7-screen flow for "stuck" issue
+  if (id === 'stuck') {
+    const currentScreen = STUCK_FLOW_SCREENS[stuckFlowStep - 1];
+    const isLastScreen = stuckFlowStep === 7;
+
+    return (
+      <UniverseBackground>
+        <SafeAreaView style={styles.container}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={28} color="#FFD700" />
+            </TouchableOpacity>
+            <View style={styles.progressContainer}>
+              {STUCK_FLOW_SCREENS.map((_, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.progressDot,
+                    index + 1 <= stuckFlowStep && styles.progressDotActive,
+                  ]}
+                />
+              ))}
+            </View>
+            <View style={styles.headerSpacer} />
+          </View>
+
+          <View style={styles.hateFlowContainer}>
+            <View style={styles.hateFlowContent}>
+              <Text style={styles.hateFlowMessage}>{currentScreen.message}</Text>
+            </View>
+
+            <View style={styles.hateFlowButtonContainer}>
+              {isLastScreen ? (
+                <TouchableOpacity
+                  style={styles.letGoRitualButton}
+                  onPress={() => {
+                    playClickSound();
+                    router.push({
+                      pathname: '/let-go',
+                      params: { issueId: 'stuck' },
+                    });
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.letGoRitualButtonText}>Let Go Ritual</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={styles.continueButton}
+                  onPress={() => {
+                    playClickSound();
+                    setStuckFlowStep(stuckFlowStep + 1);
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.continueButtonText}>Continue</Text>
+                  <Ionicons name="arrow-forward" size={20} color="#0a0e27" style={styles.continueIcon} />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </SafeAreaView>
+      </UniverseBackground>
+    );
+  }
+
+  // Special 8-screen flow for "reactions" issue
+  if (id === 'reactions') {
+    const currentScreen = REACTIONS_FLOW_SCREENS[reactionsFlowStep - 1];
+    const isLastScreen = reactionsFlowStep === 8;
+    const isActionScreen = currentScreen.isActionScreen || false;
+
+    return (
+      <UniverseBackground>
+        <SafeAreaView style={styles.container}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={28} color="#FFD700" />
+            </TouchableOpacity>
+            <View style={styles.progressContainer}>
+              {REACTIONS_FLOW_SCREENS.map((_, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.progressDot,
+                    index + 1 <= reactionsFlowStep && styles.progressDotActive,
+                  ]}
+                />
+              ))}
+            </View>
+            <View style={styles.headerSpacer} />
+          </View>
+
+          <View style={styles.hateFlowContainer}>
+            <View style={styles.hateFlowContent}>
+              <Text style={styles.hateFlowMessage}>{currentScreen.message}</Text>
+              
+              {isActionScreen && (
+                <View style={styles.actionOptionsContainer}>
+                  {currentScreen.actionOptions?.map((option, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.actionOption,
+                        selectedAction === option && styles.actionOptionSelected,
+                      ]}
+                      onPress={() => {
+                        playClickSound();
+                        setSelectedAction(option);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[
+                        styles.actionOptionText,
+                        selectedAction === option && styles.actionOptionTextSelected,
+                      ]}>
+                        {option}
+                      </Text>
+                      {selectedAction === option && (
+                        <Ionicons name="checkmark-circle" size={24} color="#FFD700" />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                  {currentScreen.actionNote && (
+                    <Text style={styles.actionNote}>{currentScreen.actionNote}</Text>
+                  )}
+                </View>
+              )}
+            </View>
+
+            <View style={styles.hateFlowButtonContainer}>
+              {isLastScreen ? (
+                <TouchableOpacity
+                  style={styles.letGoRitualButton}
+                  onPress={() => {
+                    playClickSound();
+                    router.push({
+                      pathname: '/let-go',
+                      params: { issueId: 'reactions' },
+                    });
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.letGoRitualButtonText}>Let Go Ritual</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[
+                    styles.continueButton,
+                    isActionScreen && !selectedAction && styles.continueButtonDisabled,
+                  ]}
+                  onPress={() => {
+                    if (isActionScreen && !selectedAction) return;
+                    playClickSound();
+                    setReactionsFlowStep(reactionsFlowStep + 1);
+                    setSelectedAction(null);
+                  }}
+                  activeOpacity={0.85}
+                  disabled={isActionScreen && !selectedAction}
+                >
+                  <Text style={styles.continueButtonText}>Continue</Text>
+                  <Ionicons name="arrow-forward" size={20} color="#0a0e27" style={styles.continueIcon} />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </SafeAreaView>
+      </UniverseBackground>
+    );
+  }
+
+  // Special 7-screen flow for "hate" issue
+  if (id === 'hate') {
+    const currentScreen = HATE_FLOW_SCREENS[hateFlowStep - 1];
+    const isLastScreen = hateFlowStep === 7;
+
+    return (
+      <UniverseBackground>
+        <SafeAreaView style={styles.container}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={28} color="#FFD700" />
+            </TouchableOpacity>
+            <View style={styles.progressContainer}>
+              {HATE_FLOW_SCREENS.map((_, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.progressDot,
+                    index + 1 <= hateFlowStep && styles.progressDotActive,
+                  ]}
+                />
+              ))}
+            </View>
+            <View style={styles.headerSpacer} />
+          </View>
+
+          <View style={styles.hateFlowContainer}>
+            <View style={styles.hateFlowContent}>
+              <Text style={styles.hateFlowMessage}>{currentScreen.message}</Text>
+            </View>
+
+            <View style={styles.hateFlowButtonContainer}>
+              {isLastScreen ? (
+                <TouchableOpacity
+                  style={styles.letGoRitualButton}
+                  onPress={() => {
+                    playClickSound();
+                    router.push({
+                      pathname: '/let-go',
+                      params: { issueId: 'hate' },
+                    });
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.letGoRitualButtonText}>Let Go Ritual</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={styles.continueButton}
+                  onPress={() => {
+                    playClickSound();
+                    setHateFlowStep(hateFlowStep + 1);
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.continueButtonText}>Continue</Text>
+                  <Ionicons name="arrow-forward" size={20} color="#0a0e27" style={styles.continueIcon} />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </SafeAreaView>
+      </UniverseBackground>
+    );
+  }
 
   return (
     <UniverseBackground>
@@ -670,12 +1161,6 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     alignItems: 'center',
   },
-  affirmationTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFD700',
-    textAlign: 'center',
-  },
   starsLayout: {
     flex: 1,
     position: 'relative',
@@ -804,5 +1289,129 @@ const styles = StyleSheet.create({
     fontSize: 18,
     textAlign: 'center',
     marginTop: 40,
+  },
+  // Hate flow styles
+  progressContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  progressDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  progressDotActive: {
+    backgroundColor: '#FFD700',
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  headerSpacer: {
+    width: 40,
+  },
+  hateFlowContainer: {
+    flex: 1,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 40,
+    paddingBottom: 40,
+  },
+  hateFlowContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  hateFlowMessage: {
+    fontSize: 24,
+    fontWeight: '500',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    lineHeight: 36,
+    paddingHorizontal: 20,
+  },
+  hateFlowButtonContainer: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  continueButton: {
+    backgroundColor: '#FFD700',
+    paddingVertical: 18,
+    paddingHorizontal: 48,
+    borderRadius: 30,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    minWidth: 200,
+    justifyContent: 'center',
+  },
+  continueButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#0a0e27',
+  },
+  continueIcon: {
+    marginLeft: 4,
+  },
+  letGoRitualButton: {
+    backgroundColor: '#FFD700',
+    paddingVertical: 20,
+    paddingHorizontal: 60,
+    borderRadius: 30,
+    minWidth: 250,
+    alignItems: 'center',
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  letGoRitualButtonText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#0a0e27',
+  },
+  // Reactions flow action screen styles
+  actionOptionsContainer: {
+    width: '100%',
+    marginTop: 32,
+    gap: 16,
+  },
+  actionOption: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 215, 0, 0.4)',
+    borderRadius: 12,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  actionOptionSelected: {
+    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    borderColor: '#FFD700',
+  },
+  actionOptionText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#FFFFFF',
+    flex: 1,
+    lineHeight: 24,
+  },
+  actionOptionTextSelected: {
+    color: '#FFD700',
+    fontWeight: '600',
+  },
+  actionNote: {
+    fontSize: 14,
+    fontStyle: 'italic',
+    color: 'rgba(255, 255, 255, 0.7)',
+    textAlign: 'center',
+    marginTop: 8,
+    lineHeight: 20,
+  },
+  continueButtonDisabled: {
+    opacity: 0.5,
   },
 });

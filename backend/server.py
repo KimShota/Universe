@@ -818,6 +818,23 @@ async def delete_batching_script(
     
     return {"message": "Script deleted successfully"}
 
+# ==================== HEALTH CHECK ====================
+
+@app.get("/")
+async def root():
+    """Health check endpoint"""
+    return {"status": "ok", "message": "Universe Backend API is running"}
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint with database status"""
+    try:
+        # Check MongoDB connection
+        await db.command("ping")
+        return {"status": "healthy", "database": "connected"}
+    except Exception as e:
+        return {"status": "unhealthy", "database": "disconnected", "error": str(e)}
+
 # ==================== INCLUDE ROUTER ====================
 
 app.include_router(api_router)
