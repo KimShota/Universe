@@ -94,28 +94,6 @@ export const CONTENT_TIPS = [
     ]
   },
   {
-    id: 'how-to-film',
-    title: 'How to film',
-    content: "**Creating Quality Content with What You Have**\n\nYou don't need expensive gear to create great content. Focus on these essentials:\n\n**Lighting:**\n- Natural light is your best friend\n- Face a window for soft lighting\n- Avoid harsh overhead lights\n- Golden hour (sunset) is magical\n\n**Framing:**\n- Rule of thirds - put yourself off-center\n- Leave headroom (space above your head)\n- Eye level or slightly above\n- Clean, uncluttered background\n\n**Audio:**\n- Get close to the microphone\n- Film in quiet spaces\n- Use a cheap lavalier mic if possible\n- Good audio > Good video\n\n**Stability:**\n- Use a tripod or stable surface\n- Avoid shaky handheld shots\n- Use phone stands or books\n\n**Pro Tip:** Film multiple pieces of content in one session to stay consistent.",
-    quiz: [
-      {
-        question: "Which is more important: good audio or good video?",
-        options: ["Good video", "Good audio", "Both equal", "Neither matters"],
-        correct: 1
-      },
-      {
-        question: "Natural light is better than expensive lighting equipment for beginners.",
-        options: ["True", "False"],
-        correct: 0
-      },
-      {
-        question: "Where should you place yourself in the frame?",
-        options: ["Dead center", "Off-center (rule of thirds)", "Bottom corner", "Top corner"],
-        correct: 1
-      }
-    ]
-  },
-  {
     id: 'how-to-edit',
     title: 'How to edit',
     content: "**Editing for Maximum Engagement**\n\nEditing transforms raw footage into engaging content:\n\n**Pacing:**\n- Cut out pauses and ums\n- Keep it fast-paced\n- Every second should add value\n- If you're bored, viewers are too\n\n**Visual Interest:**\n- Add text overlays for key points\n- Use jump cuts for energy\n- Include B-roll when relevant\n- Zoom in for emphasis\n\n**Audio:**\n- Normalize audio levels\n- Add background music (low volume)\n- Use sound effects sparingly\n- Clear voice is priority\n\n**Captions:**\n- Add subtitles (80% watch without sound)\n- Make captions easy to read\n- Use contrasting colors\n\n**Length:**\n- Shorter is usually better\n- Each platform has sweet spots\n- Cut ruthlessly\n\n**Tools:** CapCut, Adobe Premiere Rush, InShot - all beginner-friendly.",

@@ -23,8 +23,13 @@ function flowBulletText(line: string): string {
   return t;
 }
 
-// 12-screen flow for "Define Your Creator Universe"
-const DEFINE_UNIVERSE_FLOW_SCREENS: Array<{
+const HOW_TO_SCRIPT_OPTIONS = [
+  { id: 'think-before-script', title: 'How to think before you script', icon: 'bulb-outline' },
+  { id: 'universe-scripting-system', title: 'How to use the universe scripting system', icon: 'document-text-outline' },
+];
+
+// 3-screen flow for "How to think before you script"
+const THINK_BEFORE_SCRIPT_FLOW_SCREENS: Array<{
   id: number;
   title: string;
   shortTitle: string;
@@ -34,195 +39,67 @@ const DEFINE_UNIVERSE_FLOW_SCREENS: Array<{
 }> = [
   {
     id: 1,
-    title: 'Screen 1 — What the Creator Universe Is',
-    shortTitle: 'What the Creator Universe Is',
-    icon: 'globe-outline',
-    content: `The Creator Universe is your content identity system.
+    title: 'Screen 1 — What a Script Actually Is',
+    shortTitle: 'What a Script Actually Is',
+    icon: 'document-text-outline',
+    content: `A script is not words. It's retention.
 
-It exists to answer:
+A good script is a retention plan, not a paragraph.
 
-"What should I post without guessing?"
+Teach this:
 
-Instead of chasing niches or trends,
-you create a universe people orbit.
+• The algorithm does not reward good openings alone
+• It rewards continuous attention
+• If any part gets boring → distribution dies
 
-Different posts.
-One clear identity.`,
+Universe Insight:
+
+"Your script's job is to earn the next second, over and over."`,
+    takeaway: 'Hook = entry. Script = why they stay.',
   },
   {
     id: 2,
-    title: 'Screen 2 — Why Creators Feel Lost Without It',
-    shortTitle: 'Why Creators Feel Lost Without It',
-    icon: 'help-circle-outline',
-    content: `Most creators struggle because:
+    title: 'Screen 2 — How the Algorithm Reads Your Script',
+    shortTitle: 'How the Algorithm Reads Your Script',
+    icon: 'analytics-outline',
+    content: `The algorithm reads behavior, not effort.
 
-• They copy too many people
-• They jump between formats
-• They don't know what they stand for
+The algorithm watches:
 
-This causes:
+• Did they stop scrolling?
+• Did they stay?
+• Did they rewatch?
 
-• Inconsistent growth
-• Audience confusion
-• Burnout`,
-    takeaway: 'Creator Universe gives your content a center of gravity.',
+Even with a strong first 3 seconds,
+if the middle is boring → the video fails.
+
+Retention checkpoints:
+
+• 0–3s: curiosity
+• 3–7s: pain recognition
+• 7–15s: tension
+• 15–25s: solution forming
+• End: loop or rewatch trigger`,
   },
   {
     id: 3,
-    title: 'Screen 3 — The 3 Parts of Creator Universe',
-    shortTitle: 'The 3 Parts of Creator Universe',
-    icon: 'layers-outline',
-    content: `Your Creator Universe has 3 components:
-
-WHAT — your message (ethos)
-
-WHO — your audience
-
-UNIQUENESS — your pain, experience, skills`,
-    takeaway: 'If one is missing, your content feels hollow.',
-  },
-  {
-    id: 4,
-    title: 'Screen 4 — WHAT: Your Message (Ethos)',
-    shortTitle: 'WHAT: Your Message (Ethos)',
-    icon: 'chatbubble-ellipses-outline',
-    content: `Your message is what you believe, not what you post.
-
-It's the idea that connects everything.
-
-Examples:
-
-"People deserve financial freedom to live fully."
-
-"Learning shouldn't feel overwhelming."
-
-Your topics can change.
-Your message anchors them.`,
-  },
-  {
-    id: 5,
-    title: 'Screen 5 — Why You Don\'t Need to Niche Down',
-    shortTitle: "Why You Don't Need to Niche Down",
-    icon: 'expand-outline',
-    content: `Traditional niches fail long-term because:
-
-• You evolve as a human
-• Your interests change
-• Your audience changes
-
-A message scales.
-A niche traps.`,
-    takeaway: 'Say it until it sticks: I am the niche.',
-  },
-  {
-    id: 6,
-    title: 'Screen 6 — WHO: Understanding Your Audience',
-    shortTitle: 'WHO: Understanding Your Audience',
-    icon: 'people-outline',
-    content: `Follower count doesn't matter.
-Understanding people does.
-
-To serve your audience, know:
-
-• Demographics (age, location, profession)
-• Psychographics (struggles, desires, fears)
-
-Psychographics matter more.`,
-    takeaway: 'People follow creators who understand their inner dialogue.',
-  },
-  {
-    id: 7,
-    title: 'Screen 7 — The Younger You Principle',
-    shortTitle: 'The Younger You Principle',
-    icon: 'person-outline',
-    content: `If you're unsure who to target:
-
-Target you, 2–3 years ago.
-
-Why this works:
-
-• You lived their pain
-• You know the transformation
-• You speak with authenticity`,
-    takeaway: 'This builds the right audience — not just views.',
-  },
-  {
-    id: 8,
-    title: 'Screen 8 — UNIQUENESS: Why People Care',
-    shortTitle: 'UNIQUENESS: Why People Care',
-    icon: 'star-outline',
-    content: `Your uniqueness comes from three layers:
-
-• Pain — what you struggled with
-• Experience — what you lived through
-• Skills — what people ask you for help with`,
-    takeaway: 'Your strongest content comes from pain, not highlights.',
-  },
-  {
-    id: 9,
-    title: 'Screen 9 — Sharing Pain the Right Way',
-    shortTitle: 'Sharing Pain the Right Way',
-    icon: 'heart-outline',
-    content: `You don't overshare.
-
-You share:
-
-• Reflected pain
-• Lessons learned
-• Growth you can teach
-
-Don't:
-
-• Trauma dump
-• Attack others
-• Flex constantly`,
-    takeaway: "Pain becomes powerful when it's turned into service.",
-  },
-  {
-    id: 10,
-    title: 'Screen 10 — Your 4 Content Pillars',
-    shortTitle: 'Your 4 Content Pillars',
-    icon: 'grid-outline',
-    content: `Your Creator Universe has 4 pillars:
-
-• Skill — what you know or are learning
-• Passion — what excites you
-• Interest — what you're exploring
-• Your Story — your journey`,
-    takeaway: '⚠️ The story pillar is mandatory. That\'s where connection lives.',
-  },
-  {
-    id: 11,
-    title: 'Screen 11 — The 3P Story Framework',
-    shortTitle: 'The 3P Story Framework',
+    title: 'Screen 3 — The Universal Script Flow',
+    shortTitle: 'The Universal Script Flow',
     icon: 'git-branch-outline',
-    content: `To tell your story clearly, use 3P:
+    content: `The only script flow you need.
 
-• Problem — what hurt
-• Pursuit — what you tried
-• Payoff — what changed internally`,
-    takeaway: 'Start with pain. That\'s where people connect.',
-  },
-  {
-    id: 12,
-    title: 'Screen 12 — 20-Minute Story Exercise',
-    shortTitle: '20-Minute Story Exercise',
-    icon: 'time-outline',
-    content: `To unlock your story pillar:
-
-• List major life struggles
-• Note how they changed you
-• Use AI to find patterns
-
-Those patterns become:
-
-• Your story themes
-• Your most powerful content`,
+• Hook → curiosity gap
+• Agitate → make the pain felt
+• Rehook → question / scene change
+• Context → "here's what's happening"
+• Build solution → clarity, not fluff
+• Early end → force rewatch`,
+    takeaway: 'Never end after the solution peaks. End at peak engagement.',
   },
 ];
 
-// 4-screen flow for "Use Your Creator Universe" (Screens 13–16)
-const USE_UNIVERSE_FLOW_SCREENS: Array<{
+// 6-screen flow for "How to use the universe scripting system" (Screens 4–9)
+const UNIVERSE_SCRIPTING_FLOW_SCREENS: Array<{
   id: number;
   title: string;
   shortTitle: string;
@@ -231,175 +108,160 @@ const USE_UNIVERSE_FLOW_SCREENS: Array<{
   takeaway?: string;
 }> = [
   {
-    id: 13,
-    title: 'Screen 13 — How Creator Universe Guides Posting',
-    shortTitle: 'How Creator Universe Guides Posting',
+    id: 4,
+    title: 'Screen 4 — Mission (Your North Star)',
+    shortTitle: 'Mission (Your North Star)',
     icon: 'compass-outline',
-    content: `Before posting, ask:
+    content: `Matches field: Mission
 
-• Which pillar is this?
-• Which pain or desire does it serve?
-• How does it reflect my message?
+What Mission actually means:
 
-If it fits your universe → post.
-If not → skip.`,
-    takeaway: 'Clarity removes anxiety.',
+NOT "what the video is about"
+
+BUT "what change should happen in the viewer"
+
+Teach them to write Mission like this:
+
+"After watching this, the viewer should ____."
+
+Good Mission examples:
+
+• "Stop overthinking posting"
+• "Believe they can start without being an expert"
+• "Understand why niching down is hurting them"
+
+Bad Mission example:
+
+• "Talk about content creation"`,
+    takeaway: 'No mission = random content.',
   },
   {
-    id: 14,
-    title: 'Screen 14 — Journey POV vs Expert POV',
-    shortTitle: 'Journey POV vs Expert POV',
-    icon: 'swap-horizontal-outline',
-    content: `You don't need to be an expert to post.
+    id: 5,
+    title: 'Screen 5 — Footage Needed (Visual Proof)',
+    shortTitle: 'Footage Needed (Visual Proof)',
+    icon: 'videocam-outline',
+    content: `Matches field: Footage Needed
 
-Journey POV
-• Learning in public
-• A few steps ahead
-• Highly relatable
+Teach this clearly:
 
-Expert POV
-• Teaching from experience
-• Clear authority`,
-    takeaway: 'Most creators should start with Journey POV.',
+Footage is not decoration.
+Footage is evidence.
+
+Prompt users to think:
+
+What must the viewer see to believe me?
+
+Examples:
+
+• Walking alone → struggle
+• Working late → pursuit
+• Calm moment → payoff`,
+    takeaway: "If you can't explain why a shot exists, remove it.",
   },
   {
-    id: 15,
-    title: 'Screen 15 — Why Story Is the Strongest Pillar',
-    shortTitle: 'Why Story Is the Strongest Pillar',
-    icon: 'book-outline',
-    content: `Your story:
+    id: 6,
+    title: 'Screen 6 — Text Visual (What the Eyes Follow)',
+    shortTitle: 'Text Visual (What the Eyes Follow)',
+    icon: 'text-outline',
+    content: `Matches field: Text Visual
 
-• Builds trust
-• Makes you memorable
-• Turns followers into community
+What text should do:
 
-People stop championing your tips
-and start championing you.`,
-    takeaway: "That's how brands are built.",
+• Carry meaning even without sound
+• Guide attention, not summarize
+
+Rules from your knowledge:
+
+• One idea per screen
+• Every line must be readable in <1 second
+
+Text should either:
+
+• Agitate pain
+• Open a loop
+• Signal transformation
+
+Examples:
+
+• "I thought I was bad at content…"
+• "This changed everything."
+• "Nobody tells beginners this."`,
   },
   {
-    id: 16,
-    title: 'Screen 16 — Creator Universe Is Flexible',
-    shortTitle: 'Creator Universe Is Flexible',
-    icon: 'git-branch-outline',
-    content: `Your universe is not fixed.
+    id: 7,
+    title: 'Screen 7 — Audio (Emotion Driver)',
+    shortTitle: 'Audio (Emotion Driver)',
+    icon: 'musical-notes-outline',
+    content: `Matches field: Audio
 
-• Message can evolve
-• Pillars can shift
-• Story deepens
+Teach this:
 
-As long as the structure stays,
-your audience feels continuity.`,
-    takeaway: 'You never have to "start over."',
+Audio controls emotion, not information.
+
+Options users can choose from:
+
+• Trending sound → reach
+• Voiceover → authority
+• Silence → tension
+• Rising music → transformation`,
+    takeaway: "Music should signal what's about to happen, not explain it.",
+  },
+  {
+    id: 8,
+    title: 'Screen 8 — Caption (Depth Lives Here)',
+    shortTitle: 'Caption (Depth Lives Here)',
+    icon: 'chatbox-outline',
+    content: `Matches field: Caption
+
+Explain clearly:
+
+• Video earns attention
+• Caption earns trust
+
+Caption structure you've implied:
+
+• Expand the pain
+• Add nuance you couldn't fit on screen
+• Teach one clear insight
+• Soft CTA at the end`,
+    takeaway: "Don't repeat the video. Complete it.",
+  },
+  {
+    id: 9,
+    title: 'Screen 9 — Call to Action (One Clear Move)',
+    shortTitle: 'Call to Action (One Clear Move)',
+    icon: 'megaphone-outline',
+    content: `Matches field: Call to Action
+
+Teach this rule:
+
+One video = one action
+
+Good CTAs:
+
+• "Comment 'PLAN'"
+• "Save this"
+• "Follow for part 2"
+
+Bad CTA:
+
+• Like + comment + follow + DM + link`,
+    takeaway: 'Confused viewers don\'t convert.',
   },
 ];
 
-const WHAT_TO_POST_CONTENT: { [key: string]: string } = {
-  'what-types-of-content': `**What Types of Content to Post**
+const HOW_TO_SCRIPT_CONTENT: { [key: string]: string } = {};
 
-Post at least 3 times per week. Here's the strategic mix that builds your community:
-
-**The Three Core Content Types:**
-
-**1. Storytelling Content**
-This is how people connect with you authentically.
-
-**What Makes Good Storytelling:**
-- It doesn't have to be a massive transformation (0 to billionaire)
-- It can be a simple mindset shift
-- Examples: anxiety → peace, can't study → able to study
-- Use Journey POV: treat yourself as a peer, not an expert
-- You're a few steps ahead, not miles ahead
-
-**The 3P Framework:**
-- **Problem**: What struggle did you encounter?
-- **Pursuit**: What actions did you take to overcome it?
-- **Payoff**: What was the transformation and why was it meaningful?
-
-**Why It Works:**
-- People connect through struggle, not highlights
-- When you lead with storytelling, you become approachable
-- Your content feels human and people feel seen
-- They stop championing just your tips and start championing YOU as a brand
-
-**2. Value-Based Content**
-This is where you teach insights based on your own experiences.
-
-**How to Know If It's Valuable:**
-Ask: Is this selfish or selfless content?
-- **Selfless**: Thinking about the payoff for your audience
-- **Selfish**: Only highlighting your genius (this makes people feel looked down upon)
-
-**Types of Value Content:**
-- Teaching one thing you actually know
-- One technique, one decision, one key takeaway
-- Breaking something down (3-step system, common mistake, mini framework)
-- Walk-through steps
-
-**3. Reach Content**
-You need content optimized for attracting new eyeballs.
-
-**How to Create Reach Content:**
-- Combine trending formats with your message
-- Use proven formats that work on the algorithm
-- Examples: B-roll with text, split screen, trending sounds
-- The format does the work, your insight builds credibility
-
-**The Weekly Schedule (7 Days):**
-
-**Day 1: High Effort - Build Trust**
-- Your story, a real struggle, the shift you made, the lesson learned
-- This makes people believe you
-
-**Day 2: Low Effort - Build Relatability**
-- Behind the scenes, day in the life, something real and unpolished
-- This makes your content feel human
-
-**Day 3: Medium Effort - Build Authority**
-- Teach one thing you actually know
-- One technique, one decision, one key takeaway
-- Positions you as worth listening to
-
-**Day 4: Low Effort - Build Reach**
-- Trending format (B-roll with text, split screen)
-- Pair it with your message
-- Format does the work, your insight builds credibility
-
-**Day 5: Medium Effort - Build Value**
-- Break something down
-- 3-step system, common mistake, mini framework
-- This keeps people following you
-
-**Day 6: Lowest Effort - Stay Consistent**
-- Reflection, gratitude, answering a common question
-- Helps you stay consistent on low-energy days
-
-**Day 7: High Effort - Build Depth**
-- Longer reel, mini lesson, short vlog
-- Turns followers into a real community
-
-**If Posting Less:**
-- 6 days: Remove Day 6
-- 5 days: Remove Day 2
-- 4 days: Remove Day 3
-
-**The 80/20 Rule:**
-- 80% proven formats (what works)
-- 20% experimentation (try new things)
-
-**Remember**: Good content solves a real problem, is easy to understand, feels relevant and authentic, and aligns with a clear goal. Focus on selfless content that serves your audience.`,
-};
-
-export default function WhatToPostDetailScreen() {
+export default function HowToScriptDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [defineUniverseStep, setDefineUniverseStep] = useState(1);
-  const [useUniverseStep, setUseUniverseStep] = useState(1);
+  const [thinkBeforeStep, setThinkBeforeStep] = useState(1);
+  const [universeScriptingStep, setUniverseScriptingStep] = useState(1);
 
-  // 12-screen flow for "Define Your Creator Universe"
-  if (id === 'define-your-creator-universe') {
-    const currentScreen = DEFINE_UNIVERSE_FLOW_SCREENS[defineUniverseStep - 1];
-    const isLastScreen = defineUniverseStep === 12;
+  // 3-screen flow for "How to think before you script"
+  if (id === 'think-before-script') {
+    const currentScreen = THINK_BEFORE_SCRIPT_FLOW_SCREENS[thinkBeforeStep - 1];
+    const isLastScreen = thinkBeforeStep === 3;
 
     return (
       <UniverseBackground>
@@ -414,22 +276,17 @@ export default function WhatToPostDetailScreen() {
             >
               <Ionicons name="arrow-back" size={28} color="#FFD700" />
             </TouchableOpacity>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.progressScrollContent}
-              style={styles.progressScroll}
-            >
-              {DEFINE_UNIVERSE_FLOW_SCREENS.map((_, index) => (
+            <View style={styles.progressContainer}>
+              {THINK_BEFORE_SCRIPT_FLOW_SCREENS.map((_, index) => (
                 <View
                   key={index}
                   style={[
-                    styles.progressDotSmall,
-                    index + 1 <= defineUniverseStep && styles.progressDotSmallActive,
+                    styles.progressDot,
+                    index + 1 <= thinkBeforeStep && styles.progressDotActive,
                   ]}
                 />
               ))}
-            </ScrollView>
+            </View>
             <View style={styles.headerSpacer} />
           </View>
 
@@ -441,7 +298,7 @@ export default function WhatToPostDetailScreen() {
             >
               <View style={styles.screenPill}>
                 <Text style={styles.screenPillText}>
-                  {defineUniverseStep} / {DEFINE_UNIVERSE_FLOW_SCREENS.length}
+                  {thinkBeforeStep} / {THINK_BEFORE_SCRIPT_FLOW_SCREENS.length}
                 </Text>
               </View>
               <View style={styles.flowCard}>
@@ -515,7 +372,7 @@ export default function WhatToPostDetailScreen() {
                   style={styles.continueButton}
                   onPress={() => {
                     playClickSound();
-                    setDefineUniverseStep(defineUniverseStep + 1);
+                    setThinkBeforeStep(thinkBeforeStep + 1);
                   }}
                   activeOpacity={0.85}
                 >
@@ -535,10 +392,10 @@ export default function WhatToPostDetailScreen() {
     );
   }
 
-  // 4-screen flow for "Use Your Creator Universe"
-  if (id === 'use-your-creator-universe') {
-    const currentScreen = USE_UNIVERSE_FLOW_SCREENS[useUniverseStep - 1];
-    const isLastScreen = useUniverseStep === 4;
+  // 6-screen flow for "How to use the universe scripting system"
+  if (id === 'universe-scripting-system') {
+    const currentScreen = UNIVERSE_SCRIPTING_FLOW_SCREENS[universeScriptingStep - 1];
+    const isLastScreen = universeScriptingStep === UNIVERSE_SCRIPTING_FLOW_SCREENS.length;
 
     return (
       <UniverseBackground>
@@ -553,22 +410,17 @@ export default function WhatToPostDetailScreen() {
             >
               <Ionicons name="arrow-back" size={28} color="#FFD700" />
             </TouchableOpacity>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.progressScrollContent}
-              style={styles.progressScroll}
-            >
-              {USE_UNIVERSE_FLOW_SCREENS.map((_, index) => (
+            <View style={styles.progressContainer}>
+              {UNIVERSE_SCRIPTING_FLOW_SCREENS.map((_, index) => (
                 <View
                   key={index}
                   style={[
-                    styles.progressDotSmall,
-                    index + 1 <= useUniverseStep && styles.progressDotSmallActive,
+                    styles.progressDot,
+                    index + 1 <= universeScriptingStep && styles.progressDotActive,
                   ]}
                 />
               ))}
-            </ScrollView>
+            </View>
             <View style={styles.headerSpacer} />
           </View>
 
@@ -580,7 +432,7 @@ export default function WhatToPostDetailScreen() {
             >
               <View style={styles.screenPill}>
                 <Text style={styles.screenPillText}>
-                  {useUniverseStep} / {USE_UNIVERSE_FLOW_SCREENS.length}
+                  {universeScriptingStep} / {UNIVERSE_SCRIPTING_FLOW_SCREENS.length}
                 </Text>
               </View>
               <View style={styles.flowCard}>
@@ -654,7 +506,7 @@ export default function WhatToPostDetailScreen() {
                   style={styles.continueButton}
                   onPress={() => {
                     playClickSound();
-                    setUseUniverseStep(useUniverseStep + 1);
+                    setUniverseScriptingStep(universeScriptingStep + 1);
                   }}
                   activeOpacity={0.85}
                 >
@@ -674,8 +526,8 @@ export default function WhatToPostDetailScreen() {
     );
   }
 
-  const content = WHAT_TO_POST_CONTENT[id || ''] || 'Content not found.';
-  const option = WHAT_TO_POST_OPTIONS.find((opt) => opt.id === id);
+  const content = HOW_TO_SCRIPT_CONTENT[id || ''] || 'Content not found.';
+  const option = HOW_TO_SCRIPT_OPTIONS.find((opt) => opt.id === id);
 
   return (
     <UniverseBackground>
@@ -691,8 +543,8 @@ export default function WhatToPostDetailScreen() {
             <Ionicons name="arrow-back" size={28} color="#FFD700" />
           </TouchableOpacity>
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>
-              {option?.title || 'What to Post'}
+            <Text style={styles.title} numberOfLines={2}>
+              {option?.title || 'How to Script'}
             </Text>
           </View>
         </View>
@@ -703,7 +555,6 @@ export default function WhatToPostDetailScreen() {
         >
           <View style={styles.contentBox}>
             {content.split('\n').map((line, index) => {
-              // Handle bold text (**text**)
               const parts: (string | JSX.Element)[] = [];
               let remaining = line;
               let keyIndex = 0;
@@ -712,15 +563,13 @@ export default function WhatToPostDetailScreen() {
                 const boldMatch = remaining.match(/\*\*(.*?)\*\*/);
                 if (boldMatch) {
                   const beforeBold = remaining.substring(0, boldMatch.index);
-                  if (beforeBold) {
-                    parts.push(beforeBold);
-                  }
+                  if (beforeBold) parts.push(beforeBold);
                   parts.push(
                     <Text key={`bold-${index}-${keyIndex++}`} style={styles.boldText}>
                       {boldMatch[1]}
                     </Text>
                   );
-                  remaining = remaining.substring((boldMatch.index || 0) + boldMatch[0].length);
+                  remaining = remaining.substring((boldMatch.index ?? 0) + boldMatch[0].length);
                 } else {
                   parts.push(remaining);
                   break;
@@ -744,28 +593,8 @@ export default function WhatToPostDetailScreen() {
   );
 }
 
-const WHAT_TO_POST_OPTIONS = [
-  {
-    id: 'define-your-creator-universe',
-    title: 'Define Your Creator Universe',
-    icon: 'create-outline',
-  },
-  {
-    id: 'use-your-creator-universe',
-    title: 'Use Your Creator Universe',
-    icon: 'telescope-outline',
-  },
-  {
-    id: 'what-types-of-content',
-    title: 'What Types of Content to Post',
-    icon: 'list-outline',
-  },
-];
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -773,10 +602,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     position: 'relative',
   },
-  backButton: {
-    padding: 8,
-    zIndex: 1,
-  },
+  backButton: { padding: 8, zIndex: 1 },
   titleContainer: {
     position: 'absolute',
     left: 0,
@@ -788,14 +614,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#FFD700',
+    textAlign: 'center',
   },
-  scrollView: {
-    flex: 1,
-  },
-  contentContainer: {
-    padding: 20,
-    paddingBottom: 40,
-  },
+  scrollView: { flex: 1 },
+  contentContainer: { padding: 20, paddingBottom: 40 },
   contentBox: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 16,
@@ -809,14 +631,9 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     marginBottom: 12,
   },
-  boldText: {
-    fontWeight: 'bold',
-    color: '#FFD700',
-  },
-  emptyLine: {
-    height: 12,
-  },
-  // Define Universe flow (same design as Use Hooks)
+  boldText: { fontWeight: 'bold', color: '#FFD700' },
+  emptyLine: { height: 12 },
+  // Flow (same design as Use Hooks / Define Universe)
   flowHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -824,40 +641,30 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
     paddingHorizontal: 20,
   },
-  flowBackButton: {
-    padding: 8,
-    zIndex: 1,
-  },
-  progressScroll: {
-    flex: 1,
-    marginHorizontal: 8,
-  },
-  progressScrollContent: {
+  flowBackButton: { padding: 8, zIndex: 1 },
+  progressContainer: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 8,
     alignItems: 'center',
-    paddingHorizontal: 4,
   },
-  progressDotSmall: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-  },
-  progressDotSmallActive: {
-    backgroundColor: '#FFD700',
+  progressDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+  },
+  progressDotActive: {
+    backgroundColor: '#FFD700',
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     shadowColor: '#FFD700',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
-    shadowRadius: 3,
+    shadowRadius: 4,
     elevation: 2,
   },
-  headerSpacer: {
-    width: 40,
-  },
+  headerSpacer: { width: 40 },
   flowContainer: {
     flex: 1,
     justifyContent: 'space-between',
@@ -865,65 +672,55 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 40,
   },
-  flowScrollView: {
-    flex: 1,
-  },
-  flowContent: {
-    paddingBottom: 24,
-  },
+  flowScrollView: { flex: 1 },
+  flowContent: { paddingBottom: 28 },
   screenPill: {
     alignSelf: 'center',
-    backgroundColor: 'rgba(255, 215, 0, 0.15)',
-    paddingVertical: 6,
-    paddingHorizontal: 14,
+    backgroundColor: 'rgba(255, 215, 0, 0.25)',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     borderRadius: 20,
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.35)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 215, 0, 0.5)',
   },
   screenPillText: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
     color: '#FFD700',
   },
   flowCard: {
     width: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
     borderRadius: 20,
     padding: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.25)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 215, 0, 0.4)',
     overflow: 'hidden',
   },
   flowCardIconWrap: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: 'rgba(255, 215, 0, 0.12)',
+    backgroundColor: 'rgba(255, 215, 0, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.25)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 215, 0, 0.45)',
   },
   flowScreenTitle: {
-    fontSize: 20,
+    fontSize: 21,
     fontWeight: '700',
     color: '#FFD700',
     marginBottom: 20,
     textAlign: 'center',
-    lineHeight: 26,
+    lineHeight: 28,
   },
-  flowCardBody: {
-    gap: 4,
-  },
-  flowBlock: {
-    marginBottom: 4,
-  },
-  flowLineRow: {
-    marginBottom: 10,
-  },
+  flowCardBody: { gap: 4 },
+  flowBlock: { marginBottom: 4 },
+  flowLineRow: { marginBottom: 12 },
   flowBulletRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -938,38 +735,33 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   flowBodyText: {
-    fontSize: 16,
-    lineHeight: 26,
-    color: 'rgba(255, 255, 255, 0.92)',
+    fontSize: 17,
+    lineHeight: 28,
+    color: '#FFFFFF',
     flex: 1,
   },
-  flowBulletText: {
-    flex: 1,
-  },
+  flowBulletText: { flex: 1 },
   takeawayBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
-    marginTop: 8,
+    marginTop: 12,
     paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 215, 0, 0.2)',
-    backgroundColor: 'rgba(255, 215, 0, 0.06)',
-    paddingVertical: 14,
-    paddingHorizontal: 14,
+    borderTopWidth: 1.5,
+    borderTopColor: 'rgba(255, 215, 0, 0.35)',
+    backgroundColor: 'rgba(255, 215, 0, 0.12)',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
     borderRadius: 12,
   },
   takeawayText: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
     color: '#FFD700',
-    lineHeight: 22,
+    lineHeight: 24,
     flex: 1,
   },
-  flowButtonContainer: {
-    width: '100%',
-    alignItems: 'center',
-  },
+  flowButtonContainer: { width: '100%', alignItems: 'center' },
   continueButton: {
     backgroundColor: '#FFD700',
     paddingVertical: 18,
@@ -991,9 +783,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#0a0e27',
   },
-  continueIcon: {
-    marginLeft: 4,
-  },
+  continueIcon: { marginLeft: 4 },
   doneButton: {
     backgroundColor: '#FFD700',
     paddingVertical: 18,

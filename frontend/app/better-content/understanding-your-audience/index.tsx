@@ -7,30 +7,23 @@ import {
   TouchableOpacity,
   SafeAreaView,
 } from 'react-native';
-import { UniverseBackground } from '../components/UniverseBackground';
+import { UniverseBackground } from '../../../components/UniverseBackground';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { playClickSound } from '../utils/soundEffects';
+import { playClickSound } from '../../../utils/soundEffects';
 
-const WHAT_TO_POST_OPTIONS = [
+const UNDERSTANDING_AUDIENCE_OPTIONS = [
   {
-    id: 'define-your-creator-universe',
-    title: 'Define Your Creator Universe',
-    icon: 'create-outline',
+    id: 'what-it-means',
+    title: 'What "understanding your audience" actually means',
   },
   {
-    id: 'use-your-creator-universe',
-    title: 'Use Your Creator Universe',
-    icon: 'telescope-outline',
-  },
-  {
-    id: 'what-types-of-content',
-    title: 'What Types of Content to Post',
-    icon: 'list-outline',
+    id: 'how-to-understand',
+    title: 'How to understand your audience',
   },
 ];
 
-export default function WhatToPostScreen() {
+export default function UnderstandingAudienceScreen() {
   const router = useRouter();
 
   return (
@@ -47,28 +40,30 @@ export default function WhatToPostScreen() {
             <Ionicons name="arrow-back" size={28} color="#FFD700" />
           </TouchableOpacity>
           <Text style={styles.starCharacter}>⭐</Text>
-          <Text style={styles.title}>What to Post</Text>
+          <Text style={styles.title}>Understanding Your Audience</Text>
         </View>
 
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.contentContainer}
+          contentContainerStyle={styles.buttonsContainer}
+          showsVerticalScrollIndicator={false}
         >
-          {WHAT_TO_POST_OPTIONS.map((option) => (
+          {UNDERSTANDING_AUDIENCE_OPTIONS.map((option) => (
             <TouchableOpacity
               key={option.id}
               style={styles.optionButton}
               onPress={() => {
                 playClickSound();
-                router.push(`/what-to-post/${option.id}`);
+                router.push(
+                  `/better-content/understanding-your-audience/${option.id}`
+                );
               }}
-              activeOpacity={0.7}
+              activeOpacity={0.8}
             >
-              <Ionicons name={option.icon as any} size={28} color="#FFD700" />
               <Text style={styles.optionButtonText}>{option.title}</Text>
               <Ionicons
                 name="chevron-forward"
-                size={20}
+                size={24}
                 color="rgba(255, 255, 255, 0.5)"
               />
             </TouchableOpacity>
@@ -87,6 +82,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 24,
     position: 'relative',
+    paddingHorizontal: 20,
   },
   backButton: {
     position: 'absolute',
@@ -99,35 +95,34 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#FFD700',
+    textAlign: 'center',
   },
   scrollView: {
     flex: 1,
   },
-  contentContainer: {
-    padding: 20,
+  buttonsContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
     gap: 16,
   },
   optionButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    padding: 20,
+    paddingVertical: 28,
+    paddingHorizontal: 24,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
+    borderColor: 'rgba(255, 215, 0, 0.4)',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    justifyContent: 'space-between',
+    minHeight: 100,
   },
   optionButtonText: {
-    color: '#fff',
-    fontSize: 18,
+    color: '#FFFFFF',
+    fontSize: 19,
     fontWeight: '600',
     flex: 1,
   },
