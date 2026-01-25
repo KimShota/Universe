@@ -11,14 +11,17 @@ import {
   SafeAreaView,
   Keyboard,
   TouchableWithoutFeedback,
+  Image,
+  Easing,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { UniverseBackground } from '../components/UniverseBackground';
-import { StarCharacter } from '../components/StarCharacter';
 import { useAuth } from '../contexts/AuthContext';
-import { Easing } from 'react-native';
+
+const SAD_STAR = require('../Media/crying-star.png');
+const HAPPY_STAR = require('../Media/happy-star.png');
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
@@ -176,14 +179,6 @@ export default function AffirmationScreen() {
     });
   }, [affirmations]);
 
-  useEffect(() => {
-    if (affirmations.every((a) => a.trim())) {
-      setShowCelebration(true);
-    } else {
-      setShowCelebration(false);
-    }
-  }, [affirmations]);
-
   const starPositions = useMemo(() => {
     return [
       { x: SCREEN_WIDTH * 0.45, y: SCREEN_HEIGHT * 0.13 },
@@ -268,7 +263,11 @@ export default function AffirmationScreen() {
                     onStartShouldSetResponder={() => true}
                   >
                     <Animated.View style={[styles.starCharWrap, { opacity: starOpacity, transform: [{ scale }] }]}>
-                      <StarCharacter isHappy={isHappy} size={148} />
+                      <Image
+                        source={isHappy ? HAPPY_STAR : SAD_STAR}
+                        style={styles.starImage}
+                        resizeMode="contain"
+                      />
                     </Animated.View>
 
                     <TextInput
@@ -291,11 +290,11 @@ export default function AffirmationScreen() {
             <View style={styles.footer}>
               <TouchableOpacity
                 style={[styles.homeButton, !affirmations.every((a) => a.trim()) && styles.homeButtonDisabled]}
-                onPress={handleGoHome}
+                onPress={() => affirmations.every((a) => a.trim()) && setShowCelebration(true)}
                 disabled={!affirmations.every((a) => a.trim())}
                 activeOpacity={0.85}
               >
-                <Text style={styles.homeButtonText}>Go Home</Text>
+                <Text style={styles.homeButtonText}>Submit</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -315,7 +314,7 @@ export default function AffirmationScreen() {
               </View>
 
               <TouchableOpacity style={styles.modalButton} onPress={handleGoHome} activeOpacity={0.85}>
-                <Text style={styles.modalButtonText}>Go Home</Text>
+                <Text style={styles.modalButtonText}>Submit</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -371,6 +370,10 @@ const styles = StyleSheet.create({
     height: 148,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  starImage: {
+    width: 148,
+    height: 148,
   },
   starInput: {
     marginTop: 12,
