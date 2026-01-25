@@ -141,17 +141,42 @@ export default function MainScreen() {
                 {roadmapSteps.map((step, index) => {
                   if (index < roadmapSteps.length - 1) {
                     const nextStep = roadmapSteps[index + 1];
+                    const completed = step.completed;
                     return (
-                      <Line
-                        key={`line-${step.id}`}
-                        x1={step.x}
-                        y1={step.y}
-                        x2={nextStep.x}
-                        y2={nextStep.y}
-                        stroke={step.completed ? "#4ade80" : "#374151"}
-                        strokeWidth="2"
-                        opacity={0.6}
-                      />
+                      <React.Fragment key={`line-${step.id}`}>
+                        {completed ? (
+                          <>
+                            <Line
+                              x1={step.x}
+                              y1={step.y}
+                              x2={nextStep.x}
+                              y2={nextStep.y}
+                              stroke="#FFD700"
+                              strokeWidth="6"
+                              opacity={0.35}
+                            />
+                            <Line
+                              x1={step.x}
+                              y1={step.y}
+                              x2={nextStep.x}
+                              y2={nextStep.y}
+                              stroke="#FFD700"
+                              strokeWidth="2.5"
+                              opacity={1}
+                            />
+                          </>
+                        ) : (
+                          <Line
+                            x1={step.x}
+                            y1={step.y}
+                            x2={nextStep.x}
+                            y2={nextStep.y}
+                            stroke="#b8860b"
+                            strokeWidth="2"
+                            opacity={0.5}
+                          />
+                        )}
+                      </React.Fragment>
                     );
                   }
                   return null;

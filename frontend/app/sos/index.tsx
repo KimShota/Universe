@@ -1,6 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Image } from 'react-native';
 import { UniverseBackground } from '../../components/UniverseBackground';
+
+const SAD_STAR = require('../../Media/sad_star.png');
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { playClickSound } from '../../utils/soundEffects';
@@ -68,6 +70,10 @@ export default function SOSScreen() {
               </TouchableOpacity>
             ))}
           </ScrollView>
+
+          <View style={styles.sadStarContainer}>
+            <Image source={SAD_STAR} style={styles.sadStarImage} resizeMode="contain" />
+          </View>
         </View>
       </SafeAreaView>
     </UniverseBackground>
@@ -95,6 +101,16 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 32,
+  },
+  sadStarContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 5,
+    paddingBottom: 10,
+  },
+  sadStarImage: {
+    width: 150,
+    height: 150,
   },
   question: {
     fontSize: 28,

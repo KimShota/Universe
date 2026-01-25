@@ -1092,7 +1092,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   regionChipTextSmall: {
-    fontSize: 11,
+    fontSize: 9,
   },
   ageRangeRow: {
     flexDirection: 'row',
