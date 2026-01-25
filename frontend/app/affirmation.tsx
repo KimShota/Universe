@@ -16,6 +16,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { UniverseBackground } from '../components/UniverseBackground';
+import { StarCharacter } from '../components/StarCharacter';
 import { useAuth } from '../contexts/AuthContext';
 import { Easing } from 'react-native';
 
@@ -185,9 +186,9 @@ export default function AffirmationScreen() {
 
   const starPositions = useMemo(() => {
     return [
-      { x: SCREEN_WIDTH * 0.5, y: SCREEN_HEIGHT * 0.26 },
-      { x: SCREEN_WIDTH * 0.26, y: SCREEN_HEIGHT * 0.54 },
-      { x: SCREEN_WIDTH * 0.74, y: SCREEN_HEIGHT * 0.54 },
+      { x: SCREEN_WIDTH * 0.45, y: SCREEN_HEIGHT * 0.13 },
+      { x: SCREEN_WIDTH * 0.24, y: SCREEN_HEIGHT * 0.44 },
+      { x: SCREEN_WIDTH * 0.70, y: SCREEN_HEIGHT * 0.44 },
     ];
   }, []);
 
@@ -256,38 +257,18 @@ export default function AffirmationScreen() {
 
             <View style={styles.starsStage}>
               {starPositions.map((p, i) => {
+                const isHappy = affirmations[i].trim() !== '';
                 const scale = glow[i].interpolate({ inputRange: [0, 1], outputRange: [1, 1.08] });
-                const starOpacity = glow[i].interpolate({ inputRange: [0, 1], outputRange: [0.45, 1] });
-
-                // 3つの星の位置（中心の星の周りに配置）
-                const threeStarsPositions = [
-                  { x: 0, y: -25 }, // 上
-                  { x: -22, y: 12 }, // 左下
-                  { x: 22, y: 12 }, // 右下
-                ];
+                const starOpacity = glow[i].interpolate({ inputRange: [0, 1], outputRange: [0.7, 1] });
 
                 return (
-                  <View 
-                    key={`star-${i}`} 
+                  <View
+                    key={`star-${i}`}
                     style={[styles.starWrap, { left: p.x - 74, top: p.y - 74 }]}
                     onStartShouldSetResponder={() => true}
                   >
-                    <Animated.View style={[styles.starOrb, { opacity: starOpacity, transform: [{ scale }] }]}>
-                      <View style={styles.starCore} />
-                      {/* 3つの小さな星を追加 */}
-                      {threeStarsPositions.map((offset, starIdx) => (
-                        <Animated.View
-                          key={`small-star-${starIdx}`}
-                          style={[
-                            styles.smallStar,
-                            {
-                              left: 74 + offset.x - 4,
-                              top: 74 + offset.y - 4,
-                              opacity: starOpacity,
-                            },
-                          ]}
-                        />
-                      ))}
+                    <Animated.View style={[styles.starCharWrap, { opacity: starOpacity, transform: [{ scale }] }]}>
+                      <StarCharacter isHappy={isHappy} size={148} />
                     </Animated.View>
 
                     <TextInput
@@ -385,38 +366,11 @@ const styles = StyleSheet.create({
     minHeight: 190,
     alignItems: 'center',
   },
-  starOrb: {
+  starCharWrap: {
     width: 148,
     height: 148,
-    borderRadius: 74,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 14,
-    elevation: 12,
-  },
-  starCore: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: '#FFD700',
-  },
-  smallStar: {
-    position: 'absolute',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#FFD700',
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.9,
-    shadowRadius: 6,
-    elevation: 6,
   },
   starInput: {
     marginTop: 12,
