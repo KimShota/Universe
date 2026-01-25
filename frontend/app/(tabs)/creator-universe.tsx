@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Dimensions,
+  Modal,
 } from 'react-native';
 import { UniverseBackground } from '../../components/UniverseBackground';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -18,6 +19,7 @@ import { playClickSound } from '../../utils/soundEffects';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 const { width, height } = Dimensions.get('window');
+const INFO_PAGE_WIDTH = Math.min(width - 40, 500);
 
 const REGION_LAYOUT: string[][] = [
   ['North America'],
@@ -28,11 +30,15 @@ const REGION_LAYOUT: string[][] = [
 ];
 
 type ScreenType = 'vision' | 'audience' | 'edge';
+type InfoScreenType = 'vision' | 'avatar' | 'identity';
 
 export default function CreatorUniverseScreen() {
   const router = useRouter();
   const scrollViewRef = useRef<ScrollView>(null);
+  const infoScrollRef = useRef<ScrollView>(null);
   const [activeScreen, setActiveScreen] = useState<ScreenType>('vision');
+  const [showInfoModal, setShowInfoModal] = useState(false);
+  const [infoActiveScreen, setInfoActiveScreen] = useState<InfoScreenType>('vision');
 
   // Vision screen state
   const [goal, setGoal] = useState('');
@@ -43,9 +49,15 @@ export default function CreatorUniverseScreen() {
     { title: 'Content Pillar 4', ideas: [''] },
   ]);
 
-  // Audience screen state
-  const [demographic, setDemographic] = useState({
-    region: '',
+  // Audience screen state — region supports multiple selections
+  const [demographic, setDemographic] = useState<{
+    region: string[];
+    ageMin: string;
+    ageMax: string;
+    genderMale: string;
+    genderFemale: string;
+  }>({
+    region: [],
     ageMin: '',
     ageMax: '',
     genderMale: '',
@@ -58,7 +70,7 @@ export default function CreatorUniverseScreen() {
   });
 
   // Edge screen state — start with 0 boxes per category; users add via + like Vision
-  const [uniqueness, setUniqueness] = useState<{
+  const [identity, setIdentity] = useState<{
     pain: string[];
     passion: string[];
     experience: string[];
@@ -91,8 +103,14 @@ export default function CreatorUniverseScreen() {
       // Audience
       if (data.audience) {
         const d = data.audience.demographic || {};
+        const r = d.region;
+        const regionArr = Array.isArray(r)
+          ? r
+          : typeof r === 'string' && r.trim()
+            ? [r.trim()]
+            : [];
         setDemographic({
-          region: d.region ?? '',
+          region: regionArr,
           ageMin: d.ageMin ?? '',
           ageMax: d.ageMax ?? '',
           genderMale: d.genderMale ?? '',
@@ -102,18 +120,18 @@ export default function CreatorUniverseScreen() {
       }
       
       // Edge — start with 0 boxes; normalize legacy "3 empty" default to []
-      if (data.edge?.uniqueness) {
-        const u = data.edge.uniqueness as Record<string, string[]>;
+      const edgeData = (data.edge?.identity ?? data.edge?.uniqueness) as Record<string, string[]> | undefined;
+      if (edgeData) {
         const norm = (arr: unknown): string[] => {
           if (!Array.isArray(arr)) return [];
           if (arr.length === 3 && arr.every((s) => s === '')) return [];
           return arr;
         };
-        setUniqueness({
-          pain: norm(u.pain),
-          passion: norm(u.passion),
-          experience: norm(u.experience),
-          skill: norm(u.skill),
+        setIdentity({
+          pain: norm(edgeData.pain),
+          passion: norm(edgeData.passion),
+          experience: norm(edgeData.experience),
+          skill: norm(edgeData.skill),
         });
       }
     } catch (error) {
@@ -123,11 +141,11 @@ export default function CreatorUniverseScreen() {
 
   const saveUniverse = async (overrides?: {
     demographic?: typeof demographic;
-    uniqueness?: typeof uniqueness;
+    identity?: typeof identity;
   }) => {
     try {
       const d = overrides?.demographic ?? demographic;
-      const u = overrides?.uniqueness ?? uniqueness;
+      const u = overrides?.identity ?? identity;
       const sessionToken = await AsyncStorage.getItem('session_token');
       await fetch(`${BACKEND_URL}/api/creator-universe`, {
         method: 'PUT',
@@ -143,7 +161,7 @@ export default function CreatorUniverseScreen() {
             psychographic,
           },
           edge: {
-            uniqueness: u,
+            identity: u,
           },
         }),
       });
@@ -164,6 +182,30 @@ export default function CreatorUniverseScreen() {
     const screenIndex = Math.round(offsetX / width);
     const screens: ScreenType[] = ['vision', 'audience', 'edge'];
     setActiveScreen(screens[screenIndex]);
+  };
+
+  const handleInfoScreenChange = (screen: InfoScreenType) => {
+    playClickSound();
+    setInfoActiveScreen(screen);
+    const i = screen === 'vision' ? 0 : screen === 'avatar' ? 1 : 2;
+    infoScrollRef.current?.scrollTo({ x: i * INFO_PAGE_WIDTH, animated: true });
+  };
+
+  const handleInfoScroll = (event: any) => {
+    const offsetX = event.nativeEvent.contentOffset.x;
+    const i = Math.round(offsetX / INFO_PAGE_WIDTH);
+    const screens: InfoScreenType[] = ['vision', 'avatar', 'identity'];
+    setInfoActiveScreen(screens[i]);
+  };
+
+  const openInfoModal = () => {
+    playClickSound();
+    setInfoActiveScreen('vision');
+    setShowInfoModal(true);
+  };
+
+  const onInfoModalShow = () => {
+    infoScrollRef.current?.scrollTo({ x: 0, animated: false });
   };
 
   // Vision screen functions
@@ -195,28 +237,28 @@ export default function CreatorUniverseScreen() {
   };
 
   // Edge screen functions (mirror Vision: add/remove boxes per category)
-  const updateUniquenessField = (category: keyof typeof uniqueness, index: number, value: string) => {
-    const newUniqueness = { ...uniqueness };
-    newUniqueness[category] = [...newUniqueness[category]];
-    newUniqueness[category][index] = value;
-    setUniqueness(newUniqueness);
+  const updateIdentityField = (category: keyof typeof identity, index: number, value: string) => {
+    const next = { ...identity };
+    next[category] = [...next[category]];
+    next[category][index] = value;
+    setIdentity(next);
   };
 
-  const addUniquenessItem = (category: keyof typeof uniqueness) => {
-    if (uniqueness[category].length >= 4) return;
+  const addIdentityItem = (category: keyof typeof identity) => {
+    if (identity[category].length >= 4) return;
     playClickSound();
-    const newUniqueness = { ...uniqueness };
-    newUniqueness[category] = [...newUniqueness[category], ''];
-    setUniqueness(newUniqueness);
-    saveUniverse({ uniqueness: newUniqueness });
+    const next = { ...identity };
+    next[category] = [...next[category], ''];
+    setIdentity(next);
+    saveUniverse({ identity: next });
   };
 
-  const removeUniquenessItem = (category: keyof typeof uniqueness, index: number) => {
+  const removeIdentityItem = (category: keyof typeof identity, index: number) => {
     playClickSound();
-    const newUniqueness = { ...uniqueness };
-    newUniqueness[category] = newUniqueness[category].filter((_, i) => i !== index);
-    setUniqueness(newUniqueness);
-    saveUniverse({ uniqueness: newUniqueness });
+    const next = { ...identity };
+    next[category] = next[category].filter((_, i) => i !== index);
+    setIdentity(next);
+    saveUniverse({ identity: next });
   };
 
   return (
@@ -265,7 +307,7 @@ export default function CreatorUniverseScreen() {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.helpButton}>
+          <TouchableOpacity style={styles.helpButton} onPress={openInfoModal}>
             <Ionicons name="help-circle-outline" size={26} color="#FFD700" />
           </TouchableOpacity>
         </View>
@@ -436,7 +478,7 @@ export default function CreatorUniverseScreen() {
                             style={row.length === 1 ? styles.regionRowSingle : styles.regionRowDouble}
                           >
                             {row.map((r) => {
-                              const selected = demographic.region === r;
+                              const selected = demographic.region.includes(r);
                               const isSmall = row.length === 2;
                               return (
                                 <TouchableOpacity
@@ -449,7 +491,12 @@ export default function CreatorUniverseScreen() {
                                   ]}
                                   onPress={() => {
                                     playClickSound();
-                                    const next = { ...demographic, region: selected ? '' : r };
+                                    const next = {
+                                      ...demographic,
+                                      region: selected
+                                        ? demographic.region.filter((x) => x !== r)
+                                        : [...demographic.region, r],
+                                    };
                                     setDemographic(next);
                                     saveUniverse({ demographic: next });
                                   }}
@@ -579,15 +626,15 @@ export default function CreatorUniverseScreen() {
           {/* Edge Screen */}
           <View style={styles.screen}>
             <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
-              {/* Uniqueness */}
+              {/* Identity */}
               <View style={styles.goalContainer}>
                 <View style={styles.goalLabelRow}>
                   <Ionicons name="sparkles-outline" size={16} color="#FFD700" />
-                  <Text style={styles.goalLabel}>Uniqueness</Text>
+                  <Text style={styles.goalLabel}>Identity</Text>
                 </View>
               </View>
 
-              {/* Connection Lines from Uniqueness */}
+              {/* Connection Lines from Identity */}
               <View style={styles.connectionsContainer}>
                 <Svg height="60" width={width - 40} style={styles.svg}>
                   <Line x1={(width - 40) / 2} y1="0" x2={(width - 40) * 0.125} y2="60" stroke="#FFD700" strokeWidth="3" />
@@ -624,13 +671,13 @@ export default function CreatorUniverseScreen() {
                   const label = category === 'experience' ? 'Exp.' : category.charAt(0).toUpperCase() + category.slice(1);
                   return (
                     <View key={category} style={styles.ideasColumn}>
-                      {uniqueness[category].map((value, index) => (
+                      {identity[category].map((value, index) => (
                         <View key={index} style={styles.ideaBoxWrapper}>
                           <View style={styles.ideaBox}>
                             <TextInput
                               style={styles.ideaInput}
                               value={value}
-                              onChangeText={(text) => updateUniquenessField(category, index, text)}
+                              onChangeText={(text) => updateIdentityField(category, index, text)}
                               onBlur={() => saveUniverse()}
                               placeholder={`${label} ${index + 1}`}
                               placeholderTextColor="rgba(255, 255, 255, 0.3)"
@@ -639,16 +686,16 @@ export default function CreatorUniverseScreen() {
                           </View>
                           <TouchableOpacity
                             style={styles.deleteIdeaButton}
-                            onPress={() => removeUniquenessItem(category, index)}
+                            onPress={() => removeIdentityItem(category, index)}
                           >
                             <Ionicons name="close-circle" size={18} color="#ff4444" />
                           </TouchableOpacity>
                         </View>
                       ))}
-                      {uniqueness[category].length < 4 && (
+                      {identity[category].length < 4 && (
                         <TouchableOpacity
                           style={styles.addIdeaButton}
-                          onPress={() => addUniquenessItem(category)}
+                          onPress={() => addIdentityItem(category)}
                         >
                           <Ionicons name="add-circle-outline" size={20} color="#FFD700" />
                         </TouchableOpacity>
@@ -661,6 +708,132 @@ export default function CreatorUniverseScreen() {
           </View>
         </ScrollView>
       </SafeAreaView>
+
+      {/* Info Modal — swipeable Vision / Avatar / Identity */}
+      <Modal
+        visible={showInfoModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowInfoModal(false)}
+        onShow={onInfoModalShow}
+      >
+        <View style={styles.infoModalOverlay}>
+          <View style={styles.infoModalContent}>
+            <View style={styles.infoModalHeader}>
+              <Text style={styles.infoModalTitle}>Guide</Text>
+              <TouchableOpacity
+                style={styles.infoModalClose}
+                onPress={() => {
+                  playClickSound();
+                  setShowInfoModal(false);
+                }}
+              >
+                <Ionicons name="close" size={24} color="#FFD700" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.infoTabContainer}>
+              <TouchableOpacity
+                style={[styles.infoTab, infoActiveScreen === 'vision' && styles.infoTabActive]}
+                onPress={() => handleInfoScreenChange('vision')}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.infoTabText, infoActiveScreen === 'vision' && styles.infoTabTextActive]}>Vision</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.infoTab, infoActiveScreen === 'avatar' && styles.infoTabActive]}
+                onPress={() => handleInfoScreenChange('avatar')}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.infoTabText, infoActiveScreen === 'avatar' && styles.infoTabTextActive]}>Avatar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.infoTab, infoActiveScreen === 'identity' && styles.infoTabActive]}
+                onPress={() => handleInfoScreenChange('identity')}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.infoTabText, infoActiveScreen === 'identity' && styles.infoTabTextActive]}>Identity</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView
+              ref={infoScrollRef}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onMomentumScrollEnd={handleInfoScroll}
+              scrollEventThrottle={16}
+              style={styles.infoHorizontalScroll}
+            >
+              {/* Vision */}
+              <View style={styles.infoScreen}>
+                <ScrollView style={styles.infoScroll} contentContainerStyle={styles.infoContent}>
+                  <Text style={styles.infoScreenTitle}>Vision</Text>
+                  <Text style={styles.infoSubtitle}>How to construct your vision universe:</Text>
+                  <Text style={styles.infoSectionTitle}>The first pillar</Text>
+                  <Text style={styles.infoBody}>
+                    This should be Your Skill (What You Know). If you want to sell a product, people will buy from you because of this.
+                  </Text>
+                  <Text style={styles.infoSectionTitle}>The second pillar</Text>
+                  <Text style={styles.infoBody}>
+                    This should be Your Passion (What You Love). Why passion? Because you will build deep connections with your audience through familiarity & shared values.
+                  </Text>
+                  <Text style={styles.infoSectionTitle}>The third pillar</Text>
+                  <Text style={styles.infoBody}>
+                    This should be Your Story (Who You Are). This is the most important pillar. Your story is WHY behind your message. Sharing your story often creates the widest reach and builds the deepest connections with your audience.
+                  </Text>
+                  <Text style={styles.infoBody}>
+                    You can add your interest as one more pillar since your ethos will connect all of your content pillars eventually.
+                  </Text>
+                </ScrollView>
+              </View>
+              {/* Avatar */}
+              <View style={styles.infoScreen}>
+                <ScrollView style={styles.infoScroll} contentContainerStyle={styles.infoContent}>
+                  <Text style={styles.infoScreenTitle}>Avatar</Text>
+                  <Text style={styles.infoBody}>
+                    Psychographic is more important than demographic since it will help you enhance the impact of your story.
+                  </Text>
+                  <Text style={styles.infoSectionTitle}>Struggle:</Text>
+                  <Text style={styles.infoBody}>Think about what your target audience is struggling with.</Text>
+                  <Text style={styles.infoSectionTitle}>Desire:</Text>
+                  <Text style={styles.infoBody}>Think about what they desire.</Text>
+                  <Text style={styles.infoSectionTitle}>Creators they consume:</Text>
+                  <Text style={styles.infoBody}>
+                    Think about what other content creators they are watching daily. You can have them as inspiration and learn the formats from them.
+                  </Text>
+                  <Text style={styles.infoTip}>
+                    If you don't know who to target, think about people who are 2–3 years younger than you. You've already gone through the phase they're in, which means you can teach them valuable lessons based on your experiences and the skills you gained during that time.
+                  </Text>
+                </ScrollView>
+              </View>
+              {/* Identity */}
+              <View style={styles.infoScreen}>
+                <ScrollView style={styles.infoScroll} contentContainerStyle={styles.infoContent}>
+                  <Text style={styles.infoScreenTitle}>Identity</Text>
+                  <Text style={styles.infoBody}>
+                    Identity is very important since it defines who you are and makes you such a valuable and relatable content creator.
+                  </Text>
+                  <Text style={styles.infoSectionTitle}>Pain</Text>
+                  <Text style={styles.infoBody}>
+                    Think about what you've struggled with. What defines challenges? What was the lowest point? What are core insecurities?
+                  </Text>
+                  <Text style={styles.infoSectionTitle}>Passion</Text>
+                  <Text style={styles.infoBody}>
+                    Think about what you are passionate about right now. Is there anything that you are working on right now, whether it could be your business, projects, gymming, etc?
+                  </Text>
+                  <Text style={styles.infoSectionTitle}>Experience</Text>
+                  <Text style={styles.infoBody}>
+                    Think about what you have gone through or what you have developed. Any qualifications? Any key milestones? Who have you helped?
+                  </Text>
+                  <Text style={styles.infoSectionTitle}>Skill</Text>
+                  <Text style={styles.infoBody}>
+                    Think about what you are good at and what people come to you for. What can you teach? What are the methods you mastered? Is there any go-to expertise?
+                  </Text>
+                </ScrollView>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </UniverseBackground>
   );
 }
@@ -1009,5 +1182,128 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 215, 0, 0.25)',
     borderStyle: 'dashed',
+  },
+  // Info modal (Guide)
+  infoModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  infoModalContent: {
+    width: '100%',
+    maxWidth: 500,
+    height: Math.min(height * 0.82, 640),
+    backgroundColor: 'rgba(18, 18, 28, 0.98)',
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 215, 0, 0.35)',
+    overflow: 'hidden',
+    ...cardShadow,
+  },
+  infoModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 215, 0, 0.2)',
+  },
+  infoModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFD700',
+    letterSpacing: 0.5,
+  },
+  infoModalClose: {
+    padding: 4,
+  },
+  infoTabContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 215, 0, 0.12)',
+  },
+  infoTab: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.25)',
+  },
+  infoTabActive: {
+    backgroundColor: 'rgba(255, 215, 0, 0.16)',
+    borderColor: 'rgba(255, 215, 0, 0.55)',
+  },
+  infoTabText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.55)',
+  },
+  infoTabTextActive: {
+    color: '#FFD700',
+    fontWeight: '700',
+  },
+  infoHorizontalScroll: {
+    flex: 1,
+    minHeight: 320,
+  },
+  infoScreen: {
+    width: INFO_PAGE_WIDTH,
+    minHeight: 320,
+    alignSelf: 'stretch',
+  },
+  infoScroll: {
+    flex: 1,
+  },
+  infoContent: {
+    padding: 20,
+    paddingBottom: 28,
+  },
+  infoScreenTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFD700',
+    marginBottom: 12,
+    letterSpacing: 0.5,
+  },
+  infoSubtitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: 16,
+    lineHeight: 22,
+  },
+  infoSectionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: 'rgba(255, 215, 0, 0.9)',
+    marginTop: 14,
+    marginBottom: 6,
+  },
+  infoBody: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.82)',
+    lineHeight: 22,
+    marginBottom: 4,
+  },
+  infoTip: {
+    fontSize: 14,
+    color: 'rgba(255, 215, 0, 0.85)',
+    lineHeight: 22,
+    marginTop: 16,
+    fontStyle: 'italic',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(255, 215, 0, 0.08)',
+    borderRadius: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: 'rgba(255, 215, 0, 0.5)',
   },
 });

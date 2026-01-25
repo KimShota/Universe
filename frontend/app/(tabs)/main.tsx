@@ -96,7 +96,7 @@ export default function MainScreen() {
   const roadmapSteps = Array.from({ length: totalSteps }, (_, i) => {
       const isLeft = i % 2 === 0;
     const yPosition = 80 + i * 100;
-    const xPosition = isLeft ? width * 0.3 : width * 0.7;
+    const xPosition = isLeft ? width * 0.2 : width * 0.7;
 
     return {
       id: i,
