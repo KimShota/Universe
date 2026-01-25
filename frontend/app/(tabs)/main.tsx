@@ -7,18 +7,30 @@ import {
   ScrollView,
   Modal,
   Dimensions,
+  Image,
 } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { UniverseBackground } from '../../components/UniverseBackground';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import Svg, { Line, Circle } from 'react-native-svg';
+import Svg, { Line } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { playClickSound } from '../../utils/soundEffects';
 
 const { width } = Dimensions.get('window');
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+
+const PLANETS = [
+  require('../../Media/mercury.png'),
+  require('../../Media/venus.png'),
+  require('../../Media/earth.png'),
+  require('../../Media/mars.png'),
+  require('../../Media/jupiter.png'),
+  require('../../Media/saturn.png'),
+  require('../../Media/uranus.png'),
+  require('../../Media/neptune.png'),
+];
 
 export default function MainScreen() {
   const { user, logout, refreshUser } = useAuth();
@@ -78,7 +90,7 @@ export default function MainScreen() {
     }
   };
 
-  const totalSteps = 5;
+  const totalSteps = 365;
   const currentStep = user?.current_planet || 0;
 
   const roadmapSteps = Array.from({ length: totalSteps }, (_, i) => {
@@ -145,16 +157,6 @@ export default function MainScreen() {
                   return null;
                 })}
 
-                {roadmapSteps.map((step) => (
-                  <Circle
-                    key={`circle-${step.id}`}
-                    cx={step.x}
-                    cy={step.y}
-                    r="4"
-                    fill={step.completed ? "#4ade80" : step.current ? "#fbbf24" : "#6b7280"}
-                    opacity={0.8}
-                  />
-                ))}
               </Svg>
 
               {roadmapSteps.map((step) => (
@@ -172,12 +174,11 @@ export default function MainScreen() {
                   onPress={() => handlePlanetPress(step.id)}
                   disabled={!step.current || missionCompleted}
                 >
-                  <Text style={[
-                    styles.stepText,
-                    step.current && styles.stepTextCurrent,
-                  ]}>
-                    {step.id + 1}
-                  </Text>
+                  <Image
+                    source={PLANETS[step.id % PLANETS.length]}
+                    style={styles.planetImage}
+                    resizeMode="cover"
+                  />
                   {step.completed && <Text style={styles.checkmark}>✓</Text>}
                 </TouchableOpacity>
               ))}
@@ -450,27 +451,26 @@ const styles = StyleSheet.create({
   },
   stepCircle: {
     position: 'absolute',
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#1f2937',
-    borderWidth: 3,
-    borderColor: '#374151',
+    width: 100,
+    height: 100,
+    borderRadius: 25,
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
   },
-  stepCompleted: {
-    backgroundColor: '#065f46',
-    borderColor: '#4ade80',
+  planetImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 40,
   },
+  stepCompleted: {},
   stepCurrent: {
-    backgroundColor: '#78350f',
-    borderColor: '#fbbf24',
     shadowColor: '#fbbf24',
     shadowOpacity: 0.6,
   },
