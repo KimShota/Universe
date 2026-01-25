@@ -57,12 +57,17 @@ export default function CreatorUniverseScreen() {
     creators: '',
   });
 
-  // Edge screen state
-  const [uniqueness, setUniqueness] = useState({
-    pain: ['', '', ''],
-    passion: ['', '', ''],
-    experience: ['', '', ''],
-    skill: ['', '', ''],
+  // Edge screen state — start with 0 boxes per category; users add via + like Vision
+  const [uniqueness, setUniqueness] = useState<{
+    pain: string[];
+    passion: string[];
+    experience: string[];
+    skill: string[];
+  }>({
+    pain: [],
+    passion: [],
+    experience: [],
+    skill: [],
   });
 
   useEffect(() => {
@@ -96,13 +101,19 @@ export default function CreatorUniverseScreen() {
         setPsychographic(data.audience.psychographic || { struggle: '', desire: '', creators: '' });
       }
       
-      // Edge
-      if (data.edge) {
-        setUniqueness(data.edge.uniqueness || {
-          pain: ['', '', ''],
-          passion: ['', '', ''],
-          experience: ['', '', ''],
-          skill: ['', '', ''],
+      // Edge — start with 0 boxes; normalize legacy "3 empty" default to []
+      if (data.edge?.uniqueness) {
+        const u = data.edge.uniqueness as Record<string, string[]>;
+        const norm = (arr: unknown): string[] => {
+          if (!Array.isArray(arr)) return [];
+          if (arr.length === 3 && arr.every((s) => s === '')) return [];
+          return arr;
+        };
+        setUniqueness({
+          pain: norm(u.pain),
+          passion: norm(u.passion),
+          experience: norm(u.experience),
+          skill: norm(u.skill),
         });
       }
     } catch (error) {
@@ -110,9 +121,13 @@ export default function CreatorUniverseScreen() {
     }
   };
 
-  const saveUniverse = async (overrides?: { demographic?: typeof demographic }) => {
+  const saveUniverse = async (overrides?: {
+    demographic?: typeof demographic;
+    uniqueness?: typeof uniqueness;
+  }) => {
     try {
       const d = overrides?.demographic ?? demographic;
+      const u = overrides?.uniqueness ?? uniqueness;
       const sessionToken = await AsyncStorage.getItem('session_token');
       await fetch(`${BACKEND_URL}/api/creator-universe`, {
         method: 'PUT',
@@ -128,7 +143,7 @@ export default function CreatorUniverseScreen() {
             psychographic,
           },
           edge: {
-            uniqueness,
+            uniqueness: u,
           },
         }),
       });
@@ -165,8 +180,10 @@ export default function CreatorUniverseScreen() {
   };
 
   const addIdea = (pillarIndex: number) => {
+    const current = pillars[pillarIndex].ideas;
+    if (current.length >= 4) return;
     const newPillars = [...pillars];
-    newPillars[pillarIndex].ideas.push('');
+    newPillars[pillarIndex].ideas = [...current, ''];
     setPillars(newPillars);
   };
 
@@ -177,12 +194,29 @@ export default function CreatorUniverseScreen() {
     saveUniverse();
   };
 
-  // Edge screen functions
+  // Edge screen functions (mirror Vision: add/remove boxes per category)
   const updateUniquenessField = (category: keyof typeof uniqueness, index: number, value: string) => {
     const newUniqueness = { ...uniqueness };
     newUniqueness[category] = [...newUniqueness[category]];
     newUniqueness[category][index] = value;
     setUniqueness(newUniqueness);
+  };
+
+  const addUniquenessItem = (category: keyof typeof uniqueness) => {
+    if (uniqueness[category].length >= 4) return;
+    playClickSound();
+    const newUniqueness = { ...uniqueness };
+    newUniqueness[category] = [...newUniqueness[category], ''];
+    setUniqueness(newUniqueness);
+    saveUniverse({ uniqueness: newUniqueness });
+  };
+
+  const removeUniquenessItem = (category: keyof typeof uniqueness, index: number) => {
+    playClickSound();
+    const newUniqueness = { ...uniqueness };
+    newUniqueness[category] = newUniqueness[category].filter((_, i) => i !== index);
+    setUniqueness(newUniqueness);
+    saveUniverse({ uniqueness: newUniqueness });
   };
 
   return (
@@ -328,15 +362,17 @@ export default function CreatorUniverseScreen() {
                         </TouchableOpacity>
                       </View>
                     ))}
-                    <TouchableOpacity
-                      style={styles.addIdeaButton}
-                      onPress={() => {
-                        addIdea(pillarIndex);
-                        saveUniverse();
-                      }}
-                    >
-                      <Ionicons name="add-circle-outline" size={20} color="#FFD700" />
-                    </TouchableOpacity>
+                    {pillar.ideas.length < 4 && (
+                      <TouchableOpacity
+                        style={styles.addIdeaButton}
+                        onPress={() => {
+                          addIdea(pillarIndex);
+                          saveUniverse();
+                        }}
+                      >
+                        <Ionicons name="add-circle-outline" size={20} color="#FFD700" />
+                      </TouchableOpacity>
+                    )}
                   </View>
                 ))}
               </View>
@@ -401,6 +437,7 @@ export default function CreatorUniverseScreen() {
                           >
                             {row.map((r) => {
                               const selected = demographic.region === r;
+                              const isSmall = row.length === 2;
                               return (
                                 <TouchableOpacity
                                   key={r}
@@ -408,6 +445,7 @@ export default function CreatorUniverseScreen() {
                                     styles.regionChip,
                                     selected && styles.regionChipSelected,
                                     row.length === 1 ? styles.regionChipFull : styles.regionChipHalf,
+                                    isSmall && styles.regionChipSmall,
                                   ]}
                                   onPress={() => {
                                     playClickSound();
@@ -418,9 +456,21 @@ export default function CreatorUniverseScreen() {
                                   activeOpacity={0.8}
                                 >
                                   {selected && (
-                                    <Ionicons name="checkmark-circle" size={12} color="#FFD700" style={styles.regionChipCheck} />
+                                    <Ionicons
+                                      name="checkmark-circle"
+                                      size={isSmall ? 10 : 12}
+                                      color="#FFD700"
+                                      style={styles.regionChipCheck}
+                                    />
                                   )}
-                                  <Text style={[styles.regionChipText, selected && styles.regionChipTextSelected]} numberOfLines={1}>
+                                  <Text
+                                    style={[
+                                      styles.regionChipText,
+                                      selected && styles.regionChipTextSelected,
+                                      isSmall && styles.regionChipTextSmall,
+                                    ]}
+                                    numberOfLines={1}
+                                  >
                                     {r}
                                   </Text>
                                 </TouchableOpacity>
@@ -549,9 +599,11 @@ export default function CreatorUniverseScreen() {
 
               {/* Categories Row */}
               <View style={styles.pillarsRow}>
-                {(['Pain', 'Passion', 'Experience', 'Skill'] as const).map((category, index) => (
+                {(['Pain', 'Passion', 'Experience', 'Skill'] as const).map((category) => (
                   <View key={category} style={styles.pillarBox}>
-                    <Text style={styles.pillarTitle}>{category}</Text>
+                    <Text style={styles.pillarTitle} numberOfLines={1}>
+                      {category === 'Experience' ? 'Exp.' : category}
+                    </Text>
                   </View>
                 ))}
               </View>
@@ -566,25 +618,44 @@ export default function CreatorUniverseScreen() {
                 </Svg>
               </View>
 
-              {/* Input Fields Grid */}
+              {/* Input Fields Grid — add/remove boxes per category like Vision */}
               <View style={styles.ideasRow}>
-                {(['pain', 'passion', 'experience', 'skill'] as const).map((category, categoryIndex) => (
-                  <View key={category} style={styles.ideasColumn}>
-                    {uniqueness[category].map((value, index) => (
-                      <View key={index} style={styles.ideaBox}>
-                        <TextInput
-                          style={styles.ideaInput}
-                          value={value}
-                          onChangeText={(text) => updateUniquenessField(category, index, text)}
-                          onBlur={() => saveUniverse()}
-                          placeholder={`${category.charAt(0).toUpperCase() + category.slice(1)} ${index + 1}`}
-                          placeholderTextColor="rgba(255, 255, 255, 0.3)"
-                          multiline
-                        />
-                      </View>
-                    ))}
-                  </View>
-                ))}
+                {(['pain', 'passion', 'experience', 'skill'] as const).map((category) => {
+                  const label = category === 'experience' ? 'Exp.' : category.charAt(0).toUpperCase() + category.slice(1);
+                  return (
+                    <View key={category} style={styles.ideasColumn}>
+                      {uniqueness[category].map((value, index) => (
+                        <View key={index} style={styles.ideaBoxWrapper}>
+                          <View style={styles.ideaBox}>
+                            <TextInput
+                              style={styles.ideaInput}
+                              value={value}
+                              onChangeText={(text) => updateUniquenessField(category, index, text)}
+                              onBlur={() => saveUniverse()}
+                              placeholder={`${label} ${index + 1}`}
+                              placeholderTextColor="rgba(255, 255, 255, 0.3)"
+                              multiline
+                            />
+                          </View>
+                          <TouchableOpacity
+                            style={styles.deleteIdeaButton}
+                            onPress={() => removeUniquenessItem(category, index)}
+                          >
+                            <Ionicons name="close-circle" size={18} color="#ff4444" />
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+                      {uniqueness[category].length < 4 && (
+                        <TouchableOpacity
+                          style={styles.addIdeaButton}
+                          onPress={() => addUniquenessItem(category)}
+                        >
+                          <Ionicons name="add-circle-outline" size={20} color="#FFD700" />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  );
+                })}
               </View>
             </ScrollView>
           </View>
@@ -826,6 +897,11 @@ const styles = StyleSheet.create({
   regionChipHalf: {
     flex: 1,
   },
+  regionChipSmall: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+  },
   regionChipSelected: {
     backgroundColor: 'rgba(255, 215, 0, 0.16)',
     borderColor: 'rgba(255, 215, 0, 0.6)',
@@ -841,6 +917,9 @@ const styles = StyleSheet.create({
   regionChipTextSelected: {
     color: '#FFD700',
     fontWeight: '700',
+  },
+  regionChipTextSmall: {
+    fontSize: 11,
   },
   ageRangeRow: {
     flexDirection: 'row',
