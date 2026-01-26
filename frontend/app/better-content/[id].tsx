@@ -317,8 +317,8 @@ A vlog format can work for education.`,
   },
   {
     id: 10,
-    title: 'Screen 10 — Silent Film Case Study (Jun Yuh)',
-    shortTitle: 'Silent Film Case Study (Jun Yuh)',
+    title: 'Screen 10 — Silent Film Case Study',
+    shortTitle: 'Silent Film Case Study',
     icon: 'film-outline',
     content: `Example: Silent film storytelling
 

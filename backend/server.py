@@ -81,8 +81,8 @@ class CreatorUniverse(BaseModel):
     user_id: str
     overarching_goal: str = ""
     content_pillars: List[Dict[str, Union[str, List[str]]]] = []
-    audience: Optional[Dict] = None
-    edge: Optional[Dict] = None
+    avatar: Optional[Dict] = None
+    identity: Optional[Dict] = None
     updated_at: datetime
 
 # Content Tips Models
@@ -116,8 +116,8 @@ class SOSCompleteRequest(BaseModel):
 class UpdateCreatorUniverseRequest(BaseModel):
     overarching_goal: Optional[str] = None
     content_pillars: Optional[List[Dict]] = None
-    audience: Optional[Dict] = None
-    edge: Optional[Dict] = None
+    avatar: Optional[Dict] = None
+    identity: Optional[Dict] = None
 
 class AnalysisEntry(BaseModel):
     id: str
@@ -281,8 +281,8 @@ async def exchange_session(session_id: str, response: Response):
                         {"title": "Content Pillar 3", "ideas": []},
                         {"title": "Content Pillar 4", "ideas": []}
                     ],
-                    audience=None,
-                    edge=None,
+                    avatar=None,
+                    identity=None,
                     updated_at=datetime.now(timezone.utc)
                 )
                 await db.creator_universe.insert_one(creator_universe.dict())
@@ -506,8 +506,8 @@ async def get_creator_universe(current_user: User = Depends(get_current_user)):
                 {"title": "Content Pillar 3", "ideas": []},
                 {"title": "Content Pillar 4", "ideas": []}
             ],
-            audience=None,
-            edge=None,
+            avatar=None,
+            identity=None,
             updated_at=datetime.now(timezone.utc)
         )
         await db.creator_universe.insert_one(universe.dict())
@@ -529,11 +529,11 @@ async def update_creator_universe(
     if request.content_pillars is not None:
         update_data["content_pillars"] = request.content_pillars
     
-    if request.audience is not None:
-        update_data["audience"] = request.audience
+    if request.avatar is not None:
+        update_data["avatar"] = request.avatar
     
-    if request.edge is not None:
-        update_data["edge"] = request.edge
+    if request.identity is not None:
+        update_data["identity"] = request.identity
     
     await db.creator_universe.update_one(
         {"user_id": current_user.user_id},

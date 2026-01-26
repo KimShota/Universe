@@ -1,10 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Image } from 'react-native';
 import { UniverseBackground } from '../../components/UniverseBackground';
 import { CONTENT_TIPS } from '../../constants/content';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { playClickSound } from '../../utils/soundEffects';
+
+const POLARBEAR = require('../../Media/polarbear1.png');
 
 export default function ContentTipsScreen() {
   const router = useRouter();
@@ -22,7 +24,7 @@ export default function ContentTipsScreen() {
           >
             <Ionicons name="arrow-back" size={28} color="#FFD700" />
           </TouchableOpacity>
-          <Text style={styles.starCharacter}>⭐</Text>
+          <Image source={POLARBEAR} style={styles.polarbearImage} resizeMode="contain" />
           <Text style={styles.title}>Content Tips</Text>
         </View>
 
@@ -70,8 +72,9 @@ const styles = StyleSheet.create({
     top: 24,
     zIndex: 1,
   },
-  starCharacter: {
-    fontSize: 48,
+  polarbearImage: {
+    width: 56,
+    height: 56,
     marginBottom: 8,
   },
   title: {

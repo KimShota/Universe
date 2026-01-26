@@ -43,9 +43,6 @@ export default function SOSScreen() {
           >
             <Ionicons name="arrow-back" size={28} color="#FFD700" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.helpButton}>
-            <Ionicons name="help-circle-outline" size={28} color="#FFD700" />
-          </TouchableOpacity>
         </View>
 
         <View style={styles.content}>
@@ -92,9 +89,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   backButton: {
-    zIndex: 1,
-  },
-  helpButton: {
     zIndex: 1,
   },
   content: {

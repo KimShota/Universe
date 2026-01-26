@@ -6,9 +6,12 @@ import {
   ScrollView,
   TouchableOpacity,
   SafeAreaView,
+  Image,
 } from 'react-native';
 import { UniverseBackground } from '../../components/UniverseBackground';
 import { useRouter } from 'expo-router';
+
+const POLARBEAR = require('../../Media/polarbear1.png');
 import { Ionicons } from '@expo/vector-icons';
 import { playClickSound } from '../../utils/soundEffects';
 
@@ -41,7 +44,7 @@ export default function HowToScriptScreen() {
           >
             <Ionicons name="arrow-back" size={28} color="#FFD700" />
           </TouchableOpacity>
-          <Text style={styles.starCharacter}>⭐</Text>
+          <Image source={POLARBEAR} style={styles.polarbearImage} resizeMode="contain" />
           <Text style={styles.title}>How to Script</Text>
         </View>
 
@@ -89,8 +92,9 @@ const styles = StyleSheet.create({
     top: 24,
     zIndex: 1,
   },
-  starCharacter: {
-    fontSize: 48,
+  polarbearImage: {
+    width: 56,
+    height: 56,
     marginBottom: 8,
   },
   title: {

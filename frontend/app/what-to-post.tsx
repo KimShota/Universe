@@ -6,9 +6,12 @@ import {
   ScrollView,
   TouchableOpacity,
   SafeAreaView,
+  Image,
 } from 'react-native';
 import { UniverseBackground } from '../components/UniverseBackground';
 import { useRouter } from 'expo-router';
+
+const POLARBEAR = require('../Media/polarbear1.png');
 import { Ionicons } from '@expo/vector-icons';
 import { playClickSound } from '../utils/soundEffects';
 
@@ -46,7 +49,7 @@ export default function WhatToPostScreen() {
           >
             <Ionicons name="arrow-back" size={28} color="#FFD700" />
           </TouchableOpacity>
-          <Text style={styles.starCharacter}>⭐</Text>
+          <Image source={POLARBEAR} style={styles.polarbearImage} resizeMode="contain" />
           <Text style={styles.title}>What to Post</Text>
         </View>
 
@@ -94,8 +97,9 @@ const styles = StyleSheet.create({
     top: 24,
     zIndex: 1,
   },
-  starCharacter: {
-    fontSize: 48,
+  polarbearImage: {
+    width: 100,
+    height: 100,
     marginBottom: 8,
   },
   title: {

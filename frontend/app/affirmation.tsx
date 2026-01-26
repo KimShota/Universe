@@ -294,7 +294,7 @@ export default function AffirmationScreen() {
                 disabled={!affirmations.every((a) => a.trim())}
                 activeOpacity={0.85}
               >
-                <Text style={styles.homeButtonText}>Submit</Text>
+                <Text style={styles.homeButtonText}>Shoot Stars</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -314,7 +314,7 @@ export default function AffirmationScreen() {
               </View>
 
               <TouchableOpacity style={styles.modalButton} onPress={handleGoHome} activeOpacity={0.85}>
-                <Text style={styles.modalButtonText}>Submit</Text>
+                <Text style={styles.modalButtonText}>Shoot Stars</Text>
               </TouchableOpacity>
             </View>
           </View>

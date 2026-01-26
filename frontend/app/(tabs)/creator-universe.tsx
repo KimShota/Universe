@@ -29,7 +29,7 @@ const REGION_LAYOUT: string[][] = [
   ['Middle East'],
 ];
 
-type ScreenType = 'vision' | 'audience' | 'edge';
+type ScreenType = 'vision' | 'avatar' | 'identity';
 type InfoScreenType = 'vision' | 'avatar' | 'identity';
 
 export default function CreatorUniverseScreen() {
@@ -49,7 +49,7 @@ export default function CreatorUniverseScreen() {
     { title: 'Content Pillar 4', ideas: [''] },
   ]);
 
-  // Audience screen state — region supports multiple selections
+  // Avatar screen state — region supports multiple selections
   const [demographic, setDemographic] = useState<{
     region: string[];
     ageMin: string;
@@ -69,7 +69,7 @@ export default function CreatorUniverseScreen() {
     creators: '',
   });
 
-  // Edge screen state — start with 0 boxes per category; users add via + like Vision
+  // Identity screen state — start with 0 boxes per category; users add via + like Vision
   const [identity, setIdentity] = useState<{
     pain: string[];
     passion: string[];
@@ -100,38 +100,38 @@ export default function CreatorUniverseScreen() {
         setPillars(data.content_pillars);
       }
       
-      // Audience
-      if (data.audience) {
-        const d = data.audience.demographic || {};
-        const r = d.region;
-        const regionArr = Array.isArray(r)
-          ? r
-          : typeof r === 'string' && r.trim()
-            ? [r.trim()]
-            : [];
+      // Avatar — support legacy audience
+      const avatarRaw = data as { avatar?: { demographic?: Record<string, unknown>; psychographic?: { struggle?: string; desire?: string; creators?: string } }; audience?: { demographic?: Record<string, unknown>; psychographic?: { struggle?: string; desire?: string; creators?: string } } };
+      const avatarData = avatarRaw.avatar ?? avatarRaw.audience;
+      if (avatarData) {
+        const d = avatarData.demographic || {};
+        const r = (d as { region?: unknown }).region;
+        const regionArr = Array.isArray(r) ? r as string[] : typeof r === 'string' && r.trim() ? [r.trim()] : [];
         setDemographic({
           region: regionArr,
-          ageMin: d.ageMin ?? '',
-          ageMax: d.ageMax ?? '',
-          genderMale: d.genderMale ?? '',
-          genderFemale: d.genderFemale ?? '',
+          ageMin: String((d as { ageMin?: string }).ageMin ?? ''),
+          ageMax: String((d as { ageMax?: string }).ageMax ?? ''),
+          genderMale: String((d as { genderMale?: string }).genderMale ?? ''),
+          genderFemale: String((d as { genderFemale?: string }).genderFemale ?? ''),
         });
-        setPsychographic(data.audience.psychographic || { struggle: '', desire: '', creators: '' });
+        const psych = avatarData.psychographic;
+        setPsychographic({ struggle: psych?.struggle ?? '', desire: psych?.desire ?? '', creators: psych?.creators ?? '' });
       }
       
-      // Edge — start with 0 boxes; normalize legacy "3 empty" default to []
-      const edgeData = (data.edge?.identity ?? data.edge?.uniqueness) as Record<string, string[]> | undefined;
-      if (edgeData) {
+      // Identity — start with 0 boxes; normalize legacy "3 empty" default to []; support legacy edge
+      const identityRaw = data as { identity?: Record<string, string[]>; edge?: { identity?: Record<string, string[]>; uniqueness?: Record<string, string[]> } };
+      const identityData = identityRaw.identity ?? identityRaw.edge?.identity ?? identityRaw.edge?.uniqueness;
+      if (identityData) {
         const norm = (arr: unknown): string[] => {
           if (!Array.isArray(arr)) return [];
           if (arr.length === 3 && arr.every((s) => s === '')) return [];
           return arr;
         };
         setIdentity({
-          pain: norm(edgeData.pain),
-          passion: norm(edgeData.passion),
-          experience: norm(edgeData.experience),
-          skill: norm(edgeData.skill),
+          pain: norm(identityData.pain),
+          passion: norm(identityData.passion),
+          experience: norm(identityData.experience),
+          skill: norm(identityData.skill),
         });
       }
     } catch (error) {
@@ -156,13 +156,11 @@ export default function CreatorUniverseScreen() {
         body: JSON.stringify({
           overarching_goal: goal,
           content_pillars: pillars,
-          audience: {
+          avatar: {
             demographic: d,
             psychographic,
           },
-          edge: {
-            identity: u,
-          },
+          identity: u,
         }),
       });
     } catch (error) {
@@ -173,14 +171,14 @@ export default function CreatorUniverseScreen() {
   const handleScreenChange = (screen: ScreenType) => {
     playClickSound();
     setActiveScreen(screen);
-    const screenIndex = screen === 'vision' ? 0 : screen === 'audience' ? 1 : 2;
+    const screenIndex = screen === 'vision' ? 0 : screen === 'avatar' ? 1 : 2;
     scrollViewRef.current?.scrollTo({ x: screenIndex * width, animated: true });
   };
 
   const handleScroll = (event: any) => {
     const offsetX = event.nativeEvent.contentOffset.x;
     const screenIndex = Math.round(offsetX / width);
-    const screens: ScreenType[] = ['vision', 'audience', 'edge'];
+    const screens: ScreenType[] = ['vision', 'avatar', 'identity'];
     setActiveScreen(screens[screenIndex]);
   };
 
@@ -236,7 +234,7 @@ export default function CreatorUniverseScreen() {
     saveUniverse();
   };
 
-  // Edge screen functions (mirror Vision: add/remove boxes per category)
+  // Identity screen functions (mirror Vision: add/remove boxes per category)
   const updateIdentityField = (category: keyof typeof identity, index: number, value: string) => {
     const next = { ...identity };
     next[category] = [...next[category]];
@@ -288,21 +286,21 @@ export default function CreatorUniverseScreen() {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.tabButton, activeScreen === 'audience' && styles.tabButtonActive]}
-              onPress={() => handleScreenChange('audience')}
+              style={[styles.tabButton, activeScreen === 'avatar' && styles.tabButtonActive]}
+              onPress={() => handleScreenChange('avatar')}
               activeOpacity={0.8}
             >
-              <Text style={[styles.tabText, activeScreen === 'audience' && styles.tabTextActive]}>
-                Audience
+              <Text style={[styles.tabText, activeScreen === 'avatar' && styles.tabTextActive]}>
+                Avatar
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.tabButton, activeScreen === 'edge' && styles.tabButtonActive]}
-              onPress={() => handleScreenChange('edge')}
+              style={[styles.tabButton, activeScreen === 'identity' && styles.tabButtonActive]}
+              onPress={() => handleScreenChange('identity')}
               activeOpacity={0.8}
             >
-              <Text style={[styles.tabText, activeScreen === 'edge' && styles.tabTextActive]}>
-                Edge
+              <Text style={[styles.tabText, activeScreen === 'identity' && styles.tabTextActive]}>
+                Identity
               </Text>
             </TouchableOpacity>
           </View>
@@ -421,14 +419,14 @@ export default function CreatorUniverseScreen() {
             </ScrollView>
           </View>
 
-          {/* Audience Screen */}
+          {/* Avatar Screen */}
           <View style={styles.screen}>
-            <ScrollView style={styles.scrollView} contentContainerStyle={[styles.contentContainer, styles.contentContainerAudience]}>
+            <ScrollView style={styles.scrollView} contentContainerStyle={[styles.contentContainer, styles.contentContainerAvatar]}>
               {/* Target Avatar */}
-              <View style={[styles.goalContainer, styles.goalContainerAudience]}>
+              <View style={[styles.goalContainer, styles.goalContainerAvatar]}>
                 <View style={styles.goalLabelRow}>
                   <Ionicons name="people-outline" size={18} color="#FFD700" />
-                  <Text style={[styles.goalLabel, styles.goalLabelAudience]}>Target Avatar</Text>
+                  <Text style={[styles.goalLabel, styles.goalLabelAvatar]}>Target Avatar</Text>
                 </View>
               </View>
 
@@ -442,14 +440,14 @@ export default function CreatorUniverseScreen() {
 
               {/* Demographic and Psychographic Row */}
               <View style={styles.pillarsRow}>
-                <View style={styles.audienceBox}>
-                  <View style={styles.audienceCategoryHeader}>
+                <View style={styles.avatarBox}>
+                  <View style={styles.avatarCategoryHeader}>
                     <Ionicons name="earth-outline" size={14} color="#FFD700" />
                     <Text style={styles.pillarTitle}>Demographic</Text>
                   </View>
                 </View>
-                <View style={styles.audienceBox}>
-                  <View style={styles.audienceCategoryHeader}>
+                <View style={styles.avatarBox}>
+                  <View style={styles.avatarCategoryHeader}>
                     <Ionicons name="heart-outline" size={14} color="#FFD700" />
                     <Text style={styles.pillarTitle}>Psychographic</Text>
                   </View>
@@ -465,12 +463,12 @@ export default function CreatorUniverseScreen() {
               </View>
 
               {/* Input Fields Grid */}
-              <View style={[styles.ideasRow, styles.ideasRowAudience]}>
+              <View style={[styles.ideasRow, styles.ideasRowAvatar]}>
                 {/* Demographic Column */}
-                <View style={styles.audienceColumn}>
-                  <View style={styles.audiencePanel}>
-                    <View style={styles.audienceSection}>
-                      <Text style={styles.audienceFieldLabel}>Region</Text>
+                <View style={styles.avatarColumn}>
+                  <View style={styles.avatarPanel}>
+                    <View style={styles.avatarSection}>
+                      <Text style={styles.avatarFieldLabel}>Region</Text>
                       <View style={styles.regionGrid}>
                         {REGION_LAYOUT.map((row, rowIndex) => (
                           <View
@@ -527,8 +525,8 @@ export default function CreatorUniverseScreen() {
                         ))}
                       </View>
                     </View>
-                    <View style={styles.audienceSection}>
-                      <Text style={styles.audienceFieldLabel}>Age range</Text>
+                    <View style={styles.avatarSection}>
+                      <Text style={styles.avatarFieldLabel}>Age range</Text>
                       <View style={styles.ageRangeRow}>
                         <TextInput
                           style={styles.ageInput}
@@ -551,8 +549,8 @@ export default function CreatorUniverseScreen() {
                         />
                       </View>
                     </View>
-                    <View style={styles.audienceSection}>
-                      <Text style={styles.audienceFieldLabel}>Male : Female ratio</Text>
+                    <View style={styles.avatarSection}>
+                      <Text style={styles.avatarFieldLabel}>Male : Female ratio</Text>
                       <View style={styles.genderRatioRow}>
                         <TextInput
                           style={styles.genderInput}
@@ -579,10 +577,10 @@ export default function CreatorUniverseScreen() {
                 </View>
 
                 {/* Psychographic Column */}
-                <View style={styles.audienceColumn}>
-                  <View style={styles.audiencePanel}>
-                    <View style={styles.audienceSection}>
-                      <Text style={styles.audienceFieldLabel}>Struggle</Text>
+                <View style={styles.avatarColumn}>
+                  <View style={styles.avatarPanel}>
+                    <View style={styles.avatarSection}>
+                      <Text style={styles.avatarFieldLabel}>Struggle</Text>
                       <TextInput
                         style={styles.psychographicInput}
                         value={psychographic.struggle}
@@ -593,8 +591,8 @@ export default function CreatorUniverseScreen() {
                         multiline
                       />
                     </View>
-                    <View style={styles.audienceSection}>
-                      <Text style={styles.audienceFieldLabel}>Desire</Text>
+                    <View style={styles.avatarSection}>
+                      <Text style={styles.avatarFieldLabel}>Desire</Text>
                       <TextInput
                         style={styles.psychographicInput}
                         value={psychographic.desire}
@@ -605,8 +603,8 @@ export default function CreatorUniverseScreen() {
                         multiline
                       />
                     </View>
-                    <View style={styles.audienceSection}>
-                      <Text style={styles.audienceFieldLabel}>Creators they consume</Text>
+                    <View style={styles.avatarSection}>
+                      <Text style={styles.avatarFieldLabel}>Creators they consume</Text>
                       <TextInput
                         style={styles.psychographicInput}
                         value={psychographic.creators}
@@ -623,7 +621,7 @@ export default function CreatorUniverseScreen() {
             </ScrollView>
           </View>
 
-          {/* Edge Screen */}
+          {/* Identity Screen */}
           <View style={styles.screen}>
             <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
               {/* Identity */}
@@ -926,10 +924,10 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.85)',
     letterSpacing: 0.5,
   },
-  goalContainerAudience: {
+  goalContainerAvatar: {
     marginBottom: 6,
   },
-  goalLabelAudience: {
+  goalLabelAvatar: {
     fontSize: 14,
     fontWeight: '700',
     color: 'rgba(255, 255, 255, 0.95)',
@@ -976,7 +974,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...cardShadow,
   },
-  audienceBox: {
+  avatarBox: {
     flex: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.07)',
     borderWidth: 1.5,
@@ -993,7 +991,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
   },
-  audienceCategoryHeader: {
+  avatarCategoryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1009,32 +1007,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     gap: 8,
   },
-  ideasRowAudience: {
+  ideasRowAvatar: {
     gap: 12,
     paddingHorizontal: 2,
   },
-  contentContainerAudience: {
+  contentContainerAvatar: {
     paddingBottom: 40,
   },
   ideasColumn: {
     flex: 1,
     gap: 10,
   },
-  audienceColumn: {
+  avatarColumn: {
     flex: 1,
     gap: 0,
   },
-  audiencePanel: {
+  avatarPanel: {
     backgroundColor: 'rgba(255, 255, 255, 0.04)',
     borderRadius: 16,
     padding: 14,
     borderWidth: 1,
     borderColor: 'rgba(255, 215, 0, 0.2)',
   },
-  audienceSection: {
+  avatarSection: {
     marginBottom: 14,
   },
-  audienceFieldLabel: {
+  avatarFieldLabel: {
     fontSize: 11,
     fontWeight: '700',
     color: 'rgba(255, 215, 0, 0.95)',
