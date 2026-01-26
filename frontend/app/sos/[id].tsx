@@ -22,149 +22,164 @@ import Svg, { Line } from 'react-native-svg';
 const { width } = Dimensions.get('window');
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
-// 7-screen flow content for "Hate comments hurt"
+// 9-screen flow content for "Hate comments hurt"
 const HATE_FLOW_SCREENS = [
   {
     id: 1,
-    message: "Hate comments can really hurt. Especially when you've put your heart into what you share.",
+    message: "Let's be honest. Hate comments hurt. Even when you try to ignore them, they can stay in your mind longer than they should. That feeling is normal. You're human.",
   },
   {
     id: 2,
-    message: "Feeling upset doesn't mean you're weak. It means you care — and that's okay.",
+    message: "Hate comments are not about you. They are a reflection of who they are, their anger, insecurity, or frustration. They project their emotions onto you because they don't know how to deal with them themselves.",
   },
   {
     id: 3,
-    message: "Most hate comments aren't about you. They're often a reflection of someone else's frustration or insecurity.",
+    message: "Here's something important to remember: Those people are not doing more than you. You are already ahead of them. People who are building don't waste time tearing others down.",
   },
   {
     id: 4,
-    message: "You're never judged by someone doing more than you. It's almost always from those doing less.",
+    message: "Don't let someone else's negativity: control your emotions, slow your progress, and stop you from posting. Your growth is too valuable to be paused by that negativity.",
   },
   {
     id: 5,
-    message: "You don't need to explain yourself or fight back. Your energy is more valuable than that.",
+    message: "If someone is negative or disrespectful to you, unfollow them immediately. Protecting your mental space is the highest priority.",
   },
   {
     id: 6,
-    message: "Your role isn't to please everyone. It's to show up for the people who need what you share.",
+    message: "This also applies to friends. If your friends constantly discourage you, mock your goals, or make you doubt yourself… Ask yourself: Are they truly supporting you? Real friends support your growth, even when they don't fully understand it.",
   },
   {
     id: 7,
-    message: "You're still here. And one comment doesn't get to decide your future.",
+    message: "Sometimes, even family members won't support you. That's painful, but it's normal. Not everyone will understand your vision. That's why trusting yourself matters more than approval.",
+  },
+  {
+    id: 8,
+    message: "Building a personal brand is one of the most valuable assets in history. It compounds. It opens doors. It creates freedom. Don't let temporary comments destroy long-term value.",
+  },
+  {
+    id: 9,
+    message: "Also, remember that not every negative comment is bad. Some may sound harsh, but carry lessons you can learn from. Take what helps you. Ignore what doesn't. Growth comes from discernment.",
   },
 ];
 
 // 8-screen flow content for "I'm scared of what other people will think"
-const REACTIONS_FLOW_SCREENS = [
+type ReactionsFlowScreen = {
+  id: number;
+  message: string;
+  isActionScreen?: boolean;
+  actionOptions?: string[];
+  actionNote?: string;
+};
+const REACTIONS_FLOW_SCREENS: ReactionsFlowScreen[] = [
   {
     id: 1,
-    message: "If you're scared of what others might think, there's nothing wrong with you.\n\nYou're not broken. You're human.",
+    message: "It's completely okay to feel scared before posting content for the first time. Fear doesn't mean you're weak. It means you're stepping outside your comfort zone. Every confident creator you admire once felt this exact same fear.",
   },
   {
     id: 2,
-    message: "This fear exists because humans evolved to belong. Caring about others' opinions once helped us survive.\n\nYour brain is trying to protect you.",
+    message: "Here's a brutal truth. No one is thinking about you as much as you think they are. People are too busy worrying about themselves.",
   },
   {
     id: 3,
-    message: "Right now, your body reacts as if judgment is dangerous.\n\nBut posting content isn't a threat — even if it feels that way.\n\nYou are safe in this moment.",
+    message: 'You might think: "Everyone is watching me." "Everyone thinks I\'m cringey." But that\'s not reality. Most people are thinking about themselves. They have their own worries.',
   },
   {
     id: 4,
-    message: "Sometimes this fear comes from past moments of rejection.\n\nThose experiences mattered — and it's okay that they still echo.\n\nThey don't define who you are now.",
+    message: 'In fact, many people who see your content are quietly thinking: "I wish I had the courage to do that." Some won\'t admit it, but they\'re jealous because you\'re TRYING.',
   },
   {
     id: 5,
-    message: "Fear can make you hesitate, and hesitation can make the fear feel stronger.\n\nThis loop isn't your fault.",
+    message: "Being real doesn't make you cringey. Showing your struggles doesn't make you weak. It makes you human. And humans connect with honesty, not perfection. So, be yourself when you create content.",
   },
   {
     id: 6,
-    message: "Fear of judgment lives in thoughts, not facts.\n\nAnd thoughts can be questioned — gently, at your own pace.\n\nYou don't have to obey every thought.",
+    message: "When you show up as your true self, you're not just posting content. You're building a personal brand. You're creating connections. You're helping someone feel less alone. That matters more than views.",
   },
   {
     id: 7,
-    message: "Let's try something small — no pressure, no posting required.",
-    isActionScreen: true,
-    actionOptions: [
-      "Write a post but don't publish it",
-      "Record a video just for yourself",
-      "Share something honest with one trusted person",
-      "Save an idea for later",
-    ],
-    actionNote: "Small actions weaken fear. Avoidance strengthens it.",
+    message: "You don't succeed because you're fearless. You succeed because you keep posting anyway. You learn. You improve. You stay consistent. Confidence comes after action.",
   },
   {
     id: 8,
-    message: "You don't need approval to start.\n\nBeing true to yourself is already enough.\n\nYou're allowed to take up space.",
+    message: "You will never be judged by people doing more than you. Judgment almost always comes from people doing less. So keep going. The right people are watching, and they're rooting for you.",
   },
 ];
 
-// 7-screen flow content for "Nothing seems to work"
+// 8-screen flow content for "Nothing seems to work"
 const STUCK_FLOW_SCREENS = [
   {
     id: 1,
-    message: "When nothing seems to work, it's exhausting.\n\nPutting in effort without seeing results hurts.\n\nYou're not imagining this feeling.",
+    message: 'There are moments when you think: "Nothing is working." "I\'m not going to succeed." "Posting isn\'t worth it… I should just quit." If you feel this way, pause for a second and read this. This moment happens to everyone.',
   },
   {
     id: 2,
-    message: "Almost every creator you admire\nfelt invisible for a long time.\n\nThis phase isn't failure — it's the beginning.",
+    message: "Success doesn't always come fast. It might take: one month, one year, two years or even five years. That doesn't mean you're failing. It means you're early.",
   },
   {
     id: 3,
-    message: "Low views don't mean your content is bad.\nThey mean you're early.\n\nEvery post is data. Not a verdict.",
+    message: "It took MrBeast around 7 to 8 years to succeed. Years of posting. Years of trying. Years of seeing almost no results. He didn't win because he was lucky. He won because he never quit. That's how you win content creation.",
   },
   {
     id: 4,
-    message: "Confidence and quality don't come first.\nThey come from doing it many times.\n\nEvery post teaches you something — even the quiet ones.",
+    message: "Most days won't feel exciting. Some days, it will feel like nothing has changed. No growth. No validation. No progress. But progress is happening quietly, even when you can't see it yet.",
   },
   {
     id: 5,
-    message: "The creators you look up to\nweren't built in weeks or months.\n\nIt took one year. Two years. Sometimes five.\nThat time is normal — not a problem.",
+    message: "Always think in terms of the long game. If success came instantly, dreams wouldn't be meaningful. Dreams are exciting because they're hard. Because they demand patience. Because they test your commitment.",
   },
   {
     id: 6,
-    message: "When motivation fades, systems carry you.\nThat's why Universe exists.\n\nYou don't need a viral post.\nYou need a process you can return to.",
+    message: "There will be obstacles for sure. There will be slow periods for sure. But if you know deep down that you will succeed, then you might as well enjoy the journey. Don't suffer through the process. Grow through it.",
   },
   {
     id: 7,
-    message: "You don't become a creator after success.\nYou become one by showing up consistently.\n\nDocument your life. Follow the system.\nFuture you is built one post at a time.",
+    message: "The shortest path to success is not talent. It's not motivation. It's not luck. It's consistency. Showing up again. Even when it's boring. Even when it feels pointless.",
+  },
+  {
+    id: 8,
+    message: "If you keep posting consistently, and keep improving step by step, success becomes inevitable. Trust the process. Trust the system. Trust yourself.",
   },
 ];
 
-// 7-screen flow content for "I have no energy to post"
-const TIRED_FLOW_SCREENS = [
+// 8-screen flow content for "I have no energy to post"
+type TiredFlowScreen = {
+  id: number;
+  message: string;
+  isActionScreen?: boolean;
+  actionOptions?: string[];
+};
+const TIRED_FLOW_SCREENS: TiredFlowScreen[] = [
   {
     id: 1,
-    message: "If you feel like you have no energy to post, you're not lazy.\n\nYou're human — and this happens to every creator.",
+    message: "I know you're tired. It's almost bedtime. You've already done everything you needed to do today. All you want is to sleep.",
   },
   {
     id: 2,
-    message: "Posting doesn't mean creating something high-quality every day.\n\nConsistency is about showing up — not being perfect.",
+    message: 'Right now, you might be thinking: "Every post needs to be perfect." "If I can\'t do it properly, I shouldn\'t post at all." But that\'s not true.',
   },
   {
     id: 3,
-    message: "Every successful creator mixes high-effort and low-effort content.\n\nEasy posts on low-energy days are part of the process — not a failure.",
+    message: "When you're busy or exhausted, you don't need a perfect post. You can simply: post a B-roll with one honest line of text and value in the caption, or record a talking-head video with no script. Showing up imperfectly is still showing up.",
   },
   {
     id: 4,
-    message: "On days like this, it's enough to:",
-    isActionScreen: true,
-    actionOptions: [
-      "Post a B-roll with one line of text",
-      "Share value in the caption only",
-      "Record a talking head with no script",
-    ],
+    message: "Some of the most relatable content is made when you're tired. No edits. No overthinking. Just real energy. Your audience connects with you, not perfection.",
   },
   {
     id: 5,
-    message: "You can also repost something you shared weeks or months ago.\n\nMost people didn't see it the first time — and it still matters.",
+    message: "Here's a secret most people don't realize: Famous creators don't create content every single day. They plan ahead. They batch. They work smarter, not harder.",
   },
   {
     id: 6,
-    message: "The creators who win aren't the ones who go all-out every day.\n\nThey're the ones who keep showing up — even on low-energy days.",
+    message: "Batching means: scripting multiple posts at once, filming multiple videos in one session, resting on the days you don't have energy. This is how creators stay consistent without burning out.",
   },
   {
     id: 7,
-    message: "Today doesn't need your best.\n\nIt just needs you to show up in the smallest way possible.",
+    message: "You don't need to post daily. Aim for at least 4 posts a week. That's enough to: build trust, create connections, stay visible. Consistency beats intensity.",
+  },
+  {
+    id: 8,
+    message: "Not all content needs to be polished. In fact, imperfection is more beautiful than perfection. It makes you relatable. It makes you human. It deepens your connection with your audience.",
   },
 ];
 
@@ -177,8 +192,8 @@ export default function SOSFlowScreen() {
   const [step, setStep] = useState(1); // 1: Explanation, 2: Black Hole, 3: Affirmations
   const [hateFlowStep, setHateFlowStep] = useState(1); // 1-7 for hate flow
   const [reactionsFlowStep, setReactionsFlowStep] = useState(1); // 1-8 for reactions flow
-  const [stuckFlowStep, setStuckFlowStep] = useState(1); // 1-7 for stuck flow
-  const [tiredFlowStep, setTiredFlowStep] = useState(1); // 1-7 for tired flow
+  const [stuckFlowStep, setStuckFlowStep] = useState(1); // 1-8 for stuck flow
+  const [tiredFlowStep, setTiredFlowStep] = useState(1); // 1-8 for tired flow
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
   const [asteroids, setAsteroids] = useState(['', '', '']);
   const [affirmations, setAffirmations] = useState(['', '', '', '']);
@@ -305,10 +320,10 @@ export default function SOSFlowScreen() {
     }
   };
 
-  // Special 7-screen flow for "tired" issue
+  // Special 8-screen flow for "tired" issue
   if (id === 'tired') {
     const currentScreen = TIRED_FLOW_SCREENS[tiredFlowStep - 1];
-    const isLastScreen = tiredFlowStep === 7;
+    const isLastScreen = tiredFlowStep === TIRED_FLOW_SCREENS.length;
     const isActionScreen = currentScreen.isActionScreen || false;
 
     return (
@@ -407,10 +422,10 @@ export default function SOSFlowScreen() {
     );
   }
 
-  // Special 7-screen flow for "stuck" issue
+  // Special 8-screen flow for "stuck" issue
   if (id === 'stuck') {
     const currentScreen = STUCK_FLOW_SCREENS[stuckFlowStep - 1];
-    const isLastScreen = stuckFlowStep === 7;
+    const isLastScreen = stuckFlowStep === STUCK_FLOW_SCREENS.length;
 
     return (
       <UniverseBackground>
@@ -578,10 +593,10 @@ export default function SOSFlowScreen() {
     );
   }
 
-  // Special 7-screen flow for "hate" issue
+  // Special 9-screen flow for "hate" issue
   if (id === 'hate') {
     const currentScreen = HATE_FLOW_SCREENS[hateFlowStep - 1];
-    const isLastScreen = hateFlowStep === 7;
+    const isLastScreen = hateFlowStep === HATE_FLOW_SCREENS.length;
 
     return (
       <UniverseBackground>
