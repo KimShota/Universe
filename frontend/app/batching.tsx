@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,17 +8,22 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Dimensions,
-  Alert,
   Modal,
   Pressable,
+  Animated,
+  PanResponder,
+  Platform,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { UniverseBackground } from '../components/UniverseBackground';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { playClickSound } from '../utils/soundEffects';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
+const SHEET_MAX_HEIGHT = Math.min(height * 0.92, height - 60);
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
 interface Script {
@@ -43,12 +48,22 @@ const FIELDS: { key: keyof Script; label: string; icon: string; placeholder: str
   { key: 'callToAction', label: 'CALL TO ACTION', icon: 'hand-left-outline', placeholder: 'What should viewers do next?', multiline: true },
 ];
 
+const SCRIPT_TIPS: { icon: string; title: string; description: string }[] = [
+  { icon: 'refresh', title: 'ALGORITHM & RETENTION', description: "Ensure your first 3 seconds stop the scroll. The algorithm favors high initial watch time over total length." },
+  { icon: 'sparkles', title: '1. THE CURIOSITY HOOK', description: "Open with a question or a bold statement that opens a 'loop' in the viewer's mind that needs closing." },
+  { icon: 'flame', title: '2. AGITATE THE PAIN', description: "Identify a specific struggle your audience has. Make them feel the urgency of solving it now." },
+  { icon: 'help-circle', title: '3. THE REHOOK QUESTION', description: "Mid-way through, ask a question to re-engage viewers who might be starting to drift away." },
+  { icon: 'eye', title: '4. ESTABLISH CONTEXT', description: "Briefly explain why you are the right person to deliver this solution. Build trust quickly." },
+];
+
 export default function BatchingScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [scripts, setScripts] = useState<Script[]>([]);
   const [selectedScriptId, setSelectedScriptId] = useState<string | null>(null);
   const [showScriptDetail, setShowScriptDetail] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
+  const [showTipsModal, setShowTipsModal] = useState(false);
   const [dateDraft, setDateDraft] = useState('');
 
   useEffect(() => {
@@ -140,23 +155,49 @@ export default function BatchingScreen() {
     }
   };
 
-  const showMoreMenu = () => {
+  const sheetAnim = useRef(new Animated.Value(SHEET_MAX_HEIGHT)).current;
+  const panStartY = useRef(0);
+
+  const openTipsModal = () => {
     playClickSound();
-    Alert.alert(
-      'Script',
-      undefined,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete script',
-          style: 'destructive',
-          onPress: () => {
-            if (selectedScriptId) handleDeleteScript(selectedScriptId);
-          },
-        },
-      ]
-    );
+    setShowTipsModal(true);
   };
+
+  const closeTipsModal = useCallback(() => {
+    playClickSound();
+    Animated.timing(sheetAnim, {
+      toValue: SHEET_MAX_HEIGHT,
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => setShowTipsModal(false));
+  }, [sheetAnim]);
+
+  useEffect(() => {
+    if (!showTipsModal) return;
+    sheetAnim.setValue(SHEET_MAX_HEIGHT);
+    Animated.spring(sheetAnim, {
+      toValue: 0,
+      useNativeDriver: true,
+      damping: 20,
+      stiffness: 200,
+    }).start();
+  }, [showTipsModal, sheetAnim]);
+
+  const sheetPanResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 5,
+        onPanResponderGrant: (_, g) => {
+          panStartY.current = g.moveY;
+        },
+        onPanResponderRelease: (_, g) => {
+          const dy = g.moveY - panStartY.current;
+          if (dy > 50) closeTipsModal();
+        },
+      }),
+    [closeTipsModal]
+  );
 
   const handleUpdateField = (field: keyof Script, value: string) => {
     if (!selectedScriptId) return;
@@ -283,7 +324,7 @@ export default function BatchingScreen() {
             <Text style={styles.dateLabel}>PRODUCTION DATE</Text>
             <Text style={styles.dateValue}>{displayDate}</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={showMoreMenu} style={styles.moreButton}>
+          <TouchableOpacity onPress={openTipsModal} style={styles.moreButton}>
             <Ionicons name="ellipsis-horizontal" size={22} color="#FFD700" />
           </TouchableOpacity>
         </View>
@@ -317,6 +358,68 @@ export default function BatchingScreen() {
               </View>
             </Pressable>
           </Pressable>
+        </Modal>
+
+        <Modal visible={showTipsModal} transparent animationType="none">
+          <View style={styles.tipsSheetOverlay}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={closeTipsModal}>
+              <BlurView
+                intensity={Platform.OS === 'ios' ? 60 : 80}
+                tint="dark"
+                style={StyleSheet.absoluteFill}
+              />
+            </Pressable>
+            <Animated.View
+              style={[
+                styles.tipsSheet,
+                {
+                  height: SHEET_MAX_HEIGHT,
+                  paddingBottom: insets.bottom,
+                  transform: [{ translateY: sheetAnim }],
+                },
+              ]}
+            >
+              <View {...sheetPanResponder.panHandlers} style={styles.tipsSheetHandle}>
+                <View style={styles.tipsSheetHandleBar} />
+              </View>
+              <View style={styles.tipsHeader}>
+                <View style={styles.tipsHeaderSpacer} />
+                <View style={styles.tipsDateBlock}>
+                  <Text style={styles.tipsDateLabel}>PRODUCTION DATE</Text>
+                  <Text style={styles.tipsDateValue}>{displayDate}</Text>
+                </View>
+                <TouchableOpacity onPress={closeTipsModal} style={styles.tipsHeaderButton}>
+                  <Ionicons name="close" size={24} color="#fff" />
+                </TouchableOpacity>
+              </View>
+              <ScrollView
+                style={styles.tipsScroll}
+                contentContainerStyle={[styles.tipsScrollContent, { paddingBottom: 24 + 60 }]}
+                showsVerticalScrollIndicator={false}
+              >
+                <View style={styles.tipsCard}>
+                  <Text style={styles.tipsTitle}>SCRIPT SUCCESS TIPS</Text>
+                  <Text style={styles.tipsSubtitle}>ALGORITHM RETENTION FRAMEWORK</Text>
+                  {SCRIPT_TIPS.map((tip, idx) => (
+                    <View key={idx} style={styles.tipRow}>
+                      <View style={styles.tipIconWrap}>
+                        <Ionicons name={tip.icon as any} size={20} color="#FFD700" />
+                      </View>
+                      <View style={styles.tipTextWrap}>
+                        <Text style={styles.tipTitle}>{tip.title}</Text>
+                        <Text style={styles.tipDesc}>{tip.description}</Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              </ScrollView>
+              <View style={styles.tipsCloseWrap}>
+                <TouchableOpacity style={styles.tipsCloseButton} onPress={closeTipsModal} activeOpacity={0.85}>
+                  <Text style={styles.tipsCloseText}>CLOSE TIPS</Text>
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+          </View>
         </Modal>
 
         <ScrollView
@@ -618,6 +721,125 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     minWidth: 50,
     textAlign: 'center',
+  },
+  tipsSheetOverlay: {
+    flex: 1,
+    width: '100%',
+  },
+  tipsSheet: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(18, 14, 28, 0.98)',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.2)',
+    overflow: 'hidden',
+  },
+  tipsSheetHandle: {
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tipsSheetHandleBar: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
+  },
+  tipsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  tipsHeaderSpacer: { width: 40 },
+  tipsHeaderButton: { padding: 8 },
+  tipsDateBlock: { alignItems: 'center' },
+  tipsDateLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: 'rgba(255, 255, 255, 0.55)',
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  tipsDateValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFD700',
+  },
+  tipsScroll: { flex: 1 },
+  tipsScrollContent: { paddingHorizontal: 20, paddingTop: 4 },
+  tipsCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.25)',
+  },
+  tipsTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#FFD700',
+    marginBottom: 6,
+  },
+  tipsSubtitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.9)',
+    letterSpacing: 1,
+    marginBottom: 20,
+  },
+  tipRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 18,
+  },
+  tipIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  tipTextWrap: { flex: 1 },
+  tipTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFD700',
+    marginBottom: 6,
+    letterSpacing: 0.5,
+  },
+  tipDesc: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
+  tipsCloseWrap: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 12,
+    backgroundColor: 'transparent',
+  },
+  tipsCloseButton: {
+    backgroundColor: 'rgba(40, 35, 55, 0.95)',
+    paddingVertical: 16,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tipsCloseText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFD700',
+    letterSpacing: 1,
   },
 });
 
