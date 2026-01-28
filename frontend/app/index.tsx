@@ -6,14 +6,24 @@ import {
   StyleSheet,
   Image,
   ActivityIndicator,
+  ScrollView,
+  SafeAreaView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import { UniverseBackground } from '../components/UniverseBackground';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ONBOARDING_DONE_KEY = 'onboarding:done';
+
+const APP_ICON = require('../Media/saturn.png');
+
+const FEATURES = [
+  { icon: 'sparkles' as const, title: 'Overcome Fear', desc: "Get support when you're struggling" },
+  { icon: 'rocket' as const, title: 'Stay Consistent', desc: 'Track your posting streak' },
+  { icon: 'trending-up' as const, title: 'Grow Strategically', desc: 'Use Universe System to grow your personal brand fast' },
+];
 
 export default function LoginScreen() {
   const { user, loading, login } = useAuth();
@@ -47,54 +57,60 @@ export default function LoginScreen() {
   }
 
   if (user) {
-    return null; // Will redirect
+    return null;
   }
 
   return (
     <UniverseBackground>
-      <View style={styles.container}>
-        {/* Logo/Title Area */}
-        <View style={styles.header}>
-          <Text style={styles.title}>🌌 Universe</Text>
-          <Text style={styles.subtitle}>Your Content Creation Journey</Text>
-        </View>
-
-        {/* Main Content */}
-        <View style={styles.content}>
-          <View style={styles.featureContainer}>
-            <Text style={styles.featureTitle}>✨ Overcome Fear</Text>
-            <Text style={styles.featureText}>Get support when you're struggling</Text>
-          </View>
-          
-          <View style={styles.featureContainer}>
-            <Text style={styles.featureTitle}>🚀 Stay Consistent</Text>
-            <Text style={styles.featureText}>Track your posting streak</Text>
-          </View>
-          
-          <View style={styles.featureContainer}>
-            <Text style={styles.featureTitle}>🎯 Stay Motivated</Text>
-            <Text style={styles.featureText}>Earn coins and level up</Text>
-          </View>
-        </View>
-
-        {/* Login Button */}
-        <TouchableOpacity
-          style={styles.loginButton}
-          onPress={login}
-          activeOpacity={0.8}
+      <SafeAreaView style={styles.safe}>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.container}
+          showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.loginButtonText}>Continue with Google</Text>
-        </TouchableOpacity>
+          <View style={styles.header}>
+            <View style={styles.iconOuter}>
+              <View style={styles.iconInner}>
+                <Image source={APP_ICON} style={styles.iconImage} resizeMode="contain" />
+              </View>
+            </View>
+            <Text style={styles.title}>Universe</Text>
+            <Text style={styles.subtitle}>Your Content Creation Journey</Text>
+          </View>
 
-        <Text style={styles.helperText}>
-          Join thousands of creators on their journey
-        </Text>
-      </View>
+          <View style={styles.content}>
+            {FEATURES.map((f) => (
+              <View key={f.title} style={styles.featureCard}>
+                <View style={styles.featureIconWrap}>
+                  <Ionicons name={f.icon} size={24} color="#FFD700" />
+                </View>
+                <View style={styles.featureTextWrap}>
+                  <Text style={styles.featureTitle}>{f.title}</Text>
+                  <Text style={styles.featureText}>{f.desc}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.ctaWrap}>
+            <TouchableOpacity style={styles.loginButton} onPress={login} activeOpacity={0.85}>
+              <View style={styles.googleBadge}>
+                <Text style={styles.googleG}>G</Text>
+              </View>
+              <Text style={styles.loginButtonText}>Continue with Google</Text>
+            </TouchableOpacity>
+            <Text style={styles.helperText}>Join thousands of creators on their journey</Text>
+            <View style={styles.pagination} />
+          </View>
+        </ScrollView>
+      </SafeAreaView>
     </UniverseBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: { flex: 1 },
+  scroll: { flex: 1 },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -107,66 +123,137 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   container: {
-    flex: 1,
-    justifyContent: 'space-between',
+    flexGrow: 1,
     alignItems: 'center',
-    paddingVertical: 60,
     paddingHorizontal: 24,
+    paddingTop: 40,
+    paddingBottom: 32,
   },
   header: {
     alignItems: 'center',
-    marginTop: 40,
+    marginBottom: 32,
+  },
+  iconOuter: {
+    width: 88,
+    height: 88,
+    borderRadius: 22,
+    backgroundColor: 'rgba(60, 45, 90, 0.85)',
+    padding: 6,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  iconInner: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
+    backgroundColor: 'rgba(20, 55, 60, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  iconImage: {
+    width: 56,
+    height: 56,
   },
   title: {
-    fontSize: 56,
-    fontWeight: 'bold',
+    fontSize: 36,
+    fontWeight: '700',
     color: '#FFD700',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   subtitle: {
-    fontSize: 18,
-    color: '#ffffff',
-    opacity: 0.9,
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.65)',
     textAlign: 'center',
   },
   content: {
     width: '100%',
-    gap: 24,
+    gap: 16,
+    marginBottom: 28,
   },
-  featureContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    padding: 20,
+  featureCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(60, 45, 90, 0.5)',
+    paddingVertical: 18,
+    paddingHorizontal: 20,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
+    borderColor: 'rgba(255, 215, 0, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
+  featureIconWrap: {
+    marginRight: 16,
+  },
+  featureTextWrap: { flex: 1 },
   featureTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '700',
     color: '#FFD700',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   featureText: {
-    fontSize: 16,
-    color: '#ffffff',
-    opacity: 0.8,
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.7)',
+    lineHeight: 20,
+  },
+  ctaWrap: {
+    width: '100%',
+    alignItems: 'center',
   },
   loginButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#FFD700',
     paddingVertical: 16,
-    paddingHorizontal: 48,
+    paddingHorizontal: 28,
     borderRadius: 30,
-    elevation: 8,
+    width: '100%',
+    maxWidth: 320,
+    gap: 12,
+    marginBottom: 14,
+  },
+  googleBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(10, 14, 39, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  googleG: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#fff',
   },
   loginButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 17,
+    fontWeight: '700',
     color: '#0a0e27',
   },
   helperText: {
     fontSize: 14,
-    color: '#ffffff',
-    opacity: 0.6,
+    color: 'rgba(255, 255, 255, 0.55)',
     textAlign: 'center',
+    marginBottom: 24,
+  },
+  pagination: {
+    width: 32,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
   },
 });

@@ -276,16 +276,10 @@ export default function HowToScriptDetailScreen() {
             >
               <Ionicons name="arrow-back" size={28} color="#FFD700" />
             </TouchableOpacity>
-            <View style={styles.progressContainer}>
-              {THINK_BEFORE_SCRIPT_FLOW_SCREENS.map((_, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.progressDot,
-                    index + 1 <= thinkBeforeStep && styles.progressDotActive,
-                  ]}
-                />
-              ))}
+            <View style={styles.stepCounterWrap} pointerEvents="box-none">
+              <Text style={styles.stepCounter}>
+                {thinkBeforeStep} / {THINK_BEFORE_SCRIPT_FLOW_SCREENS.length}
+              </Text>
             </View>
             <View style={styles.headerSpacer} />
           </View>
@@ -296,11 +290,6 @@ export default function HowToScriptDetailScreen() {
               contentContainerStyle={styles.flowContent}
               showsVerticalScrollIndicator={false}
             >
-              <View style={styles.screenPill}>
-                <Text style={styles.screenPillText}>
-                  {thinkBeforeStep} / {THINK_BEFORE_SCRIPT_FLOW_SCREENS.length}
-                </Text>
-              </View>
               <View style={styles.flowCard}>
                 <View style={styles.flowCardIconWrap}>
                   <Ionicons
@@ -410,16 +399,10 @@ export default function HowToScriptDetailScreen() {
             >
               <Ionicons name="arrow-back" size={28} color="#FFD700" />
             </TouchableOpacity>
-            <View style={styles.progressContainer}>
-              {UNIVERSE_SCRIPTING_FLOW_SCREENS.map((_, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.progressDot,
-                    index + 1 <= universeScriptingStep && styles.progressDotActive,
-                  ]}
-                />
-              ))}
+            <View style={styles.stepCounterWrap} pointerEvents="box-none">
+              <Text style={styles.stepCounter}>
+                {universeScriptingStep} / {UNIVERSE_SCRIPTING_FLOW_SCREENS.length}
+              </Text>
             </View>
             <View style={styles.headerSpacer} />
           </View>
@@ -430,11 +413,6 @@ export default function HowToScriptDetailScreen() {
               contentContainerStyle={styles.flowContent}
               showsVerticalScrollIndicator={false}
             >
-              <View style={styles.screenPill}>
-                <Text style={styles.screenPillText}>
-                  {universeScriptingStep} / {UNIVERSE_SCRIPTING_FLOW_SCREENS.length}
-                </Text>
-              </View>
               <View style={styles.flowCard}>
                 <View style={styles.flowCardIconWrap}>
                   <Ionicons
@@ -642,27 +620,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   flowBackButton: { padding: 8, zIndex: 1 },
-  progressContainer: {
-    flexDirection: 'row',
-    gap: 8,
+  stepCounterWrap: {
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  progressDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-  },
-  progressDotActive: {
-    backgroundColor: '#FFD700',
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 4,
-    elevation: 2,
+  stepCounter: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.9)',
   },
   headerSpacer: { width: 40 },
   flowContainer: {
@@ -674,21 +640,6 @@ const styles = StyleSheet.create({
   },
   flowScrollView: { flex: 1 },
   flowContent: { paddingBottom: 28 },
-  screenPill: {
-    alignSelf: 'center',
-    backgroundColor: 'rgba(255, 215, 0, 0.25)',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    marginBottom: 16,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 215, 0, 0.5)',
-  },
-  screenPillText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#FFD700',
-  },
   flowCard: {
     width: '100%',
     backgroundColor: 'rgba(255, 255, 255, 0.14)',

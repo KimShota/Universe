@@ -294,107 +294,160 @@ your audience feels continuity.`,
   },
 ];
 
-const WHAT_TO_POST_CONTENT: { [key: string]: string } = {
-  'what-types-of-content': `**What Types of Content to Post**
+// 7-screen flow for "What Types of Content to Post"
+const WHAT_TYPES_FLOW_SCREENS: Array<{
+  id: number;
+  title: string;
+  shortTitle: string;
+  icon: string;
+  content: string;
+  takeaway?: string;
+}> = [
+  {
+    id: 1,
+    title: 'The Strategic Mix',
+    shortTitle: 'The Strategic Mix',
+    icon: 'layers-outline',
+    content: `Post at least 3 times per week. Here's the strategic mix that builds your community:
 
-Post at least 3 times per week. Here's the strategic mix that builds your community:
+The Three Core Content Types:
 
-**The Three Core Content Types:**
+1. Storytelling Content
+How people connect with you authentically.
 
-**1. Storytelling Content**
-This is how people connect with you authentically.
+2. Value-Based Content
+Where you teach insights based on your own experiences.
 
-**What Makes Good Storytelling:**
-- It doesn't have to be a massive transformation (0 to billionaire)
-- It can be a simple mindset shift
-- Examples: anxiety → peace, can't study → able to study
-- Use Journey POV: treat yourself as a peer, not an expert
-- You're a few steps ahead, not miles ahead
+3. Reach Content
+Content optimized for attracting new eyeballs.`,
+    takeaway: 'Balance story, value, and reach.',
+  },
+  {
+    id: 2,
+    title: 'Storytelling Content',
+    shortTitle: 'Storytelling Content',
+    icon: 'book-outline',
+    content: `This is how people connect with you authentically.
 
-**The 3P Framework:**
-- **Problem**: What struggle did you encounter?
-- **Pursuit**: What actions did you take to overcome it?
-- **Payoff**: What was the transformation and why was it meaningful?
+What Makes Good Storytelling:
+• It doesn't have to be a massive transformation (0 to billionaire)
+• It can be a simple mindset shift
+• Examples: anxiety → peace, can't study → able to study
+• Use Journey POV: treat yourself as a peer, not an expert
+• You're a few steps ahead, not miles ahead
 
-**Why It Works:**
-- People connect through struggle, not highlights
-- When you lead with storytelling, you become approachable
-- Your content feels human and people feel seen
-- They stop championing just your tips and start championing YOU as a brand
+The 3P Framework:
+• Problem: What struggle did you encounter?
+• Pursuit: What actions did you take to overcome it?
+• Payoff: What was the transformation and why was it meaningful?
 
-**2. Value-Based Content**
-This is where you teach insights based on your own experiences.
+Why It Works:
+• People connect through struggle, not highlights
+• When you lead with storytelling, you become approachable
+• Your content feels human and people feel seen
+• They stop championing just your tips and start championing YOU as a brand`,
+    takeaway: 'Lead with story. People champion you, not just your tips.',
+  },
+  {
+    id: 3,
+    title: 'Value-Based Content',
+    shortTitle: 'Value-Based Content',
+    icon: 'bulb-outline',
+    content: `This is where you teach insights based on your own experiences.
 
-**How to Know If It's Valuable:**
+How to Know If It's Valuable:
 Ask: Is this selfish or selfless content?
-- **Selfless**: Thinking about the payoff for your audience
-- **Selfish**: Only highlighting your genius (this makes people feel looked down upon)
+• Selfless: Thinking about the payoff for your audience
+• Selfish: Only highlighting your genius (makes people feel looked down upon)
 
-**Types of Value Content:**
-- Teaching one thing you actually know
-- One technique, one decision, one key takeaway
-- Breaking something down (3-step system, common mistake, mini framework)
-- Walk-through steps
+Types of Value Content:
+• Teaching one thing you actually know
+• One technique, one decision, one key takeaway
+• Breaking something down (3-step system, common mistake, mini framework)
+• Walk-through steps`,
+    takeaway: 'Selfless content serves. Selfish content pushes away.',
+  },
+  {
+    id: 4,
+    title: 'Reach Content',
+    shortTitle: 'Reach Content',
+    icon: 'trending-up-outline',
+    content: `You need content optimized for attracting new eyeballs.
 
-**3. Reach Content**
-You need content optimized for attracting new eyeballs.
+How to Create Reach Content:
+• Combine trending formats with your message
+• Use proven formats that work on the algorithm
+• Examples: B-roll with text, split screen, trending sounds
+• The format does the work, your insight builds credibility`,
+    takeaway: 'Format attracts. Your message converts.',
+  },
+  {
+    id: 5,
+    title: 'Weekly Schedule — Days 1–4',
+    shortTitle: 'Weekly Schedule — Days 1–4',
+    icon: 'calendar-outline',
+    content: `Day 1: High Effort — Build Trust
+• Your story, a real struggle, the shift you made, the lesson learned
+• This makes people believe you
 
-**How to Create Reach Content:**
-- Combine trending formats with your message
-- Use proven formats that work on the algorithm
-- Examples: B-roll with text, split screen, trending sounds
-- The format does the work, your insight builds credibility
+Day 2: Low Effort — Build Relatability
+• Behind the scenes, day in the life, something real and unpolished
+• This makes your content feel human
 
-**The Weekly Schedule (7 Days):**
+Day 3: Medium Effort — Build Authority
+• Teach one thing you actually know
+• One technique, one decision, one key takeaway
+• Positions you as worth listening to
 
-**Day 1: High Effort - Build Trust**
-- Your story, a real struggle, the shift you made, the lesson learned
-- This makes people believe you
+Day 4: Low Effort — Build Reach
+• Trending format (B-roll with text, split screen)
+• Pair it with your message
+• Format does the work, your insight builds credibility`,
+  },
+  {
+    id: 6,
+    title: 'Weekly Schedule — Days 5–7 & If Posting Less',
+    shortTitle: 'Days 5–7 & If Posting Less',
+    icon: 'calendar-outline',
+    content: `Day 5: Medium Effort — Build Value
+• Break something down
+• 3-step system, common mistake, mini framework
+• This keeps people following you
 
-**Day 2: Low Effort - Build Relatability**
-- Behind the scenes, day in the life, something real and unpolished
-- This makes your content feel human
+Day 6: Lowest Effort — Stay Consistent
+• Reflection, gratitude, answering a common question
+• Helps you stay consistent on low-energy days
 
-**Day 3: Medium Effort - Build Authority**
-- Teach one thing you actually know
-- One technique, one decision, one key takeaway
-- Positions you as worth listening to
+Day 7: High Effort — Build Depth
+• Longer reel, mini lesson, short vlog
+• Turns followers into a real community
 
-**Day 4: Low Effort - Build Reach**
-- Trending format (B-roll with text, split screen)
-- Pair it with your message
-- Format does the work, your insight builds credibility
+If Posting Less:
+• 6 days: Remove Day 6
+• 5 days: Remove Day 2
+• 4 days: Remove Day 3`,
+  },
+  {
+    id: 7,
+    title: 'The 80/20 Rule',
+    shortTitle: 'The 80/20 Rule',
+    icon: 'pie-chart-outline',
+    content: `80% proven formats (what works)
+20% experimentation (try new things)
 
-**Day 5: Medium Effort - Build Value**
-- Break something down
-- 3-step system, common mistake, mini framework
-- This keeps people following you
+Remember: Good content solves a real problem, is easy to understand, feels relevant and authentic, and aligns with a clear goal. Focus on selfless content that serves your audience.`,
+    takeaway: 'Serve your audience. Experiment wisely.',
+  },
+];
 
-**Day 6: Lowest Effort - Stay Consistent**
-- Reflection, gratitude, answering a common question
-- Helps you stay consistent on low-energy days
-
-**Day 7: High Effort - Build Depth**
-- Longer reel, mini lesson, short vlog
-- Turns followers into a real community
-
-**If Posting Less:**
-- 6 days: Remove Day 6
-- 5 days: Remove Day 2
-- 4 days: Remove Day 3
-
-**The 80/20 Rule:**
-- 80% proven formats (what works)
-- 20% experimentation (try new things)
-
-**Remember**: Good content solves a real problem, is easy to understand, feels relevant and authentic, and aligns with a clear goal. Focus on selfless content that serves your audience.`,
-};
+const WHAT_TO_POST_CONTENT: { [key: string]: string } = {};
 
 export default function WhatToPostDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [defineUniverseStep, setDefineUniverseStep] = useState(1);
   const [useUniverseStep, setUseUniverseStep] = useState(1);
+  const [whatTypesStep, setWhatTypesStep] = useState(1);
 
   // 12-screen flow for "Define Your Creator Universe"
   if (id === 'define-your-creator-universe') {
@@ -414,22 +467,11 @@ export default function WhatToPostDetailScreen() {
             >
               <Ionicons name="arrow-back" size={28} color="#FFD700" />
             </TouchableOpacity>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.progressScrollContent}
-              style={styles.progressScroll}
-            >
-              {DEFINE_UNIVERSE_FLOW_SCREENS.map((_, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.progressDotSmall,
-                    index + 1 <= defineUniverseStep && styles.progressDotSmallActive,
-                  ]}
-                />
-              ))}
-            </ScrollView>
+            <View style={styles.stepCounterWrap} pointerEvents="box-none">
+              <Text style={styles.stepCounter}>
+                {defineUniverseStep} / {DEFINE_UNIVERSE_FLOW_SCREENS.length}
+              </Text>
+            </View>
             <View style={styles.headerSpacer} />
           </View>
 
@@ -439,11 +481,6 @@ export default function WhatToPostDetailScreen() {
               contentContainerStyle={styles.flowContent}
               showsVerticalScrollIndicator={false}
             >
-              <View style={styles.screenPill}>
-                <Text style={styles.screenPillText}>
-                  {defineUniverseStep} / {DEFINE_UNIVERSE_FLOW_SCREENS.length}
-                </Text>
-              </View>
               <View style={styles.flowCard}>
                 <View style={styles.flowCardIconWrap}>
                   <Ionicons
@@ -553,22 +590,11 @@ export default function WhatToPostDetailScreen() {
             >
               <Ionicons name="arrow-back" size={28} color="#FFD700" />
             </TouchableOpacity>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.progressScrollContent}
-              style={styles.progressScroll}
-            >
-              {USE_UNIVERSE_FLOW_SCREENS.map((_, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.progressDotSmall,
-                    index + 1 <= useUniverseStep && styles.progressDotSmallActive,
-                  ]}
-                />
-              ))}
-            </ScrollView>
+            <View style={styles.stepCounterWrap} pointerEvents="box-none">
+              <Text style={styles.stepCounter}>
+                {useUniverseStep} / {USE_UNIVERSE_FLOW_SCREENS.length}
+              </Text>
+            </View>
             <View style={styles.headerSpacer} />
           </View>
 
@@ -578,11 +604,6 @@ export default function WhatToPostDetailScreen() {
               contentContainerStyle={styles.flowContent}
               showsVerticalScrollIndicator={false}
             >
-              <View style={styles.screenPill}>
-                <Text style={styles.screenPillText}>
-                  {useUniverseStep} / {USE_UNIVERSE_FLOW_SCREENS.length}
-                </Text>
-              </View>
               <View style={styles.flowCard}>
                 <View style={styles.flowCardIconWrap}>
                   <Ionicons
@@ -655,6 +676,129 @@ export default function WhatToPostDetailScreen() {
                   onPress={() => {
                     playClickSound();
                     setUseUniverseStep(useUniverseStep + 1);
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.continueButtonText}>Continue</Text>
+                  <Ionicons
+                    name="arrow-forward"
+                    size={20}
+                    color="#0a0e27"
+                    style={styles.continueIcon}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </SafeAreaView>
+      </UniverseBackground>
+    );
+  }
+
+  // 7-screen flow for "What Types of Content to Post"
+  if (id === 'what-types-of-content') {
+    const currentScreen = WHAT_TYPES_FLOW_SCREENS[whatTypesStep - 1];
+    const isLastScreen = whatTypesStep === WHAT_TYPES_FLOW_SCREENS.length;
+
+    return (
+      <UniverseBackground>
+        <SafeAreaView style={styles.container}>
+          <View style={styles.flowHeader}>
+            <TouchableOpacity
+              onPress={() => {
+                playClickSound();
+                router.back();
+              }}
+              style={styles.flowBackButton}
+            >
+              <Ionicons name="arrow-back" size={28} color="#FFD700" />
+            </TouchableOpacity>
+            <View style={styles.stepCounterWrap} pointerEvents="box-none">
+              <Text style={styles.stepCounter}>
+                {whatTypesStep} / {WHAT_TYPES_FLOW_SCREENS.length}
+              </Text>
+            </View>
+            <View style={styles.headerSpacer} />
+          </View>
+
+          <View style={styles.flowContainer}>
+            <ScrollView
+              style={styles.flowScrollView}
+              contentContainerStyle={styles.flowContent}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.flowCard}>
+                <View style={styles.flowCardIconWrap}>
+                  <Ionicons
+                    name={currentScreen.icon as any}
+                    size={36}
+                    color="#FFD700"
+                  />
+                </View>
+                <Text style={styles.flowScreenTitle}>{currentScreen.shortTitle}</Text>
+                <View style={styles.flowCardBody}>
+                  {currentScreen.content.split('\n\n').map((block, blockIdx) => {
+                    const lines = block.trim().split('\n');
+                    return (
+                      <View key={blockIdx} style={styles.flowBlock}>
+                        {lines.map((line, lineIdx) => {
+                          const trimmed = line.trim();
+                          if (!trimmed) return null;
+                          const isBullet = flowBulletMatch(line);
+                          const text = isBullet ? flowBulletText(line) : trimmed;
+                          return (
+                            <View
+                              key={lineIdx}
+                              style={[
+                                styles.flowLineRow,
+                                isBullet && styles.flowBulletRow,
+                              ]}
+                            >
+                              {isBullet && (
+                                <View style={styles.flowBullet} />
+                              )}
+                              <Text
+                                style={[
+                                  styles.flowBodyText,
+                                  isBullet && styles.flowBulletText,
+                                ]}
+                              >
+                                {text}
+                              </Text>
+                            </View>
+                          );
+                        })}
+                      </View>
+                    );
+                  })}
+                </View>
+                {currentScreen.takeaway ? (
+                  <View style={styles.takeawayBox}>
+                    <Ionicons name="bulb-outline" size={18} color="#FFD700" />
+                    <Text style={styles.takeawayText}>{currentScreen.takeaway}</Text>
+                  </View>
+                ) : null}
+              </View>
+            </ScrollView>
+
+            <View style={styles.flowButtonContainer}>
+              {isLastScreen ? (
+                <TouchableOpacity
+                  style={styles.doneButton}
+                  onPress={() => {
+                    playClickSound();
+                    router.back();
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.doneButtonText}>Done</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={styles.continueButton}
+                  onPress={() => {
+                    playClickSound();
+                    setWhatTypesStep(whatTypesStep + 1);
                   }}
                   activeOpacity={0.85}
                 >
@@ -828,32 +972,15 @@ const styles = StyleSheet.create({
     padding: 8,
     zIndex: 1,
   },
-  progressScroll: {
+  stepCounterWrap: {
     flex: 1,
-    marginHorizontal: 8,
-  },
-  progressScrollContent: {
-    flexDirection: 'row',
-    gap: 6,
     alignItems: 'center',
-    paddingHorizontal: 4,
+    justifyContent: 'center',
   },
-  progressDotSmall: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-  },
-  progressDotSmallActive: {
-    backgroundColor: '#FFD700',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 3,
-    elevation: 2,
+  stepCounter: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.9)',
   },
   headerSpacer: {
     width: 40,
@@ -870,21 +997,6 @@ const styles = StyleSheet.create({
   },
   flowContent: {
     paddingBottom: 24,
-  },
-  screenPill: {
-    alignSelf: 'center',
-    backgroundColor: 'rgba(255, 215, 0, 0.15)',
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.35)',
-  },
-  screenPillText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#FFD700',
   },
   flowCard: {
     width: '100%',

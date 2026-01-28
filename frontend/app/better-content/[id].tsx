@@ -474,16 +474,10 @@ export default function BetterContentDetailScreen() {
             >
               <Ionicons name="arrow-back" size={28} color="#FFD700" />
             </TouchableOpacity>
-            <View style={styles.progressContainer}>
-              {USE_HOOKS_FLOW_SCREENS.map((_, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.progressDot,
-                    index + 1 <= useHooksStep && styles.progressDotActive,
-                  ]}
-                />
-              ))}
+            <View style={styles.stepCounterWrap} pointerEvents="box-none">
+              <Text style={styles.stepCounter}>
+                {useHooksStep} / {USE_HOOKS_FLOW_SCREENS.length}
+              </Text>
             </View>
             <View style={styles.headerSpacer} />
           </View>
@@ -494,11 +488,6 @@ export default function BetterContentDetailScreen() {
               contentContainerStyle={styles.flowContent}
               showsVerticalScrollIndicator={false}
             >
-              <View style={styles.screenPill}>
-                <Text style={styles.screenPillText}>
-                  {useHooksStep} / {USE_HOOKS_FLOW_SCREENS.length}
-                </Text>
-              </View>
               <View style={styles.flowCard}>
                 <View style={styles.flowCardIconWrap}>
                   <Ionicons
@@ -608,22 +597,11 @@ export default function BetterContentDetailScreen() {
             >
               <Ionicons name="arrow-back" size={28} color="#FFD700" />
             </TouchableOpacity>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.progressScrollContent}
-              style={styles.progressScroll}
-            >
-              {STUDY_CREATORS_FLOW_SCREENS.map((_, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.progressDotSmall,
-                    index + 1 <= studyCreatorsStep && styles.progressDotSmallActive,
-                  ]}
-                />
-              ))}
-            </ScrollView>
+            <View style={styles.stepCounterWrap} pointerEvents="box-none">
+              <Text style={styles.stepCounter}>
+                {studyCreatorsStep} / {STUDY_CREATORS_FLOW_SCREENS.length}
+              </Text>
+            </View>
             <View style={styles.headerSpacer} />
           </View>
 
@@ -633,11 +611,6 @@ export default function BetterContentDetailScreen() {
               contentContainerStyle={styles.flowContent}
               showsVerticalScrollIndicator={false}
             >
-              <View style={styles.screenPill}>
-                <Text style={styles.screenPillText}>
-                  {studyCreatorsStep} / {STUDY_CREATORS_FLOW_SCREENS.length}
-                </Text>
-              </View>
               <View style={styles.flowCard}>
                 <View style={styles.flowCardIconWrap}>
                   <Ionicons
@@ -933,54 +906,15 @@ const styles = StyleSheet.create({
     padding: 8,
     zIndex: 1,
   },
-  progressContainer: {
-    flexDirection: 'row',
-    gap: 8,
-    alignItems: 'center',
-  },
-  progressScroll: {
+  stepCounterWrap: {
     flex: 1,
-    marginHorizontal: 8,
-  },
-  progressScrollContent: {
-    flexDirection: 'row',
-    gap: 6,
     alignItems: 'center',
-    paddingHorizontal: 4,
+    justifyContent: 'center',
   },
-  progressDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-  },
-  progressDotActive: {
-    backgroundColor: '#FFD700',
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  progressDotSmall: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-  },
-  progressDotSmallActive: {
-    backgroundColor: '#FFD700',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 3,
-    elevation: 2,
+  stepCounter: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.9)',
   },
   headerSpacer: {
     width: 40,
@@ -997,21 +931,6 @@ const styles = StyleSheet.create({
   },
   flowContent: {
     paddingBottom: 24,
-  },
-  screenPill: {
-    alignSelf: 'center',
-    backgroundColor: 'rgba(255, 215, 0, 0.15)',
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.35)',
-  },
-  screenPillText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#FFD700',
   },
   flowCard: {
     width: '100%',
