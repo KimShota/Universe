@@ -16,6 +16,7 @@ import { useRouter } from 'expo-router';
 import { playClickSound } from '../utils/soundEffects';
 
 const { width } = Dimensions.get('window');
+const CARD_WIDTH = width - 40;
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 const SAVE_DEBOUNCE_MS = 500;
 
@@ -77,6 +78,7 @@ export default function ScheduleScreen() {
   const [, setLastSaved] = useState<number>(0);
   const [now, setNow] = useState(() => Date.now());
   const hasLoadedRef = useRef(false);
+  const cardsScrollRef = useRef<ScrollView>(null);
 
   const weekDates = useMemo(getWeekDates, []);
 
@@ -160,8 +162,18 @@ export default function ScheduleScreen() {
     setLastModified(Date.now());
   };
 
-  const selectedEntry = weekDates.find((w) => w.dayName === selectedDay);
-  const selectedData = schedule[selectedDay];
+  const scrollToDay = (index: number) => {
+    const day = DAY_NAMES[index];
+    setSelectedDay(day);
+    cardsScrollRef.current?.scrollTo({ x: index * CARD_WIDTH, animated: true });
+  };
+
+  const handleCardsScrollEnd = (e: { nativeEvent: { contentOffset: { x: number } } }) => {
+    const x = e.nativeEvent.contentOffset.x;
+    const index = Math.round(x / CARD_WIDTH);
+    const i = Math.max(0, Math.min(index, DAY_NAMES.length - 1));
+    if (DAY_NAMES[i] !== selectedDay) setSelectedDay(DAY_NAMES[i]);
+  };
 
   return (
     <UniverseBackground>
@@ -192,7 +204,7 @@ export default function ScheduleScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.dateStrip}
           >
-            {weekDates.map(({ date, dayName }) => {
+            {weekDates.map(({ date, dayName }, idx) => {
               const isSelected = dayName === selectedDay;
               return (
                 <TouchableOpacity
@@ -200,7 +212,7 @@ export default function ScheduleScreen() {
                   style={[styles.dateChip, isSelected && styles.dateChipSelected]}
                   onPress={() => {
                     playClickSound();
-                    setSelectedDay(dayName);
+                    scrollToDay(idx);
                   }}
                   activeOpacity={0.8}
                 >
@@ -215,86 +227,97 @@ export default function ScheduleScreen() {
             })}
           </ScrollView>
 
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View style={styles.dayIcon}>
-                <Ionicons name="sparkles" size={18} color="#FFD700" />
-              </View>
-              <View style={styles.dayTextWrap}>
-                <Text style={styles.dayName}>{selectedDay}</Text>
-                <Text style={styles.dayDate}>
-                  {selectedEntry ? formatDateLong(selectedEntry.date) : ''}
-                </Text>
-              </View>
-            </View>
-
-            <Text style={styles.sectionLabel}>CONTENT IDEA</Text>
-            <View style={styles.ideaBox}>
-              <TextInput
-                style={styles.ideaInput}
-                value={selectedData?.idea ?? ''}
-                onChangeText={(v) => updateIdea(selectedDay, v)}
-                placeholder="e.g. The Midnight Library Chronicles: Chapter 4"
-                placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                multiline
-              />
-              <Ionicons name="pencil" size={16} color="rgba(255, 255, 255, 0.4)" style={styles.ideaPencil} />
-            </View>
-
-            <Text style={styles.sectionLabel}>PREFERRED FORMAT</Text>
-            <View style={styles.formatStack}>
-              {FORMAT_OPTIONS.map((opt) => {
-                const fmt = selectedData?.format ?? '';
-                const isOtherSelected = fmt === 'Other' || (fmt.length > 0 && PRESET_FORMAT_IDS.indexOf(fmt) === -1);
-                const isSelected = opt.id === 'Other' ? isOtherSelected : fmt === opt.id;
-                return (
-                  <TouchableOpacity
-                    key={opt.id}
-                    style={[styles.formatChip, isSelected && styles.formatChipSelected]}
-                    onPress={() => {
-                      playClickSound();
-                      updateFormat(selectedDay, opt.id);
-                    }}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons
-                      name={opt.icon as any}
-                      size={20}
-                      color={isSelected ? '#FFD700' : 'rgba(255,255,255,0.85)'}
-                    />
-                    <Text style={[styles.formatChipText, isSelected && styles.formatChipTextSelected]}>
-                      {opt.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-            {(() => {
-              const fmt = selectedData?.format ?? '';
+          <ScrollView
+            ref={cardsScrollRef}
+            horizontal
+            pagingEnabled
+            decelerationRate="fast"
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={handleCardsScrollEnd}
+            onScrollEndDrag={handleCardsScrollEnd}
+            contentContainerStyle={styles.cardsScrollContent}
+            style={styles.cardsScroll}
+          >
+            {weekDates.map(({ date, dayName }) => {
+              const data = schedule[dayName];
+              const fmt = data?.format ?? '';
               const showOtherInput = fmt === 'Other' || (fmt.length > 0 && PRESET_FORMAT_IDS.indexOf(fmt) === -1);
-              if (!showOtherInput) return null;
               return (
-                <TextInput
-                  style={styles.otherFormatInput}
-                  value={fmt === 'Other' ? '' : fmt}
-                  onChangeText={(v) => updateFormat(selectedDay, v.trim() ? v : 'Other')}
-                  placeholder="Write your own format..."
-                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                  autoCapitalize="words"
-                />
-              );
-            })()}
+                <View key={dayName} style={[styles.card, styles.cardPage]}>
+                  <View style={styles.cardHeader}>
+                    <View style={styles.dayIcon}>
+                      <Ionicons name="sparkles" size={18} color="#FFD700" />
+                    </View>
+                    <View style={styles.dayTextWrap}>
+                      <Text style={styles.dayName}>{dayName}</Text>
+                      <Text style={styles.dayDate}>{formatDateLong(date)}</Text>
+                    </View>
+                  </View>
 
-            <View style={styles.statusRow}>
-              <View style={styles.statusLeft}>
-                <View style={styles.statusDot} />
-                <Text style={styles.statusText}>Draft saved locally</Text>
-              </View>
-              <Text style={styles.statusRight}>
-                Modified {relativeTime(now - lastModified)}
-              </Text>
-            </View>
-          </View>
+                  <Text style={styles.sectionLabel}>CONTENT IDEA</Text>
+                  <View style={styles.ideaBox}>
+                    <TextInput
+                      style={styles.ideaInput}
+                      value={data?.idea ?? ''}
+                      onChangeText={(v) => updateIdea(dayName, v)}
+                      placeholder="e.g. The Midnight Library Chronicles: Chapter 4"
+                      placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                      multiline
+                    />
+                    <Ionicons name="pencil" size={16} color="rgba(255, 255, 255, 0.4)" style={styles.ideaPencil} />
+                  </View>
+
+                  <Text style={styles.sectionLabel}>PREFERRED FORMAT</Text>
+                  <View style={styles.formatStack}>
+                    {FORMAT_OPTIONS.map((opt) => {
+                      const isOtherSelected = fmt === 'Other' || (fmt.length > 0 && PRESET_FORMAT_IDS.indexOf(fmt) === -1);
+                      const isSelected = opt.id === 'Other' ? isOtherSelected : fmt === opt.id;
+                      return (
+                        <TouchableOpacity
+                          key={opt.id}
+                          style={[styles.formatChip, isSelected && styles.formatChipSelected]}
+                          onPress={() => {
+                            playClickSound();
+                            updateFormat(dayName, opt.id);
+                          }}
+                          activeOpacity={0.8}
+                        >
+                          <Ionicons
+                            name={opt.icon as any}
+                            size={20}
+                            color={isSelected ? '#FFD700' : 'rgba(255,255,255,0.85)'}
+                          />
+                          <Text style={[styles.formatChipText, isSelected && styles.formatChipTextSelected]}>
+                            {opt.label}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                  {showOtherInput && (
+                    <TextInput
+                      style={styles.otherFormatInput}
+                      value={fmt === 'Other' ? '' : fmt}
+                      onChangeText={(v) => updateFormat(dayName, v.trim() ? v : 'Other')}
+                      placeholder="Write your own format..."
+                      placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                      autoCapitalize="words"
+                    />
+                  )}
+
+                  <View style={styles.statusRow}>
+                    <View style={styles.statusLeft}>
+                      <View style={styles.statusDot} />
+                      <Text style={styles.statusText}>Draft saved locally</Text>
+                    </View>
+                    <Text style={styles.statusRight}>
+                      Modified {relativeTime(now - lastModified)}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
+          </ScrollView>
         </ScrollView>
       </SafeAreaView>
     </UniverseBackground>
@@ -367,6 +390,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   dateChipNumSelected: { color: '#FFD700' },
+  cardsScroll: { width: CARD_WIDTH, marginHorizontal: 0 },
+  cardsScrollContent: { flexDirection: 'row' },
+  cardPage: { width: CARD_WIDTH },
   card: {
     backgroundColor: 'rgba(60, 45, 90, 0.5)',
     borderRadius: 20,
