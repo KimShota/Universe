@@ -18,7 +18,8 @@ import { useAuth } from '../../contexts/AuthContext';
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
 export default function TipDetailScreen() {
-  const { id } = useLocalSearchParams();
+  const params = useLocalSearchParams<{ id?: string | string[] }>();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id ?? '';
   const router = useRouter();
   const { refreshUser } = useAuth();
   const tip = CONTENT_TIPS.find((t) => t.id === id);
@@ -40,6 +41,7 @@ export default function TipDetailScreen() {
   }
 
   const handleAnswerSelect = (index: number) => {
+    if (!tip.quiz?.length) return;
     setSelectedAnswer(index);
     const isCorrect = tip.quiz[currentQuestion].correct === index;
     if (isCorrect) {
@@ -47,7 +49,7 @@ export default function TipDetailScreen() {
     }
 
     setTimeout(() => {
-      if (currentQuestion < tip.quiz.length - 1) {
+      if (currentQuestion < tip.quiz!.length - 1) {
         setCurrentQuestion(currentQuestion + 1);
         setSelectedAnswer(null);
       } else {
@@ -58,19 +60,21 @@ export default function TipDetailScreen() {
 
   const handleQuizComplete = async () => {
     try {
-      const sessionToken = await AsyncStorage.getItem('session_token');
-      await fetch(`${BACKEND_URL}/api/content-tips/quiz`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionToken}`,
-        },
-        body: JSON.stringify({
-          tip_id: tip.id,
-          score,
-        }),
-      });
-      await refreshUser();
+      if (tip.quiz?.length) {
+        const sessionToken = await AsyncStorage.getItem('session_token');
+        await fetch(`${BACKEND_URL}/api/content-tips/quiz`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${sessionToken}`,
+          },
+          body: JSON.stringify({
+            tip_id: tip.id,
+            score,
+          }),
+        });
+        await refreshUser();
+      }
       setShowQuiz(false);
       setQuizComplete(false);
       setCurrentQuestion(0);
@@ -97,12 +101,14 @@ export default function TipDetailScreen() {
             <Text style={styles.contentText}>{tip.content}</Text>
           </View>
 
-          <TouchableOpacity
-            style={styles.testButton}
-            onPress={() => setShowQuiz(true)}
-          >
-            <Text style={styles.testButtonText}>Test Your Knowledge</Text>
-          </TouchableOpacity>
+          {tip.quiz && tip.quiz.length > 0 && (
+            <TouchableOpacity
+              style={styles.testButton}
+              onPress={() => setShowQuiz(true)}
+            >
+              <Text style={styles.testButtonText}>Test Your Knowledge</Text>
+            </TouchableOpacity>
+          )}
         </ScrollView>
 
         {/* Quiz Modal */}
@@ -114,7 +120,7 @@ export default function TipDetailScreen() {
         >
           <View style={styles.quizOverlay}>
             <View style={styles.quizContent}>
-              {!quizComplete ? (
+              {tip.quiz && tip.quiz.length > 0 && !quizComplete ? (
                 <>
                   <Text style={styles.quizTitle}>
                     Question {currentQuestion + 1} of {tip.quiz.length}

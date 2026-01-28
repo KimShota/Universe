@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -18,30 +18,73 @@ import { playClickSound } from '../utils/soundEffects';
 const { width } = Dimensions.get('window');
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const COLUMNS = ['Idea', 'Format'];
+const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const;
+const DAY_ABBREV: Record<string, string> = { Monday: 'MON', Tuesday: 'TUE', Wednesday: 'WED', Thursday: 'THU', Friday: 'FRI', Saturday: 'SAT', Sunday: 'SUN' };
+
+const FORMAT_OPTIONS: { id: string; label: string; icon: string }[] = [
+  { id: 'Silent Film Storytelling', label: 'Silent Film Storytelling', icon: 'grid-outline' },
+  { id: 'B-roll', label: 'B-roll', icon: 'film-outline' },
+  { id: 'Talking Head', label: 'Talking Head', icon: 'person-outline' },
+  { id: 'Split Screen', label: 'Split Screen', icon: 'albums-outline' },
+  { id: 'Other', label: 'Other', icon: 'ellipsis-horizontal' },
+];
+const PRESET_FORMAT_IDS = FORMAT_OPTIONS.filter((o) => o.id !== 'Other').map((o) => o.id);
 
 interface ScheduleData {
-  [day: string]: {
-    idea: string;
-    format: string;
-  };
+  [day: string]: { idea: string; format: string };
+}
+
+function getWeekDates(): { date: Date; dayName: (typeof DAY_NAMES)[number] }[] {
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const monOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + monOffset);
+  return DAY_NAMES.map((name, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return { date: d, dayName: name };
+  });
+}
+
+function formatDateShort(d: Date): string {
+  return d.getDate().toString();
+}
+
+function formatDateLong(d: Date): string {
+  const months = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ');
+  return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
+
+function relativeTime(ms: number): string {
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const h = Math.floor(m / 60);
+  if (m < 1) return 'Just now';
+  if (m < 60) return `${m}m ago`;
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
 }
 
 export default function ScheduleScreen() {
   const router = useRouter();
-  const [schedule, setSchedule] = useState<ScheduleData>({
-    Monday: { idea: '', format: '' },
-    Tuesday: { idea: '', format: '' },
-    Wednesday: { idea: '', format: '' },
-    Thursday: { idea: '', format: '' },
-    Friday: { idea: '', format: '' },
-    Saturday: { idea: '', format: '' },
-    Sunday: { idea: '', format: '' },
-  });
+  const [schedule, setSchedule] = useState<ScheduleData>(() =>
+    Object.fromEntries(DAY_NAMES.map((d) => [d, { idea: '', format: '' }]))
+  );
+  const [selectedDay, setSelectedDay] = useState<(typeof DAY_NAMES)[number]>('Monday');
+  const [lastModified, setLastModified] = useState<number>(() => Date.now());
+  const [, setLastSaved] = useState<number>(0);
+  const [now, setNow] = useState(() => Date.now());
+
+  const weekDates = useMemo(getWeekDates, []);
 
   useEffect(() => {
     loadSchedule();
+  }, []);
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(t);
   }, []);
 
   const loadSchedule = async () => {
@@ -52,36 +95,31 @@ export default function ScheduleScreen() {
       });
       if (response.ok) {
         const data = await response.json();
-        if (data.schedule) {
-          // Convert old format to new format if needed
-          const scheduleData = data.schedule;
-          if (scheduleData.idea && scheduleData.format) {
-            // Old format: { idea: { Monday: '', ... }, format: { Monday: '', ... } }
-            const newSchedule: ScheduleData = {
-              Monday: { idea: scheduleData.idea.Monday || '', format: scheduleData.format.Monday || '' },
-              Tuesday: { idea: scheduleData.idea.Tuesday || '', format: scheduleData.format.Tuesday || '' },
-              Wednesday: { idea: scheduleData.idea.Wednesday || '', format: scheduleData.format.Wednesday || '' },
-              Thursday: { idea: scheduleData.idea.Thursday || '', format: scheduleData.format.Thursday || '' },
-              Friday: { idea: scheduleData.idea.Friday || '', format: scheduleData.format.Friday || '' },
-              Saturday: { idea: scheduleData.idea.Saturday || '', format: scheduleData.format.Saturday || '' },
-              Sunday: { idea: scheduleData.idea.Sunday || '', format: scheduleData.format.Sunday || '' },
+        const scheduleData = data.schedule;
+        if (!scheduleData) return;
+        if (scheduleData.idea && scheduleData.format) {
+          const next: ScheduleData = {};
+          DAY_NAMES.forEach((d) => {
+            next[d] = {
+              idea: scheduleData.idea[d] || '',
+              format: scheduleData.format[d] || '',
             };
-            setSchedule(newSchedule);
-          } else {
-            // New format: { Monday: { idea: '', format: '' }, ... }
-            setSchedule(scheduleData);
-          }
+          });
+          setSchedule(next);
+        } else {
+          setSchedule(scheduleData);
         }
       }
-    } catch (error) {
-      console.error('Error loading schedule:', error);
+    } catch (e) {
+      console.error('Error loading schedule:', e);
     }
   };
 
   const saveSchedule = async () => {
+    playClickSound();
     try {
       const sessionToken = await AsyncStorage.getItem('session_token');
-      await fetch(`${BACKEND_URL}/api/schedule`, {
+      const res = await fetch(`${BACKEND_URL}/api/schedule`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -89,24 +127,36 @@ export default function ScheduleScreen() {
         },
         body: JSON.stringify({ schedule }),
       });
-    } catch (error) {
-      console.error('Error saving schedule:', error);
+      if (res.ok) {
+        setLastSaved(Date.now());
+      }
+    } catch (e) {
+      console.error('Error saving schedule:', e);
     }
   };
 
-  const updateCell = (day: string, column: string, value: string) => {
-    const newSchedule = { ...schedule };
-    newSchedule[day] = {
-      ...newSchedule[day],
-      [column.toLowerCase()]: value,
-    };
-    setSchedule(newSchedule);
+  const updateIdea = (day: string, value: string) => {
+    setSchedule((prev) => ({
+      ...prev,
+      [day]: { ...prev[day], idea: value },
+    }));
+    setLastModified(Date.now());
   };
+
+  const updateFormat = (day: string, value: string) => {
+    setSchedule((prev) => ({
+      ...prev,
+      [day]: { ...prev[day], format: value },
+    }));
+    setLastModified(Date.now());
+  };
+
+  const selectedEntry = weekDates.find((w) => w.dayName === selectedDay);
+  const selectedData = schedule[selectedDay];
 
   return (
     <UniverseBackground>
       <SafeAreaView style={styles.container}>
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => {
@@ -115,7 +165,7 @@ export default function ScheduleScreen() {
             }}
             style={styles.backButton}
           >
-            <Ionicons name="arrow-back" size={28} color="#FFD700" />
+            <Ionicons name="arrow-back" size={22} color="#fff" />
           </TouchableOpacity>
           <View style={styles.titleContainer}>
             <Text style={styles.title}>Schedule</Text>
@@ -123,45 +173,120 @@ export default function ScheduleScreen() {
         </View>
 
         <ScrollView
-          style={styles.tableScroll}
-          contentContainerStyle={styles.tableContent}
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.table}>
-            {/* Header Row */}
-            <View style={styles.headerRow}>
-              <View style={[styles.headerCell, styles.rowHeaderCell]}>
-                <Text style={styles.headerText}></Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.dateStrip}
+          >
+            {weekDates.map(({ date, dayName }) => {
+              const isSelected = dayName === selectedDay;
+              return (
+                <TouchableOpacity
+                  key={dayName}
+                  style={[styles.dateChip, isSelected && styles.dateChipSelected]}
+                  onPress={() => {
+                    playClickSound();
+                    setSelectedDay(dayName);
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.dateChipDay, isSelected && styles.dateChipDaySelected]}>
+                    {DAY_ABBREV[dayName]}
+                  </Text>
+                  <Text style={[styles.dateChipNum, isSelected && styles.dateChipNumSelected]}>
+                    {formatDateShort(date)}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <View style={styles.dayIcon}>
+                <Ionicons name="sparkles" size={18} color="#FFD700" />
               </View>
-              {COLUMNS.map((column) => (
-                <View key={column} style={styles.headerCell}>
-                  <Text style={styles.headerText}>{column}</Text>
-                </View>
-              ))}
+              <View style={styles.dayTextWrap}>
+                <Text style={styles.dayName}>{selectedDay}</Text>
+                <Text style={styles.dayDate}>
+                  {selectedEntry ? formatDateLong(selectedEntry.date) : ''}
+                </Text>
+              </View>
             </View>
 
-            {/* Data Rows */}
-            {DAYS.map((day) => (
-              <View key={day} style={styles.dataRow}>
-                <View style={[styles.dataCell, styles.rowHeaderCell]}>
-                  <Text style={styles.rowHeaderText}>{day}</Text>
-                </View>
-                {COLUMNS.map((column) => (
-                  <View key={column} style={styles.dataCell}>
-                    <TextInput
-                      style={styles.cellInput}
-                      value={schedule[day]?.[column.toLowerCase() as 'idea' | 'format'] || ''}
-                      onChangeText={(text) => {
-                        updateCell(day, column, text);
-                      }}
-                      onBlur={saveSchedule}
-                      placeholder={column === 'Idea' ? 'Enter idea...' : 'Enter format...'}
-                      placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                      multiline
+            <Text style={styles.sectionLabel}>CONTENT IDEA</Text>
+            <View style={styles.ideaBox}>
+              <TextInput
+                style={styles.ideaInput}
+                value={selectedData?.idea ?? ''}
+                onChangeText={(v) => updateIdea(selectedDay, v)}
+                onBlur={() => saveSchedule()}
+                placeholder="e.g. The Midnight Library Chronicles: Chapter 4"
+                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                multiline
+              />
+              <Ionicons name="pencil" size={16} color="rgba(255, 255, 255, 0.4)" style={styles.ideaPencil} />
+            </View>
+
+            <Text style={styles.sectionLabel}>PREFERRED FORMAT</Text>
+            <View style={styles.formatStack}>
+              {FORMAT_OPTIONS.map((opt) => {
+                const fmt = selectedData?.format ?? '';
+                const isOtherSelected = fmt === 'Other' || (fmt.length > 0 && PRESET_FORMAT_IDS.indexOf(fmt) === -1);
+                const isSelected = opt.id === 'Other' ? isOtherSelected : fmt === opt.id;
+                return (
+                  <TouchableOpacity
+                    key={opt.id}
+                    style={[styles.formatChip, isSelected && styles.formatChipSelected]}
+                    onPress={() => {
+                      playClickSound();
+                      updateFormat(selectedDay, opt.id);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons
+                      name={opt.icon as any}
+                      size={20}
+                      color={isSelected ? '#FFD700' : 'rgba(255,255,255,0.85)'}
                     />
-                  </View>
-                ))}
+                    <Text style={[styles.formatChipText, isSelected && styles.formatChipTextSelected]}>
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            {(() => {
+              const fmt = selectedData?.format ?? '';
+              const showOtherInput = fmt === 'Other' || (fmt.length > 0 && PRESET_FORMAT_IDS.indexOf(fmt) === -1);
+              if (!showOtherInput) return null;
+              return (
+                <TextInput
+                  style={styles.otherFormatInput}
+                  value={fmt === 'Other' ? '' : fmt}
+                  onChangeText={(v) => updateFormat(selectedDay, v.trim() ? v : 'Other')}
+                  onBlur={() => saveSchedule()}
+                  placeholder="Write your own format..."
+                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                  autoCapitalize="words"
+                />
+              );
+            })()}
+
+            <View style={styles.statusRow}>
+              <View style={styles.statusLeft}>
+                <View style={styles.statusDot} />
+                <Text style={styles.statusText}>Draft saved locally</Text>
               </View>
-            ))}
+              <Text style={styles.statusRight}>
+                Modified {relativeTime(now - lastModified)}
+              </Text>
+            </View>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -170,18 +295,21 @@ export default function ScheduleScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     position: 'relative',
   },
   backButton: {
-    padding: 8,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
     zIndex: 1,
   },
   titleContainer: {
@@ -193,67 +321,169 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#FFD700',
   },
-  tableScroll: {
-    flex: 1,
-  },
-  tableContent: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  table: {
-    width: '100%',
-  },
-  headerRow: {
+  scroll: { flex: 1 },
+  scrollContent: { padding: 20, paddingBottom: 40 },
+  dateStrip: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(100, 200, 255, 0.3)',
-    borderBottomWidth: 2,
-    borderBottomColor: 'rgba(255, 255, 255, 0.2)',
+    gap: 10,
+    marginBottom: 20,
+    paddingVertical: 4,
   },
-  headerCell: {
-    padding: 12,
-    justifyContent: 'center',
+  dateChip: {
+    minWidth: 64,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
-    borderRightWidth: 1,
-    borderRightColor: 'rgba(255, 255, 255, 0.1)',
-    flex: 1,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
   },
-  rowHeaderCell: {
-    width: 120,
-    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+  dateChipSelected: {
+    borderColor: '#FFD700',
+    backgroundColor: 'rgba(255, 215, 0, 0.08)',
   },
-  headerText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: 'bold',
-    textAlign: 'center',
+  dateChipDay: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: 'rgba(255, 255, 255, 0.85)',
+    letterSpacing: 0.5,
   },
-  rowHeaderText: {
-    color: '#FFD700',
-    fontSize: 14,
-    fontWeight: 'bold',
-    textAlign: 'center',
+  dateChipDaySelected: { color: '#FFD700' },
+  dateChipNum: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginTop: 2,
   },
-  dataRow: {
+  dateChipNumSelected: { color: '#FFD700' },
+  card: {
+    backgroundColor: 'rgba(60, 45, 90, 0.5)',
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  cardHeader: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+    marginBottom: 20,
   },
-  dataCell: {
-    padding: 8,
-    borderRightWidth: 1,
-    borderRightColor: 'rgba(255, 255, 255, 0.1)',
-    flex: 1,
-    minHeight: 80,
+  dayIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    backgroundColor: 'rgba(80, 60, 50, 0.6)',
+    alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 14,
   },
-  cellInput: {
-    color: '#ffffff',
-    fontSize: 12,
+  dayTextWrap: {},
+  dayName: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  dayDate: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.5)',
+    marginTop: 2,
+  },
+  sectionLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#FFD700',
+    letterSpacing: 1,
+    marginBottom: 10,
+  },
+  ideaBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 22,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  ideaInput: {
     flex: 1,
-    textAlignVertical: 'top',
-    padding: 4,
+    fontSize: 15,
+    color: '#fff',
+    paddingVertical: 4,
+    maxHeight: 80,
+  },
+  ideaPencil: {
+    marginLeft: 8,
+  },
+  formatStack: { gap: 10 },
+  formatChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+  },
+  formatChipSelected: {
+    borderColor: '#FFD700',
+    backgroundColor: 'rgba(255, 215, 0, 0.08)',
+  },
+  formatChipText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
+  formatChipTextSelected: { color: '#FFD700' },
+  otherFormatInput: {
+    marginTop: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    fontSize: 15,
+    color: '#fff',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.25)',
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  statusLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#4ade80',
+  },
+  statusText: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.55)',
+  },
+  statusRight: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.5)',
   },
 });

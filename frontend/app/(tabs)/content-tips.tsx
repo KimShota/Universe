@@ -43,6 +43,8 @@ export default function ContentTipsScreen() {
                   router.push('/how-to-script');
                 } else if (tip.id === 'how-to-edit') {
                   router.push('/how-to-edit');
+                } else if (tip.id === 'how-to-create-biography') {
+                  router.push('/how-to-create-biography');
                 } else {
                   router.push(`/tip/${tip.id}`);
                 }

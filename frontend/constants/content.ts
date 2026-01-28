@@ -136,5 +136,10 @@ export const CONTENT_TIPS = [
         correct: 0
       }
     ]
+  },
+  {
+    id: 'how-to-create-biography',
+    title: 'How to create Biography',
+    content: "**The perfect bio**\n\nThe first line of your bio should tell new viewers how you can help them.\n\nThe second line should tell them why they should trust you.\n\nThe third line should contain your email address so brands or collaborators can reach you.\n\nThe fourth line should be a call to action to an easy next step like lead magnet, low ticket product, or book a call page.\n\nRemove Linktree and opt for a single link to reduce decision fatigue.\n\n**Profile photo:** Clearly shows your face, direct to camera, and well lit."
   }
 ];

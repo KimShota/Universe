@@ -127,7 +127,9 @@ class AnalysisEntry(BaseModel):
     hook: str = ""
     format: str = ""
     duration: str = ""
+    pacing: str = ""
     audio: str = ""
+    storyArc: str = ""
     notes: str = ""
     date: Optional[str] = None
 
@@ -154,6 +156,16 @@ class Script(BaseModel):
 
 class ScriptRequest(BaseModel):
     script: Script
+
+class StoryFinderRow(BaseModel):
+    id: str
+    problem: str = ""
+    pursuit: str = ""
+    payoff: str = ""
+    your_story: str = ""
+
+class UpdateStoryFinderRequest(BaseModel):
+    rows: List[StoryFinderRow]
 
 # ==================== AUTH HELPERS ====================
 
@@ -683,6 +695,43 @@ async def update_schedule(
     )
     
     return schedule
+
+# ==================== STORY FINDER ROUTES ====================
+
+@api_router.get("/story-finder")
+async def get_story_finder(current_user: User = Depends(get_current_user)):
+    """Get user's Story Finder rows"""
+    doc = await db.story_finder.find_one(
+        {"user_id": current_user.user_id},
+        {"_id": 0, "user_id": 0}
+    )
+    if not doc or "rows" not in doc:
+        return {"rows": []}
+    return {"rows": doc["rows"]}
+
+@api_router.put("/story-finder")
+async def update_story_finder(
+    request: UpdateStoryFinderRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """Update Story Finder rows"""
+    rows = [r.dict() for r in request.rows]
+    update_data = {
+        "rows": rows,
+        "updated_at": datetime.now(timezone.utc),
+    }
+    existing = await db.story_finder.find_one({"user_id": current_user.user_id})
+    if existing:
+        await db.story_finder.update_one(
+            {"user_id": current_user.user_id},
+            {"$set": update_data}
+        )
+    else:
+        await db.story_finder.insert_one({
+            "user_id": current_user.user_id,
+            **update_data,
+        })
+    return {"rows": rows}
 
 # ==================== CONTENT TIPS ROUTES ====================
 

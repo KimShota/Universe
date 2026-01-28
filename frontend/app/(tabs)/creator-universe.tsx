@@ -40,6 +40,9 @@ export default function CreatorUniverseScreen() {
   const [activeScreen, setActiveScreen] = useState<ScreenType>('vision');
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [infoActiveScreen, setInfoActiveScreen] = useState<InfoScreenType>('vision');
+  const [deleteModeVision, setDeleteModeVision] = useState(false);
+  const [deleteModeAvatar, setDeleteModeAvatar] = useState(false);
+  const [deleteModeIdentity, setDeleteModeIdentity] = useState(false);
 
   // Vision screen state
   const [goal, setGoal] = useState('');
@@ -143,11 +146,15 @@ export default function CreatorUniverseScreen() {
   );
 
   const saveUniverse = async (overrides?: {
+    overarching_goal?: string;
     demographic?: typeof demographic;
+    psychographic?: typeof psychographic;
     identity?: typeof identity;
   }) => {
     try {
+      const g = overrides?.overarching_goal ?? goal;
       const d = overrides?.demographic ?? demographic;
+      const p = overrides?.psychographic ?? psychographic;
       const u = overrides?.identity ?? identity;
       const sessionToken = await AsyncStorage.getItem('session_token');
       await fetch(`${BACKEND_URL}/api/creator-universe`, {
@@ -157,11 +164,11 @@ export default function CreatorUniverseScreen() {
           Authorization: `Bearer ${sessionToken}`,
         },
         body: JSON.stringify({
-          overarching_goal: goal,
+          overarching_goal: g,
           content_pillars: pillars,
           avatar: {
             demographic: d,
-            psychographic,
+            psychographic: p,
           },
           identity: u,
         }),
@@ -231,11 +238,24 @@ export default function CreatorUniverseScreen() {
   };
 
   const removeIdea = (pillarIndex: number, ideaIndex: number) => {
+    playClickSound();
     const newPillars = [...pillars];
     newPillars[pillarIndex].ideas.splice(ideaIndex, 1);
     setPillars(newPillars);
     saveUniverse();
   };
+
+  const toggleDeleteMode = () => {
+    playClickSound();
+    if (activeScreen === 'vision') setDeleteModeVision((v) => !v);
+    else if (activeScreen === 'avatar') setDeleteModeAvatar((v) => !v);
+    else setDeleteModeIdentity((v) => !v);
+  };
+
+  const deleteModeActive =
+    (activeScreen === 'vision' && deleteModeVision) ||
+    (activeScreen === 'avatar' && deleteModeAvatar) ||
+    (activeScreen === 'identity' && deleteModeIdentity);
 
   // Identity screen functions (mirror Vision: add/remove boxes per category)
   const updateIdentityField = (category: keyof typeof identity, index: number, value: string) => {
@@ -308,6 +328,16 @@ export default function CreatorUniverseScreen() {
             </TouchableOpacity>
           </View>
 
+          <TouchableOpacity
+            style={[styles.deleteModeButton, deleteModeActive && styles.deleteModeButtonActive]}
+            onPress={toggleDeleteMode}
+          >
+            <Ionicons
+              name={deleteModeActive ? 'trash' : 'trash-outline'}
+              size={24}
+              color={deleteModeActive ? '#FFD700' : 'rgba(255, 255, 255, 0.6)'}
+            />
+          </TouchableOpacity>
           <TouchableOpacity style={styles.helpButton} onPress={openInfoModal}>
             <Ionicons name="help-circle-outline" size={26} color="#FFD700" />
           </TouchableOpacity>
@@ -397,12 +427,14 @@ export default function CreatorUniverseScreen() {
                             multiline
                           />
                         </View>
-                        <TouchableOpacity
-                          style={styles.deleteIdeaButton}
-                          onPress={() => removeIdea(pillarIndex, ideaIndex)}
-                        >
-                          <Ionicons name="close-circle" size={18} color="#ff4444" />
-                        </TouchableOpacity>
+                        {deleteModeVision && (
+                          <TouchableOpacity
+                            style={styles.deleteIdeaButton}
+                            onPress={() => removeIdea(pillarIndex, ideaIndex)}
+                          >
+                            <Ionicons name="close-circle" size={18} color="#ff4444" />
+                          </TouchableOpacity>
+                        )}
                       </View>
                     ))}
                     {pillar.ideas.length < 4 && (
@@ -685,12 +717,14 @@ export default function CreatorUniverseScreen() {
                               multiline
                             />
                           </View>
-                          <TouchableOpacity
-                            style={styles.deleteIdeaButton}
-                            onPress={() => removeIdentityItem(category, index)}
-                          >
-                            <Ionicons name="close-circle" size={18} color="#ff4444" />
-                          </TouchableOpacity>
+                          {deleteModeIdentity && (
+                            <TouchableOpacity
+                              style={styles.deleteIdeaButton}
+                              onPress={() => removeIdentityItem(category, index)}
+                            >
+                              <Ionicons name="close-circle" size={18} color="#ff4444" />
+                            </TouchableOpacity>
+                          )}
                         </View>
                       ))}
                       {identity[category].length < 4 && (
@@ -783,6 +817,9 @@ export default function CreatorUniverseScreen() {
                   </Text>
                   <Text style={styles.infoBody}>
                     You can add your interest as one more pillar since your ethos will connect all of your content pillars eventually.
+                  </Text>
+                  <Text style={styles.infoTip}>
+                    A creator's vision allows room for change. Your ethos and content pillars can evolve without changing your entire structure. Even when you shift one or two pillars, the others keep your audience feeling familiar. That's why having multiple layers matters.
                   </Text>
                 </ScrollView>
               </View>
@@ -893,6 +930,11 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     fontWeight: 'bold',
   },
+  deleteModeButton: {
+    zIndex: 1,
+    padding: 6,
+  },
+  deleteModeButtonActive: {},
   helpButton: {
     zIndex: 1,
     padding: 4,

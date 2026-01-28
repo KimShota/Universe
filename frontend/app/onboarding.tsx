@@ -21,6 +21,7 @@ const ONBOARDING_DONE_KEY = 'onboarding:done';
 const ONBOARDING_BRANCH_KEY = 'onboarding:branch';
 const ONBOARDING_PRIMARY_STRUGGLE_KEY = 'onboarding:primaryStruggle';
 const ONBOARDING_PRIMARY_ISSUE_KEY = 'onboarding:primaryIssueId';
+const ONBOARDING_DRAFT_KEY = 'onboarding:draft';
 
 type Branch = 'first_time' | 'stuck_creator';
 
@@ -53,7 +54,7 @@ function parseStep(raw: unknown): 1 | 2 | 3 | 4 | 5 {
 export default function OnboardingScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ step?: string; issueId?: string }>();
-  const step = parseStep(params.step);
+  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(() => parseStep(params.step));
 
   const [branch, setBranch] = useState<Branch | null>(null);
   const [primaryStruggle, setPrimaryStruggle] = useState<string | null>(null);
@@ -86,11 +87,40 @@ export default function OnboardingScreen() {
   const { width } = Dimensions.get('window');
   const contentMaxWidth = useMemo(() => Math.min(width - 32, 520), [width]);
 
-  const goToStep = (next: 1 | 2 | 3 | 4 | 5) => {
-    router.replace({
-      pathname: '/onboarding',
-      params: { step: String(next), issueId: params.issueId },
-    });
+  const buildDraft = () => ({
+    branch,
+    primaryStruggle,
+    primaryIssueId,
+    messageEthos,
+    skillPeopleComeFor,
+    passion,
+    currentStruggle,
+    regions,
+    ageMin,
+    ageMax,
+    genderMale,
+    genderFemale,
+    avatarStruggle,
+    avatarDesire,
+    avatarCreators,
+    struggledWith,
+    passionateNow,
+    experience,
+    goodAt,
+    comeToYouFor,
+  });
+
+  const persistDraft = async () => {
+    try {
+      await AsyncStorage.setItem(ONBOARDING_DRAFT_KEY, JSON.stringify(buildDraft()));
+    } catch {
+      // ignore
+    }
+  };
+
+  const goToStep = async (next: 1 | 2 | 3 | 4 | 5) => {
+    await persistDraft();
+    setStep(next);
   };
 
   const toggleRegion = (r: string) => {
@@ -103,9 +133,40 @@ export default function OnboardingScreen() {
         const b = await AsyncStorage.getItem(ONBOARDING_BRANCH_KEY);
         const ps = await AsyncStorage.getItem(ONBOARDING_PRIMARY_STRUGGLE_KEY);
         const pi = await AsyncStorage.getItem(ONBOARDING_PRIMARY_ISSUE_KEY);
+        const draftRaw = await AsyncStorage.getItem(ONBOARDING_DRAFT_KEY);
         if (b === 'first_time' || b === 'stuck_creator') setBranch(b);
         if (ps) setPrimaryStruggle(ps);
         if (pi) setPrimaryIssueId(pi);
+
+        if (draftRaw) {
+          try {
+            const d = JSON.parse(draftRaw);
+            if (d && typeof d === 'object') {
+              if (d.branch === 'first_time' || d.branch === 'stuck_creator') setBranch(d.branch);
+              if (typeof d.primaryStruggle === 'string') setPrimaryStruggle(d.primaryStruggle);
+              if (typeof d.primaryIssueId === 'string') setPrimaryIssueId(d.primaryIssueId);
+              if (typeof d.messageEthos === 'string') setMessageEthos(d.messageEthos);
+              if (typeof d.skillPeopleComeFor === 'string') setSkillPeopleComeFor(d.skillPeopleComeFor);
+              if (typeof d.passion === 'string') setPassion(d.passion);
+              if (typeof d.currentStruggle === 'string') setCurrentStruggle(d.currentStruggle);
+              if (Array.isArray(d.regions)) setRegions(d.regions);
+              if (typeof d.ageMin === 'string') setAgeMin(d.ageMin);
+              if (typeof d.ageMax === 'string') setAgeMax(d.ageMax);
+              if (typeof d.genderMale === 'string') setGenderMale(d.genderMale);
+              if (typeof d.genderFemale === 'string') setGenderFemale(d.genderFemale);
+              if (typeof d.avatarStruggle === 'string') setAvatarStruggle(d.avatarStruggle);
+              if (typeof d.avatarDesire === 'string') setAvatarDesire(d.avatarDesire);
+              if (typeof d.avatarCreators === 'string') setAvatarCreators(d.avatarCreators);
+              if (typeof d.struggledWith === 'string') setStruggledWith(d.struggledWith);
+              if (typeof d.passionateNow === 'string') setPassionateNow(d.passionateNow);
+              if (typeof d.experience === 'string') setExperience(d.experience);
+              if (typeof d.goodAt === 'string') setGoodAt(d.goodAt);
+              if (typeof d.comeToYouFor === 'string') setComeToYouFor(d.comeToYouFor);
+            }
+          } catch {
+            // ignore
+          }
+        }
 
         // Prefill the “currently struggling with” field when returning from SOS.
         if (!currentStruggle && ps) {
@@ -119,9 +180,15 @@ export default function OnboardingScreen() {
   }, []);
 
   useEffect(() => {
+    // When returning from other screens, allow external navigation to set the initial step.
+    setStep(parseStep(params.step));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.step]);
+
+  useEffect(() => {
     // Guard: branch B should not stay on SOS step
     if (step === 2 && branch === 'stuck_creator') {
-      goToStep(3);
+      setStep(3);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, branch]);
@@ -167,7 +234,7 @@ export default function OnboardingScreen() {
         skill: [skillPeopleComeFor, goodAt, comeToYouFor].map((s) => s.trim()).filter(Boolean),
       };
 
-      await fetch(`${BACKEND_URL}/api/creator-universe`, {
+      const res = await fetch(`${BACKEND_URL}/api/creator-universe`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -179,9 +246,16 @@ export default function OnboardingScreen() {
           avatar,
           identity,
         }),
-      }).catch((e) => console.error('Onboarding save failed:', e));
+      });
 
-      await AsyncStorage.setItem(ONBOARDING_DONE_KEY, '1');
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        console.error('Onboarding save failed:', res.status, text);
+      } else {
+        await AsyncStorage.setItem(ONBOARDING_DONE_KEY, '1');
+        await AsyncStorage.removeItem(ONBOARDING_DRAFT_KEY).catch(() => {});
+      }
+
     } catch (e) {
       console.error('Onboarding complete error:', e);
     }
@@ -193,9 +267,13 @@ export default function OnboardingScreen() {
     <View style={styles.header}>
       {step > 1 ? (
         <TouchableOpacity
-          onPress={() => {
+          onPress={async () => {
             playClickSound();
-            goToStep((step - 1) as 1 | 2 | 3 | 4 | 5);
+            if (step === 3 && branch === 'stuck_creator') {
+              await goToStep(1);
+              return;
+            }
+            await goToStep((step - 1) as 1 | 2 | 3 | 4 | 5);
           }}
           style={styles.backButton}
         >
@@ -215,6 +293,7 @@ export default function OnboardingScreen() {
         onPress={async () => {
           playClickSound();
           await AsyncStorage.setItem(ONBOARDING_DONE_KEY, '1');
+          await AsyncStorage.removeItem(ONBOARDING_DRAFT_KEY).catch(() => {});
           router.replace('/(tabs)/main');
         }}
         style={styles.skipButton}
@@ -268,9 +347,9 @@ export default function OnboardingScreen() {
                       // ignore
                     }
                     if (branch === 'first_time') {
-                      goToStep(2);
+                      await goToStep(2);
                     } else {
-                      goToStep(3);
+                      await goToStep(3);
                     }
                   }}
                   activeOpacity={0.85}
@@ -319,6 +398,7 @@ export default function OnboardingScreen() {
                     } catch {
                       // ignore
                     }
+                    await persistDraft();
                     router.push({
                       pathname: `/sos/${primaryIssueId}` as any,
                       params: { onboarding: '1' },
@@ -376,9 +456,9 @@ export default function OnboardingScreen() {
 
                 <TouchableOpacity
                   style={styles.primaryButton}
-                  onPress={() => {
+                  onPress={async () => {
                     playClickSound();
-                    goToStep(4);
+                    await goToStep(4);
                   }}
                   activeOpacity={0.85}
                 >
@@ -505,9 +585,9 @@ export default function OnboardingScreen() {
 
                 <TouchableOpacity
                   style={styles.primaryButton}
-                  onPress={() => {
+                  onPress={async () => {
                     playClickSound();
-                    goToStep(5);
+                    await goToStep(5);
                   }}
                   activeOpacity={0.85}
                 >

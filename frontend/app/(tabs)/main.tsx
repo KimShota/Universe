@@ -90,10 +90,13 @@ export default function MainScreen() {
     }
   };
 
-  const totalSteps = 365;
-  const currentStep = user?.current_planet || 0;
+  const currentStep = user?.current_planet ?? 0;
+  const visibleSteps = Math.min(
+    365,
+    10 * (1 + Math.floor(currentStep / 10))
+  );
 
-  const roadmapSteps = Array.from({ length: totalSteps }, (_, i) => {
+  const roadmapSteps = Array.from({ length: visibleSteps }, (_, i) => {
       const isLeft = i % 2 === 0;
     const yPosition = 80 + i * 100;
     const xPosition = isLeft ? width * 0.2 : width * 0.7;
@@ -408,6 +411,19 @@ export default function MainScreen() {
               >
                 <Ionicons name="calendar-outline" size={24} color="#FFD700" />
                 <Text style={styles.assetsMenuItemText}>Schedule</Text>
+                <Ionicons name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.5)" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.assetsMenuItem}
+                onPress={() => {
+                  playClickSound();
+                  setShowAssetsMenu(false);
+                  router.push('/story-finder');
+                }}
+              >
+                <Ionicons name="book-outline" size={24} color="#FFD700" />
+                <Text style={styles.assetsMenuItemText}>Story Finder</Text>
                 <Ionicons name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.5)" />
               </TouchableOpacity>
 

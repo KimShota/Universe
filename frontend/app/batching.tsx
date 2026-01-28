@@ -8,6 +8,9 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Dimensions,
+  Alert,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { UniverseBackground } from '../components/UniverseBackground';
@@ -30,11 +33,23 @@ interface Script {
   date?: string;
 }
 
+const FIELDS: { key: keyof Script; label: string; icon: string; placeholder: string; multiline?: boolean }[] = [
+  { key: 'title', label: 'TITLE', icon: 'create-outline', placeholder: 'Enter script title...' },
+  { key: 'mission', label: 'MISSION', icon: 'rocket-outline', placeholder: 'What is the objective of this content?', multiline: true },
+  { key: 'footageNeeded', label: 'FOOTAGE NEEDED', icon: 'videocam-outline', placeholder: 'Describe the B-roll and primary shots...', multiline: true },
+  { key: 'textVisual', label: 'TEXT VISUAL', icon: 'document-text-outline', placeholder: 'On-screen text and graphics...', multiline: true },
+  { key: 'audio', label: 'AUDIO', icon: 'mic-outline', placeholder: 'Voiceover, music, or SFX...', multiline: true },
+  { key: 'caption', label: 'CAPTION', icon: 'chatbubble-outline', placeholder: 'Draft your social media caption...', multiline: true },
+  { key: 'callToAction', label: 'CALL TO ACTION', icon: 'hand-left-outline', placeholder: 'What should viewers do next?', multiline: true },
+];
+
 export default function BatchingScreen() {
   const router = useRouter();
   const [scripts, setScripts] = useState<Script[]>([]);
   const [selectedScriptId, setSelectedScriptId] = useState<string | null>(null);
   const [showScriptDetail, setShowScriptDetail] = useState(false);
+  const [showDateModal, setShowDateModal] = useState(false);
+  const [dateDraft, setDateDraft] = useState('');
 
   useEffect(() => {
     loadScripts();
@@ -104,19 +119,15 @@ export default function BatchingScreen() {
 
   const handleDeleteScript = async (scriptId: string) => {
     if (!scriptId) return;
+    playClickSound();
     try {
       const sessionToken = await AsyncStorage.getItem('session_token');
       const response = await fetch(`${BACKEND_URL}/api/batching/scripts/${scriptId}`, {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${sessionToken}`,
-        },
+        headers: { Authorization: `Bearer ${sessionToken}` },
       });
-      
       if (response.ok) {
-        // リストから削除
         setScripts(scripts.filter(script => script.id !== scriptId));
-        // 削除されたスクリプトが選択されていた場合、詳細ビューを閉じる
         if (selectedScriptId === scriptId) {
           setShowScriptDetail(false);
           setSelectedScriptId(null);
@@ -127,6 +138,24 @@ export default function BatchingScreen() {
     } catch (error) {
       console.error('Error deleting script:', error);
     }
+  };
+
+  const showMoreMenu = () => {
+    playClickSound();
+    Alert.alert(
+      'Script',
+      undefined,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete script',
+          style: 'destructive',
+          onPress: () => {
+            if (selectedScriptId) handleDeleteScript(selectedScriptId);
+          },
+        },
+      ]
+    );
   };
 
   const handleUpdateField = (field: keyof Script, value: string) => {
@@ -170,9 +199,9 @@ export default function BatchingScreen() {
                 playClickSound();
                 router.back();
               }}
-              style={styles.backButton}
+              style={styles.listBackButton}
             >
-              <Ionicons name="arrow-back" size={28} color="#FFD700" />
+              <Ionicons name="arrow-back" size={22} color="#FFD700" />
             </TouchableOpacity>
             <View style={styles.titleContainer}>
               <Text style={styles.title}>Batching</Text>
@@ -240,121 +269,78 @@ export default function BatchingScreen() {
     );
   }
 
-  // Script Detail View
+  // Script Detail View – redesign per screenshot
+  const displayDate = currentScript.date || new Date().toISOString().split('T')[0];
+
   return (
     <UniverseBackground>
       <SafeAreaView style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => {
-              playClickSound();
-              handleBackToList();
-            }}
-            style={styles.backButton}
-          >
-            <Ionicons name="arrow-back" size={28} color="#FFD700" />
+        <View style={styles.detailHeader}>
+          <TouchableOpacity onPress={() => { playClickSound(); handleBackToList(); }} style={styles.detailBackButton}>
+            <Ionicons name="arrow-back" size={22} color="#FFD700" />
           </TouchableOpacity>
-          <View style={styles.titleContainer}>
-            <Text style={styles.title}>
-              {currentScript.title || currentScript.date || 'Script Strategy'}
-            </Text>
-          </View>
+          <TouchableOpacity style={styles.dateBlock} onPress={() => { playClickSound(); setDateDraft(displayDate); setShowDateModal(true); }}>
+            <Text style={styles.dateLabel}>PRODUCTION DATE</Text>
+            <Text style={styles.dateValue}>{displayDate}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={showMoreMenu} style={styles.moreButton}>
+            <Ionicons name="ellipsis-horizontal" size={22} color="#FFD700" />
+          </TouchableOpacity>
         </View>
+
+        <Modal visible={showDateModal} transparent animationType="fade">
+          <Pressable style={styles.modalOverlay} onPress={() => setShowDateModal(false)}>
+            <Pressable style={styles.modalBox} onPress={(e) => e.stopPropagation()}>
+              <Text style={styles.modalTitle}>Production date</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={dateDraft}
+                onChangeText={setDateDraft}
+                placeholder="YYYY-MM-DD"
+                placeholderTextColor="rgba(255,255,255,0.4)"
+                autoCapitalize="none"
+              />
+              <View style={styles.modalActions}>
+                <TouchableOpacity style={styles.modalCancel} onPress={() => setShowDateModal(false)}>
+                  <Text style={styles.modalCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.modalSave}
+                  onPress={() => {
+                    playClickSound();
+                    handleUpdateField('date', dateDraft.trim());
+                    setShowDateModal(false);
+                  }}
+                >
+                  <Text style={styles.modalSaveText}>Save</Text>
+                </TouchableOpacity>
+              </View>
+            </Pressable>
+          </Pressable>
+        </Modal>
 
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          {/* Title */}
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Title</Text>
-            <TextInput
-              style={styles.input}
-              value={currentScript.title || ''}
-              onChangeText={(text) => handleUpdateField('title', text)}
-              placeholder="Enter script title..."
-              placeholderTextColor="rgba(255, 255, 255, 0.4)"
-            />
-          </View>
-
-          {/* Mission */}
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Mission</Text>
-            <TextInput
-              style={styles.input}
-              value={currentScript.mission}
-              onChangeText={(text) => handleUpdateField('mission', text)}
-              placeholder="Enter your mission..."
-              placeholderTextColor="rgba(255, 255, 255, 0.4)"
-              multiline
-            />
-          </View>
-
-          {/* Footage Needed */}
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Footage Needed</Text>
-            <TextInput
-              style={styles.input}
-              value={currentScript.footageNeeded}
-              onChangeText={(text) => handleUpdateField('footageNeeded', text)}
-              placeholder="What footage do you need?"
-              placeholderTextColor="rgba(255, 255, 255, 0.4)"
-              multiline
-            />
-          </View>
-
-          {/* Text Visual */}
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Text Visual</Text>
-            <TextInput
-              style={styles.input}
-              value={currentScript.textVisual}
-              onChangeText={(text) => handleUpdateField('textVisual', text)}
-              placeholder="Enter text for visuals..."
-              placeholderTextColor="rgba(255, 255, 255, 0.4)"
-              multiline
-            />
-          </View>
-
-          {/* Audio */}
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Audio</Text>
-            <TextInput
-              style={styles.input}
-              value={currentScript.audio}
-              onChangeText={(text) => handleUpdateField('audio', text)}
-              placeholder="Audio requirements..."
-              placeholderTextColor="rgba(255, 255, 255, 0.4)"
-              multiline
-            />
-          </View>
-
-          {/* Caption */}
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Caption</Text>
-            <TextInput
-              style={styles.input}
-              value={currentScript.caption}
-              onChangeText={(text) => handleUpdateField('caption', text)}
-              placeholder="Write your caption..."
-              placeholderTextColor="rgba(255, 255, 255, 0.4)"
-              multiline
-            />
-          </View>
-
-          {/* Call to Action */}
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Call to Action</Text>
-            <TextInput
-              style={styles.input}
-              value={currentScript.callToAction}
-              onChangeText={(text) => handleUpdateField('callToAction', text)}
-              placeholder="What action should viewers take?"
-              placeholderTextColor="rgba(255, 255, 255, 0.4)"
-              multiline
-            />
-          </View>
+          {FIELDS.map((f) => (
+            <View key={f.key} style={styles.fieldBlock}>
+              <View style={styles.fieldTitleRow}>
+                <Ionicons name={f.icon as any} size={18} color="#FFD700" />
+                <Text style={styles.fieldLabel}>{f.label}</Text>
+              </View>
+              <TextInput
+                style={[styles.input, f.multiline && styles.inputMultiline]}
+                value={(currentScript[f.key] as string) ?? ''}
+                onChangeText={(t) => handleUpdateField(f.key, t)}
+                placeholder={f.placeholder}
+                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                multiline={f.multiline}
+              />
+            </View>
+          ))}
         </ScrollView>
       </SafeAreaView>
     </UniverseBackground>
@@ -374,6 +360,15 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 8,
+    zIndex: 1,
+  },
+  listBackButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
     zIndex: 1,
   },
   titleContainer: {
@@ -444,6 +439,130 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
   },
+  detailHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  detailBackButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  moreButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dateBlock: {
+    alignItems: 'center',
+  },
+  dateLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: 'rgba(255, 255, 255, 0.55)',
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  dateValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFD700',
+  },
+  fieldBlock: {
+    marginBottom: 20,
+  },
+  fieldTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  fieldLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#FFD700',
+    letterSpacing: 0.8,
+  },
+  input: {
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 12,
+    padding: 14,
+    color: '#fff',
+    fontSize: 15,
+    minHeight: 48,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  inputMultiline: {
+    minHeight: 88,
+    textAlignVertical: 'top',
+    paddingTop: 14,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalBox: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: 'rgba(60, 45, 90, 0.95)',
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFD700',
+    marginBottom: 12,
+  },
+  modalInput: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 12,
+    padding: 14,
+    color: '#fff',
+    fontSize: 15,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'flex-end',
+  },
+  modalCancel: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+  },
+  modalCancelText: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  modalSave: {
+    backgroundColor: '#FFD700',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+  },
+  modalSaveText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0a0e27',
+  },
   fieldContainer: {
     marginBottom: 24,
   },
@@ -452,17 +571,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFD700',
     marginBottom: 8,
-  },
-  input: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
-    padding: 16,
-    color: '#fff',
-    fontSize: 16,
-    minHeight: 60,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
-    textAlignVertical: 'top',
   },
   addButtonContainer: {
     position: 'absolute',
