@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import { playClickSound } from '../utils/soundEffects';
 
 const { width } = Dimensions.get('window');
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+const SAVE_DEBOUNCE_MS = 500;
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const;
 const DAY_ABBREV: Record<string, string> = { Monday: 'MON', Tuesday: 'TUE', Wednesday: 'WED', Thursday: 'THU', Friday: 'FRI', Saturday: 'SAT', Sunday: 'SUN' };
@@ -75,6 +76,7 @@ export default function ScheduleScreen() {
   const [lastModified, setLastModified] = useState<number>(() => Date.now());
   const [, setLastSaved] = useState<number>(0);
   const [now, setNow] = useState(() => Date.now());
+  const hasLoadedRef = useRef(false);
 
   const weekDates = useMemo(getWeekDates, []);
 
@@ -109,14 +111,15 @@ export default function ScheduleScreen() {
         } else {
           setSchedule(scheduleData);
         }
+        hasLoadedRef.current = true;
       }
     } catch (e) {
       console.error('Error loading schedule:', e);
     }
   };
 
-  const saveSchedule = async () => {
-    playClickSound();
+  const saveSchedule = async (override?: ScheduleData) => {
+    const payload = override ?? schedule;
     try {
       const sessionToken = await AsyncStorage.getItem('session_token');
       const res = await fetch(`${BACKEND_URL}/api/schedule`, {
@@ -125,7 +128,7 @@ export default function ScheduleScreen() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${sessionToken}`,
         },
-        body: JSON.stringify({ schedule }),
+        body: JSON.stringify({ schedule: payload }),
       });
       if (res.ok) {
         setLastSaved(Date.now());
@@ -134,6 +137,12 @@ export default function ScheduleScreen() {
       console.error('Error saving schedule:', e);
     }
   };
+
+  useEffect(() => {
+    if (!hasLoadedRef.current) return;
+    const t = setTimeout(() => saveSchedule(schedule), SAVE_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [schedule]);
 
   const updateIdea = (day: string, value: string) => {
     setSchedule((prev) => ({
@@ -225,7 +234,6 @@ export default function ScheduleScreen() {
                 style={styles.ideaInput}
                 value={selectedData?.idea ?? ''}
                 onChangeText={(v) => updateIdea(selectedDay, v)}
-                onBlur={() => saveSchedule()}
                 placeholder="e.g. The Midnight Library Chronicles: Chapter 4"
                 placeholderTextColor="rgba(255, 255, 255, 0.4)"
                 multiline
@@ -270,7 +278,6 @@ export default function ScheduleScreen() {
                   style={styles.otherFormatInput}
                   value={fmt === 'Other' ? '' : fmt}
                   onChangeText={(v) => updateFormat(selectedDay, v.trim() ? v : 'Other')}
-                  onBlur={() => saveSchedule()}
                   placeholder="Write your own format..."
                   placeholderTextColor="rgba(255, 255, 255, 0.4)"
                   autoCapitalize="words"
