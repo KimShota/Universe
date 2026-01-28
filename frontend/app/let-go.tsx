@@ -34,8 +34,9 @@ type AsteroidAnim = {
 
 export default function LetGoScreen() {
   const router = useRouter();
-  const { issueId } = useLocalSearchParams<{ issueId?: string }>();
+  const { issueId, onboarding } = useLocalSearchParams<{ issueId?: string; onboarding?: string }>();
   const resolvedIssueId = issueId ? String(issueId) : 'unknown';
+  const isOnboarding = onboarding === '1' || onboarding === 'true';
 
   const [fears, setFears] = useState<string[]>(['', '', '']);
   const [isVacuuming, setIsVacuuming] = useState(false);
@@ -232,7 +233,7 @@ export default function LetGoScreen() {
     setShowGoodJob(false);
     router.push({
       pathname: '/affirmation',
-      params: { issueId: resolvedIssueId },
+      params: { issueId: resolvedIssueId, onboarding: isOnboarding ? '1' : undefined },
     });
   };
 

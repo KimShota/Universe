@@ -319,6 +319,26 @@ export default function MainScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity
+                style={styles.homeMenuButton}
+                onPress={async () => {
+                  playClickSound();
+                  try {
+                    await AsyncStorage.removeItem('onboarding:done');
+                    await AsyncStorage.removeItem('onboarding:branch');
+                    await AsyncStorage.removeItem('onboarding:primaryStruggle');
+                    await AsyncStorage.removeItem('onboarding:primaryIssueId');
+                  } catch {
+                    // ignore
+                  }
+                  setShowMenu(false);
+                  router.replace('/onboarding');
+                }}
+              >
+                <Ionicons name="refresh-outline" size={24} color="#FFD700" />
+                <Text style={styles.homeMenuButtonText}>Reset Onboarding</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
                 style={styles.logoutButton}
                 onPress={() => {
                   playClickSound();

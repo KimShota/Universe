@@ -101,8 +101,9 @@ const CrackerBurst: React.FC<BurstProps> = ({ side, isActive }) => {
 
 export default function AffirmationScreen() {
   const router = useRouter();
-  const { issueId } = useLocalSearchParams<{ issueId?: string }>();
+  const { issueId, onboarding } = useLocalSearchParams<{ issueId?: string; onboarding?: string }>();
   const resolvedIssueId = issueId ? String(issueId) : 'unknown';
+  const isOnboarding = onboarding === '1' || onboarding === 'true';
   const { refreshUser } = useAuth();
 
   const [fears, setFears] = useState<string[]>(['', '', '']);
@@ -207,7 +208,11 @@ export default function AffirmationScreen() {
       // ignore (still allow navigation)
     }
 
-    router.replace('/(tabs)/main');
+    if (isOnboarding) {
+      router.replace({ pathname: '/onboarding', params: { step: '3', issueId: resolvedIssueId } });
+    } else {
+      router.replace('/(tabs)/main');
+    }
   };
 
   return (

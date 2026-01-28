@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Line } from 'react-native-svg';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { playClickSound } from '../../utils/soundEffects';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
@@ -82,11 +83,7 @@ export default function CreatorUniverseScreen() {
     skill: [],
   });
 
-  useEffect(() => {
-    loadUniverse();
-  }, []);
-
-  const loadUniverse = async () => {
+  const loadUniverse = useCallback(async () => {
     try {
       const sessionToken = await AsyncStorage.getItem('session_token');
       const response = await fetch(`${BACKEND_URL}/api/creator-universe`, {
@@ -137,7 +134,13 @@ export default function CreatorUniverseScreen() {
     } catch (error) {
       console.error('Error loading universe:', error);
     }
-  };
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadUniverse();
+    }, [loadUniverse])
+  );
 
   const saveUniverse = async (overrides?: {
     demographic?: typeof demographic;

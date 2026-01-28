@@ -11,15 +11,28 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import { UniverseBackground } from '../components/UniverseBackground';
 import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const ONBOARDING_DONE_KEY = 'onboarding:done';
 
 export default function LoginScreen() {
   const { user, loading, login } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (user && !loading) {
-      router.replace('/(tabs)/main');
-    }
+    if (!user || loading) return;
+    (async () => {
+      try {
+        const done = await AsyncStorage.getItem(ONBOARDING_DONE_KEY);
+        if (done === '1') {
+          router.replace('/(tabs)/main');
+        } else {
+          router.replace('/onboarding');
+        }
+      } catch {
+        router.replace('/onboarding');
+      }
+    })();
   }, [user, loading]);
 
   if (loading) {

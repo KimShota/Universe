@@ -184,10 +184,11 @@ const TIRED_FLOW_SCREENS: TiredFlowScreen[] = [
 ];
 
 export default function SOSFlowScreen() {
-  const { id } = useLocalSearchParams();
+  const { id, onboarding } = useLocalSearchParams<{ id?: string; onboarding?: string }>();
   const router = useRouter();
   const { refreshUser } = useAuth();
   const issue = SOS_ISSUES.find((i) => i.id === id);
+  const isOnboarding = onboarding === '1' || onboarding === 'true';
 
   const [step, setStep] = useState(1); // 1: Explanation, 2: Black Hole, 3: Affirmations
   const [hateFlowStep, setHateFlowStep] = useState(1); // 1-7 for hate flow
@@ -389,7 +390,7 @@ export default function SOSFlowScreen() {
                     playClickSound();
                     router.push({
                       pathname: '/let-go',
-                      params: { issueId: 'tired' },
+                      params: { issueId: 'tired', onboarding: isOnboarding ? '1' : undefined },
                     });
                   }}
                   activeOpacity={0.85}
@@ -461,7 +462,7 @@ export default function SOSFlowScreen() {
                     playClickSound();
                     router.push({
                       pathname: '/let-go',
-                      params: { issueId: 'stuck' },
+                      params: { issueId: 'stuck', onboarding: isOnboarding ? '1' : undefined },
                     });
                   }}
                   activeOpacity={0.85}
@@ -560,7 +561,7 @@ export default function SOSFlowScreen() {
                     playClickSound();
                     router.push({
                       pathname: '/let-go',
-                      params: { issueId: 'reactions' },
+                      params: { issueId: 'reactions', onboarding: isOnboarding ? '1' : undefined },
                     });
                   }}
                   activeOpacity={0.85}
@@ -632,7 +633,7 @@ export default function SOSFlowScreen() {
                     playClickSound();
                     router.push({
                       pathname: '/let-go',
-                      params: { issueId: 'hate' },
+                      params: { issueId: 'hate', onboarding: isOnboarding ? '1' : undefined },
                     });
                   }}
                   activeOpacity={0.85}
@@ -680,7 +681,7 @@ export default function SOSFlowScreen() {
               onPress={() =>
                 router.push({
                   pathname: '/let-go',
-                  params: { issueId: String(issue.id) },
+                  params: { issueId: String(issue.id), onboarding: isOnboarding ? '1' : undefined },
                 })
               }
               activeOpacity={0.85}
