@@ -327,7 +327,7 @@ export default function ScheduleScreen() {
                     >
                       <View style={styles.tipsCard}>
                         <Text style={styles.tipsTitle}>SCHEDULE TIP</Text>
-                        <Text style={styles.tipsSubtitle}>{pageIdx === 0 ? 'LOW INTENSITY' : 'DAY-BY-DAY'}</Text>
+                        <Text style={styles.tipsSubtitle}>{pageIdx === 0 ? 'LOW INTENSITY SCHEDULE' : 'MIXED INTENSITY SCHEDULE'}</Text>
                         {tips.map((tip, idx) => (
                           <View key={idx} style={styles.tipRow}>
                             <View style={styles.tipIconWrap}>
