@@ -10,6 +10,8 @@ import {
   Dimensions,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { UniverseBackground } from '../components/UniverseBackground';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -37,6 +39,16 @@ const STORY_SECTION = {
   icon: 'book' as const,
 };
 
+const STORY_TIP = `Finding your own story is extremely important in your short-form content journey because it's what allows you to create the most impactful content. Ask yourself questions like: How has your ethos transformed your life? How has pursuing it changed you?
+
+Maybe you grew up watching your parents get divorced and struggled mentally for years. Maybe now, after a long journey, you've achieved some level of financial freedom. That is your story.
+
+Sharing your story is one of the most powerful ways to build real connections with your audience.
+
+Talking like an expert isn't the goal. People don't connect with perfection—they connect with humanity. When you share relatable struggles and real pain, you stop being just a creator and start being someone they trust.
+
+This is the power of storytelling. People connect with who you are, not with your highlights.`;
+
 type RowKey = 'problem' | 'pursuit' | 'payoff' | 'your_story';
 
 interface StoryRow {
@@ -53,6 +65,7 @@ export default function StoryFinderScreen() {
   const [message, setMessage] = useState('');
   const [rows, setRows] = useState<StoryRow[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [showTipModal, setShowTipModal] = useState(false);
 
   const loadMessage = useCallback(async () => {
     try {
@@ -175,7 +188,32 @@ export default function StoryFinderScreen() {
           <View style={styles.titleContainer}>
             <Text style={styles.title}>Story Finder</Text>
           </View>
+          <TouchableOpacity
+            onPress={() => {
+              playClickSound();
+              setShowTipModal(true);
+            }}
+            style={styles.helpButton}
+          >
+            <Ionicons name="help-circle-outline" size={28} color="#FFD700" />
+          </TouchableOpacity>
         </View>
+
+        <Modal visible={showTipModal} transparent animationType="fade">
+          <Pressable style={styles.tipOverlay} onPress={() => setShowTipModal(false)}>
+            <Pressable style={styles.tipModal} onPress={(e) => e.stopPropagation()}>
+              <View style={styles.tipModalHeader}>
+                <Text style={styles.tipModalTitle}>Story Finder Tip</Text>
+                <TouchableOpacity onPress={() => setShowTipModal(false)} style={styles.tipCloseBtn}>
+                  <Ionicons name="close" size={24} color="#FFD700" />
+                </TouchableOpacity>
+              </View>
+              <ScrollView style={styles.tipScroll} showsVerticalScrollIndicator={false}>
+                <Text style={styles.tipText}>{STORY_TIP}</Text>
+              </ScrollView>
+            </Pressable>
+          </Pressable>
+        </Modal>
 
         <ScrollView
           style={styles.scroll}
@@ -300,6 +338,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   backButton: { padding: 8, zIndex: 1 },
+  helpButton: { padding: 8, zIndex: 1, marginLeft: 'auto' },
   titleContainer: {
     position: 'absolute',
     left: 0,
@@ -468,5 +507,45 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.5)',
     marginTop: 4,
+  },
+  tipOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  tipModal: {
+    width: '100%',
+    maxWidth: 380,
+    maxHeight: '80%',
+    backgroundColor: 'rgba(30, 25, 45, 0.98)',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
+    overflow: 'hidden',
+  },
+  tipModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  tipModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFD700',
+  },
+  tipCloseBtn: { padding: 4 },
+  tipScroll: { maxHeight: 360 },
+  tipText: {
+    fontSize: 15,
+    lineHeight: 24,
+    color: 'rgba(255, 255, 255, 0.9)',
+    padding: 20,
+    paddingTop: 16,
   },
 });

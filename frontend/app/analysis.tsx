@@ -26,6 +26,7 @@ interface AnalysisEntry {
   hook: string;
   format: string;
   duration: string;
+  textDuration: string;
   pacing: string;
   audio: string;
   storyArc: string;
@@ -68,6 +69,7 @@ export default function AnalysisScreen() {
             ...e,
             storyArc: e.storyArc ?? '',
             pacing: e.pacing ?? '',
+            textDuration: e.textDuration ?? '',
           }));
           setEntries(normalized);
         }
@@ -103,6 +105,7 @@ export default function AnalysisScreen() {
       hook: '',
       format: '',
       duration: '',
+      textDuration: '',
       pacing: '',
       audio: '',
       storyArc: '',
@@ -161,6 +164,7 @@ export default function AnalysisScreen() {
     hook: '',
     format: '',
     duration: '',
+    textDuration: '',
     pacing: '',
     audio: '',
     storyArc: '',
@@ -328,6 +332,16 @@ export default function AnalysisScreen() {
                   placeholderTextColor="rgba(255, 255, 255, 0.4)"
                 />
               </View>
+            </View>
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>TEXT DURATION</Text>
+              <TextInput
+                style={styles.input}
+                value={currentEntry.textDuration ?? ''}
+                onChangeText={(t) => handleUpdateField('textDuration', t)}
+                placeholder="1-1.5 seconds, timed to music beat"
+                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+              />
             </View>
             <View style={styles.field}>
               <Text style={styles.fieldLabel}>REEL LINK</Text>

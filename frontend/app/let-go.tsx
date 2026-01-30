@@ -389,9 +389,9 @@ export default function LetGoScreen() {
         <Modal visible={showGoodJob} transparent animationType="fade">
           <View style={styles.modalOverlay}>
             <View style={styles.modalCard}>
-              <Text style={styles.modalTitle}>Good job</Text>
+              <Text style={styles.modalTitle}>Great job for letting go of your fears!</Text>
               <Text style={styles.modalSubtitle}>
-                You let it go. Now write what you want to believe instead.
+                Now, let's write three affirmations —promises you're making to yourself — and add them as shining stars in your universe.
               </Text>
               <TouchableOpacity style={styles.modalButton} onPress={() => {
                 playClickSound();

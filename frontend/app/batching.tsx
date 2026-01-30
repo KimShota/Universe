@@ -49,11 +49,13 @@ const FIELDS: { key: keyof Script; label: string; icon: string; placeholder: str
 ];
 
 const SCRIPT_TIPS: { icon: string; title: string; description: string }[] = [
-  { icon: 'refresh', title: 'ALGORITHM & RETENTION', description: "Ensure your first 3 seconds stop the scroll. The algorithm favors high initial watch time over total length." },
-  { icon: 'sparkles', title: '1. THE CURIOSITY HOOK', description: "Open with a question or a bold statement that opens a 'loop' in the viewer's mind that needs closing." },
-  { icon: 'flame', title: '2. AGITATE THE PAIN', description: "Identify a specific struggle your audience has. Make them feel the urgency of solving it now." },
-  { icon: 'help-circle', title: '3. THE REHOOK QUESTION', description: "Mid-way through, ask a question to re-engage viewers who might be starting to drift away." },
-  { icon: 'eye', title: '4. ESTABLISH CONTEXT', description: "Briefly explain why you are the right person to deliver this solution. Build trust quickly." },
+  { icon: 'refresh', title: 'ALGORITHM & RETENTION', description: "Algorithms work based on retention. So even if the first three seconds of your video are amazing, if the rest of the video is boring, it will still perform poorly." },
+  { icon: 'sparkles', title: '1. ADD A HOOK', description: "Add a hook that creates a curiosity gap." },
+  { icon: 'flame', title: '2. AGITATE THE PAIN', description: "Further agitate that pain so that they lock in." },
+  { icon: 'help-circle', title: '3. ADD A REHOOK', description: "Add a rehook by asking a question or switching scenes." },
+  { icon: 'eye', title: '4. ESTABLISH THE CONTEXT', description: "Establish the context so that they understand what's happening." },
+  { icon: 'trending-up', title: '5. BUILD TOWARDS THE SOLUTION', description: "Build towards the solution." },
+  { icon: 'flag', title: '6. END AT PEAK ENGAGEMENT', description: "Once you have them at peak engagement, end the video so you encourage a second watch." },
 ];
 
 export default function BatchingScreen() {
@@ -381,16 +383,6 @@ export default function BatchingScreen() {
             >
               <View {...sheetPanResponder.panHandlers} style={styles.tipsSheetHandle}>
                 <View style={styles.tipsSheetHandleBar} />
-              </View>
-              <View style={styles.tipsHeader}>
-                <View style={styles.tipsHeaderSpacer} />
-                <View style={styles.tipsDateBlock}>
-                  <Text style={styles.tipsDateLabel}>PRODUCTION DATE</Text>
-                  <Text style={styles.tipsDateValue}>{displayDate}</Text>
-                </View>
-                <TouchableOpacity onPress={closeTipsModal} style={styles.tipsHeaderButton}>
-                  <Ionicons name="close" size={24} color="#fff" />
-                </TouchableOpacity>
               </View>
               <ScrollView
                 style={styles.tipsScroll}
@@ -748,28 +740,6 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     backgroundColor: 'rgba(255, 255, 255, 0.35)',
-  },
-  tipsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  tipsHeaderSpacer: { width: 40 },
-  tipsHeaderButton: { padding: 8 },
-  tipsDateBlock: { alignItems: 'center' },
-  tipsDateLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: 'rgba(255, 255, 255, 0.55)',
-    letterSpacing: 1,
-    marginBottom: 4,
-  },
-  tipsDateValue: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#FFD700',
   },
   tipsScroll: { flex: 1 },
   tipsScrollContent: { paddingHorizontal: 20, paddingTop: 4 },

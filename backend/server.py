@@ -127,6 +127,7 @@ class AnalysisEntry(BaseModel):
     hook: str = ""
     format: str = ""
     duration: str = ""
+    textDuration: str = ""
     pacing: str = ""
     audio: str = ""
     storyArc: str = ""
