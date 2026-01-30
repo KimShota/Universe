@@ -137,7 +137,7 @@ export default function MainScreen() {
             contentContainerStyle={styles.roadmapContent}
             showsVerticalScrollIndicator={false}
           >
-            <Text style={styles.title}>Your Journey</Text>
+            <Text style={styles.title}>I'M THE NICHE</Text>
 
             <View style={styles.roadmapContainer}>
               <Svg height={roadmapSteps[roadmapSteps.length - 1].y + 100} width={width}>

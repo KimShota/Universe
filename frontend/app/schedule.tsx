@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,19 +8,46 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Dimensions,
+  Modal,
+  Pressable,
+  Animated,
+  PanResponder,
+  Platform,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { UniverseBackground } from '../components/UniverseBackground';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { playClickSound } from '../utils/soundEffects';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
+const SHEET_MAX_HEIGHT = Math.min(height * 0.92, height - 60);
 const CARD_WIDTH = width - 40;
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 const SAVE_DEBOUNCE_MS = 500;
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const;
+
+const SCHEDULE_TIPS_PAGE1: { icon: string; title: string; description: string }[] = [
+  { icon: 'trending-down', title: 'LOW INTENSITY (5x per week)', description: "• B-roll with info in caption\n• B-roll with voiceover\n• Unscripted talking head\n• Trends" },
+  { icon: 'flame', title: 'HIGH INTENSITY (2x per week)', description: "• Vlogs\n• Scripted talking head with multiple angles\n• Silent film storytelling" },
+  { icon: 'checkmark-circle', title: 'STAY CONSISTENT', description: "Don't let the production level stop you from posting consistently. It is good and strategically important to post low intensity content." },
+];
+
+const SCHEDULE_TIPS_PAGE2: { icon: string; title: string; description: string }[] = [
+  { icon: 'flash', title: 'DAY 1 — BUILD TRUST', description: "Start the week with a high effort post. Your story, a real struggle, the shift you made, and the lesson you learned. This is the post that makes people believe you." },
+  { icon: 'people', title: 'DAY 2 — RELATABILITY', description: "Low effort content. Share behind the scenes, a day in the life, something real and unpolished. This is how you make your content feel human." },
+  { icon: 'school', title: 'DAY 3 — AUTHORITY', description: "Medium effort. Teach one thing you actually know. One technique, one decision, one key takeaway. This positions you as someone worth listening to." },
+  { icon: 'radio', title: 'DAY 4 — REACH', description: "Low effort. Use a trending format like b-roll with text or split screen with your message. The format does the work; your insight builds credibility." },
+  { icon: 'layers', title: 'DAY 5 — VALUE', description: "Medium effort. Break something down—a three step system, a common mistake, or a mini framework. This is the value that keeps people following you." },
+  { icon: 'heart', title: 'DAY 6 — CONSISTENCY', description: "Lowest effort. A reflection, gratitude, or answering a common question. Helps you stay consistent even on lowest energy days." },
+  { icon: 'business', title: 'DAY 7 — DEPTH', description: "High effort. A longer reel, mini lesson, or short vlog. This is how you turn followers into a real community." },
+  { icon: 'calendar', title: 'FEWER DAYS', description: "• 6 days a week: remove Day 6\n• 5 days: remove Day 2\n• 4 days: remove Day 3" },
+];
 const DAY_ABBREV: Record<string, string> = { Monday: 'MON', Tuesday: 'TUE', Wednesday: 'WED', Thursday: 'THU', Friday: 'FRI', Saturday: 'SAT', Sunday: 'SUN' };
 
 const FORMAT_OPTIONS: { id: string; label: string; icon: string }[] = [
@@ -70,17 +97,74 @@ function relativeTime(ms: number): string {
 
 export default function ScheduleScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [schedule, setSchedule] = useState<ScheduleData>(() =>
     Object.fromEntries(DAY_NAMES.map((d) => [d, { idea: '', format: '' }]))
   );
   const [selectedDay, setSelectedDay] = useState<(typeof DAY_NAMES)[number]>('Monday');
   const [lastModified, setLastModified] = useState<number>(() => Date.now());
+  const [showTipModal, setShowTipModal] = useState(false);
+  const [tipPage, setTipPage] = useState(1);
   const [, setLastSaved] = useState<number>(0);
   const [now, setNow] = useState(() => Date.now());
   const hasLoadedRef = useRef(false);
   const cardsScrollRef = useRef<ScrollView>(null);
+  const tipsPagesScrollRef = useRef<ScrollView>(null);
+  const sheetAnim = useRef(new Animated.Value(SHEET_MAX_HEIGHT)).current;
+  const panStartY = useRef(0);
+
+  const closeTipsModal = useCallback(() => {
+    playClickSound();
+    Animated.timing(sheetAnim, {
+      toValue: SHEET_MAX_HEIGHT,
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowTipModal(false);
+      setTipPage(1);
+    });
+  }, [sheetAnim]);
+
+  const scrollToTipsPage = (page: 1 | 2) => {
+    playClickSound();
+    setTipPage(page);
+    tipsPagesScrollRef.current?.scrollTo({ x: (page - 1) * width, animated: true });
+  };
+
+  const handleTipsPageScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const x = e.nativeEvent.contentOffset.x;
+    const page = Math.round(x / width) + 1;
+    if (page >= 1 && page <= 2 && page !== tipPage) setTipPage(page);
+  };
+
+  const sheetPanResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 5,
+        onPanResponderGrant: (_, g) => {
+          panStartY.current = g.moveY;
+        },
+        onPanResponderRelease: (_, g) => {
+          const dy = g.moveY - panStartY.current;
+          if (dy > 50) closeTipsModal();
+        },
+      }),
+    [closeTipsModal]
+  );
 
   const weekDates = useMemo(getWeekDates, []);
+
+  useEffect(() => {
+    if (!showTipModal) return;
+    sheetAnim.setValue(SHEET_MAX_HEIGHT);
+    Animated.spring(sheetAnim, {
+      toValue: 0,
+      useNativeDriver: true,
+      damping: 20,
+      stiffness: 200,
+    }).start();
+  }, [showTipModal, sheetAnim]);
 
   useEffect(() => {
     loadSchedule();
@@ -191,7 +275,97 @@ export default function ScheduleScreen() {
           <View style={styles.titleContainer}>
             <Text style={styles.title}>Schedule</Text>
           </View>
+          <TouchableOpacity
+            onPress={() => {
+              playClickSound();
+              setShowTipModal(true);
+            }}
+            style={styles.helpButton}
+          >
+            <Ionicons name="help-circle-outline" size={28} color="#FFD700" />
+          </TouchableOpacity>
         </View>
+
+        <Modal visible={showTipModal} transparent animationType="none">
+          <View style={styles.tipsSheetOverlay}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={closeTipsModal}>
+              <BlurView
+                intensity={Platform.OS === 'ios' ? 60 : 80}
+                tint="dark"
+                style={StyleSheet.absoluteFill}
+              />
+            </Pressable>
+            <Animated.View
+              style={[
+                styles.tipsSheet,
+                {
+                  height: SHEET_MAX_HEIGHT,
+                  paddingBottom: insets.bottom,
+                  transform: [{ translateY: sheetAnim }],
+                },
+              ]}
+            >
+              <View {...sheetPanResponder.panHandlers} style={styles.tipsSheetHandle}>
+                <View style={styles.tipsSheetHandleBar} />
+              </View>
+              <ScrollView
+                ref={tipsPagesScrollRef}
+                horizontal
+                pagingEnabled
+                decelerationRate="fast"
+                showsHorizontalScrollIndicator={false}
+                onMomentumScrollEnd={handleTipsPageScroll}
+                onScrollEndDrag={handleTipsPageScroll}
+                style={styles.tipsScroll}
+              >
+                {[SCHEDULE_TIPS_PAGE1, SCHEDULE_TIPS_PAGE2].map((tips, pageIdx) => (
+                  <View key={pageIdx} style={[styles.tipsPageWrap, { width }]}>
+                    <ScrollView
+                      style={styles.tipsPageScroll}
+                      contentContainerStyle={[styles.tipsScrollContent, { paddingBottom: 24 + 60 }]}
+                      showsVerticalScrollIndicator={false}
+                    >
+                      <View style={styles.tipsCard}>
+                        <Text style={styles.tipsTitle}>SCHEDULE TIP</Text>
+                        <Text style={styles.tipsSubtitle}>{pageIdx === 0 ? 'LOW INTENSITY' : 'DAY-BY-DAY'}</Text>
+                        {tips.map((tip, idx) => (
+                          <View key={idx} style={styles.tipRow}>
+                            <View style={styles.tipIconWrap}>
+                              <Ionicons name={tip.icon as any} size={20} color="#FFD700" />
+                            </View>
+                            <View style={styles.tipTextWrap}>
+                              <Text style={styles.tipTitle}>{tip.title}</Text>
+                              <Text style={styles.tipDesc}>{tip.description}</Text>
+                            </View>
+                          </View>
+                        ))}
+                      </View>
+                    </ScrollView>
+                  </View>
+                ))}
+              </ScrollView>
+              <View style={styles.tipsPaginationWrap}>
+                <View style={styles.tipPagination}>
+                  <TouchableOpacity
+                    onPress={() => scrollToTipsPage(1)}
+                    style={[styles.tipPageDot, tipPage === 1 && styles.tipPageDotActive]}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  />
+                  <TouchableOpacity
+                    onPress={() => scrollToTipsPage(2)}
+                    style={[styles.tipPageDot, tipPage === 2 && styles.tipPageDotActive]}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  />
+                </View>
+              </View>
+              <View style={styles.tipsCloseWrap}>
+                <TouchableOpacity style={styles.tipsCloseButton} onPress={closeTipsModal} activeOpacity={0.85}>
+                  <Text style={styles.tipsCloseText}>CLOSE TIPS</Text>
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+          </View>
+        </Modal>
 
         <ScrollView
           style={styles.scroll}
@@ -354,6 +528,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFD700',
   },
+  helpButton: { padding: 8, zIndex: 1, marginLeft: 'auto' },
   scroll: { flex: 1 },
   scrollContent: { padding: 20, paddingBottom: 40 },
   dateStrip: {
@@ -518,5 +693,124 @@ const styles = StyleSheet.create({
   statusRight: {
     fontSize: 13,
     color: 'rgba(255, 255, 255, 0.5)',
+  },
+  tipsSheetOverlay: {
+    flex: 1,
+    width: '100%',
+  },
+  tipsSheet: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(18, 14, 28, 0.98)',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.2)',
+    overflow: 'hidden',
+  },
+  tipsSheetHandle: {
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tipsSheetHandleBar: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
+  },
+  tipsScroll: { flex: 1 },
+  tipsPageWrap: { flex: 1 },
+  tipsPageScroll: { flex: 1 },
+  tipsScrollContent: { paddingHorizontal: 20, paddingTop: 4 },
+  tipsCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.25)',
+  },
+  tipsTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#FFD700',
+    marginBottom: 6,
+  },
+  tipsSubtitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.9)',
+    letterSpacing: 1,
+    marginBottom: 20,
+  },
+  tipRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 18,
+  },
+  tipIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  tipTextWrap: { flex: 1 },
+  tipTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFD700',
+    marginBottom: 6,
+    letterSpacing: 0.5,
+  },
+  tipDesc: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
+  tipsPaginationWrap: {
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  tipPagination: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10,
+  },
+  tipPageDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
+  },
+  tipPageDotActive: {
+    backgroundColor: '#FFD700',
+  },
+  tipsCloseWrap: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 12,
+    backgroundColor: 'transparent',
+  },
+  tipsCloseButton: {
+    backgroundColor: 'rgba(40, 35, 55, 0.95)',
+    paddingVertical: 16,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tipsCloseText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFD700',
+    letterSpacing: 1,
   },
 });

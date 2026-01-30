@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,12 @@ import {
   NativeScrollEvent,
   Modal,
   Pressable,
+  Animated,
+  PanResponder,
+  Platform,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { UniverseBackground } from '../components/UniverseBackground';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,7 +25,8 @@ import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { playClickSound } from '../utils/soundEffects';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
+const SHEET_MAX_HEIGHT = Math.min(height * 0.92, height - 60);
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
 const CARD_PADDING = 20;
@@ -39,15 +45,13 @@ const STORY_SECTION = {
   icon: 'book' as const,
 };
 
-const STORY_TIP = `Finding your own story is extremely important in your short-form content journey because it's what allows you to create the most impactful content. Ask yourself questions like: How has your ethos transformed your life? How has pursuing it changed you?
-
-Maybe you grew up watching your parents get divorced and struggled mentally for years. Maybe now, after a long journey, you've achieved some level of financial freedom. That is your story.
-
-Sharing your story is one of the most powerful ways to build real connections with your audience.
-
-Talking like an expert isn't the goal. People don't connect with perfection—they connect with humanity. When you share relatable struggles and real pain, you stop being just a creator and start being someone they trust.
-
-This is the power of storytelling. People connect with who you are, not with your highlights.`;
+const STORY_TIPS: { icon: string; title: string; description: string }[] = [
+  { icon: 'book', title: 'WHY IT MATTERS', description: "Finding your own story is extremely important in your short-form content journey because it's what allows you to create the most impactful content. Ask yourself: How has your ethos transformed your life? How has pursuing it changed you?" },
+  { icon: 'heart', title: 'YOUR STORY', description: "Maybe you grew up watching your parents get divorced and struggled mentally for years. Maybe now, after a long journey, you've achieved some level of financial freedom. That is your story." },
+  { icon: 'people', title: 'BUILD CONNECTIONS', description: "Sharing your story is one of the most powerful ways to build real connections with your audience." },
+  { icon: 'flash', title: 'CONNECT WITH HUMANITY', description: "Talking like an expert isn't the goal. People don't connect with perfection—they connect with humanity. When you share relatable struggles and real pain, you stop being just a creator and start being someone they trust." },
+  { icon: 'sparkles', title: 'THE POWER OF STORYTELLING', description: "This is the power of storytelling. People connect with who you are, not with your highlights." },
+];
 
 type RowKey = 'problem' | 'pursuit' | 'payoff' | 'your_story';
 
@@ -61,11 +65,50 @@ interface StoryRow {
 
 export default function StoryFinderScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
   const [message, setMessage] = useState('');
   const [rows, setRows] = useState<StoryRow[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showTipModal, setShowTipModal] = useState(false);
+  const sheetAnim = useRef(new Animated.Value(SHEET_MAX_HEIGHT)).current;
+  const panStartY = useRef(0);
+
+  const closeTipsModal = useCallback(() => {
+    playClickSound();
+    Animated.timing(sheetAnim, {
+      toValue: SHEET_MAX_HEIGHT,
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => setShowTipModal(false));
+  }, [sheetAnim]);
+
+  const sheetPanResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 5,
+        onPanResponderGrant: (_, g) => {
+          panStartY.current = g.moveY;
+        },
+        onPanResponderRelease: (_, g) => {
+          const dy = g.moveY - panStartY.current;
+          if (dy > 50) closeTipsModal();
+        },
+      }),
+    [closeTipsModal]
+  );
+
+  useEffect(() => {
+    if (!showTipModal) return;
+    sheetAnim.setValue(SHEET_MAX_HEIGHT);
+    Animated.spring(sheetAnim, {
+      toValue: 0,
+      useNativeDriver: true,
+      damping: 20,
+      stiffness: 200,
+    }).start();
+  }, [showTipModal, sheetAnim]);
 
   const loadMessage = useCallback(async () => {
     try {
@@ -199,20 +242,56 @@ export default function StoryFinderScreen() {
           </TouchableOpacity>
         </View>
 
-        <Modal visible={showTipModal} transparent animationType="fade">
-          <Pressable style={styles.tipOverlay} onPress={() => setShowTipModal(false)}>
-            <Pressable style={styles.tipModal} onPress={(e) => e.stopPropagation()}>
-              <View style={styles.tipModalHeader}>
-                <Text style={styles.tipModalTitle}>Story Finder Tip</Text>
-                <TouchableOpacity onPress={() => setShowTipModal(false)} style={styles.tipCloseBtn}>
-                  <Ionicons name="close" size={24} color="#FFD700" />
+        <Modal visible={showTipModal} transparent animationType="none">
+          <View style={styles.tipsSheetOverlay}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={closeTipsModal}>
+              <BlurView
+                intensity={Platform.OS === 'ios' ? 60 : 80}
+                tint="dark"
+                style={StyleSheet.absoluteFill}
+              />
+            </Pressable>
+            <Animated.View
+              style={[
+                styles.tipsSheet,
+                {
+                  height: SHEET_MAX_HEIGHT,
+                  paddingBottom: insets.bottom,
+                  transform: [{ translateY: sheetAnim }],
+                },
+              ]}
+            >
+              <View {...sheetPanResponder.panHandlers} style={styles.tipsSheetHandle}>
+                <View style={styles.tipsSheetHandleBar} />
+              </View>
+              <ScrollView
+                style={styles.tipsScroll}
+                contentContainerStyle={[styles.tipsScrollContent, { paddingBottom: 24 + 60 }]}
+                showsVerticalScrollIndicator={false}
+              >
+                <View style={styles.tipsCard}>
+                  <Text style={styles.tipsTitle}>STORY FINDER TIP</Text>
+                  <Text style={styles.tipsSubtitle}>FINDING YOUR STORY</Text>
+                  {STORY_TIPS.map((tip, idx) => (
+                    <View key={idx} style={styles.tipRow}>
+                      <View style={styles.tipIconWrap}>
+                        <Ionicons name={tip.icon as any} size={20} color="#FFD700" />
+                      </View>
+                      <View style={styles.tipTextWrap}>
+                        <Text style={styles.tipTitle}>{tip.title}</Text>
+                        <Text style={styles.tipDesc}>{tip.description}</Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              </ScrollView>
+              <View style={styles.tipsCloseWrap}>
+                <TouchableOpacity style={styles.tipsCloseButton} onPress={closeTipsModal} activeOpacity={0.85}>
+                  <Text style={styles.tipsCloseText}>CLOSE TIPS</Text>
                 </TouchableOpacity>
               </View>
-              <ScrollView style={styles.tipScroll} showsVerticalScrollIndicator={false}>
-                <Text style={styles.tipText}>{STORY_TIP}</Text>
-              </ScrollView>
-            </Pressable>
-          </Pressable>
+            </Animated.View>
+          </View>
         </Modal>
 
         <ScrollView
@@ -508,44 +587,101 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.5)',
     marginTop: 4,
   },
-  tipOverlay: {
+  tipsSheetOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  tipModal: {
     width: '100%',
-    maxWidth: 380,
-    maxHeight: '80%',
-    backgroundColor: 'rgba(30, 25, 45, 0.98)',
-    borderRadius: 20,
+  },
+  tipsSheet: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(18, 14, 28, 0.98)',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
+    borderColor: 'rgba(255, 215, 0, 0.2)',
     overflow: 'hidden',
   },
-  tipModalHeader: {
-    flexDirection: 'row',
+  tipsSheetHandle: {
+    paddingVertical: 12,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
   },
-  tipModalTitle: {
-    fontSize: 18,
+  tipsSheetHandleBar: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
+  },
+  tipsScroll: { flex: 1 },
+  tipsScrollContent: { paddingHorizontal: 20, paddingTop: 4 },
+  tipsCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.25)',
+  },
+  tipsTitle: {
+    fontSize: 22,
     fontWeight: '700',
     color: '#FFD700',
+    marginBottom: 6,
   },
-  tipCloseBtn: { padding: 4 },
-  tipScroll: { maxHeight: 360 },
-  tipText: {
-    fontSize: 15,
-    lineHeight: 24,
+  tipsSubtitle: {
+    fontSize: 12,
+    fontWeight: '600',
     color: 'rgba(255, 255, 255, 0.9)',
-    padding: 20,
-    paddingTop: 16,
+    letterSpacing: 1,
+    marginBottom: 20,
+  },
+  tipRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 18,
+  },
+  tipIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  tipTextWrap: { flex: 1 },
+  tipTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFD700',
+    marginBottom: 6,
+    letterSpacing: 0.5,
+  },
+  tipDesc: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
+  tipsCloseWrap: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 12,
+    backgroundColor: 'transparent',
+  },
+  tipsCloseButton: {
+    backgroundColor: 'rgba(40, 35, 55, 0.95)',
+    paddingVertical: 16,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tipsCloseText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFD700',
+    letterSpacing: 1,
   },
 });

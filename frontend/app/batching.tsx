@@ -13,6 +13,8 @@ import {
   Animated,
   PanResponder,
   Platform,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
@@ -48,7 +50,15 @@ const FIELDS: { key: keyof Script; label: string; icon: string; placeholder: str
   { key: 'callToAction', label: 'CALL TO ACTION', icon: 'hand-left-outline', placeholder: 'What should viewers do next?', multiline: true },
 ];
 
-const SCRIPT_TIPS: { icon: string; title: string; description: string }[] = [
+const SCRIPT_TIPS_PAGE1: { icon: string; title: string; description: string }[] = [
+  { icon: 'flag', title: 'YOUR GOALS WHEN SCRIPTING', description: "• Create a clear direction without over scripting\n• Identify your hook and core story arc\n• Map out scenes and angles before you film" },
+  { icon: 'sparkles', title: '1. HOOK', description: "Stop the scroll with pattern interruption + value. Grab attention in the first few seconds." },
+  { icon: 'bulb', title: '2. VALUE', description: "Your content needs to have an insight (education, inspiration, entertainment)." },
+  { icon: 'trophy', title: '3. PAYOFF', description: "Deliver the transformation, result, or solution. Your content needs to have a conclusion." },
+  { icon: 'hand-left', title: '4. CTA', description: "Get the viewer to take action. E.g. Follow for more, Comment X, head to my link in bio." },
+];
+
+const SCRIPT_TIPS_PAGE2: { icon: string; title: string; description: string }[] = [
   { icon: 'refresh', title: 'ALGORITHM & RETENTION', description: "Algorithms work based on retention. So even if the first three seconds of your video are amazing, if the rest of the video is boring, it will still perform poorly." },
   { icon: 'sparkles', title: '1. ADD A HOOK', description: "Add a hook that creates a curiosity gap." },
   { icon: 'flame', title: '2. AGITATE THE PAIN', description: "Further agitate that pain so that they lock in." },
@@ -56,6 +66,14 @@ const SCRIPT_TIPS: { icon: string; title: string; description: string }[] = [
   { icon: 'eye', title: '4. ESTABLISH THE CONTEXT', description: "Establish the context so that they understand what's happening." },
   { icon: 'trending-up', title: '5. BUILD TOWARDS THE SOLUTION', description: "Build towards the solution." },
   { icon: 'flag', title: '6. END AT PEAK ENGAGEMENT', description: "Once you have them at peak engagement, end the video so you encourage a second watch." },
+];
+
+const SCRIPT_TIPS_PAGE3: { icon: string; title: string; description: string }[] = [
+  { icon: 'repeat', title: '3 TAKE RULE', description: "For talking videos, film each line 3 times max & move on." },
+  { icon: 'shirt', title: 'OUTFIT VARIATIONS', description: "Change mid-shoot for completely fresh looking clips!" },
+  { icon: 'swap-horizontal', title: 'ANGLE SWAPS', description: "Wide, close, and POV will give you many options to repurpose!" },
+  { icon: 'layers', title: 'FILM IN SEGMENTS', description: "Film content in 30 second chunks. Easier to edit, label, & reuse!" },
+  { icon: 'videocam', title: 'FILM 3 ANGLES FOR EVERY SCENE', description: "• Wide shot: set context\n• Close up shot: highlights importance\n• POV shot: immerses the viewer" },
 ];
 
 export default function BatchingScreen() {
@@ -66,6 +84,7 @@ export default function BatchingScreen() {
   const [showScriptDetail, setShowScriptDetail] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
   const [showTipsModal, setShowTipsModal] = useState(false);
+  const [tipPage, setTipPage] = useState(1);
   const [dateDraft, setDateDraft] = useState('');
 
   useEffect(() => {
@@ -159,10 +178,23 @@ export default function BatchingScreen() {
 
   const sheetAnim = useRef(new Animated.Value(SHEET_MAX_HEIGHT)).current;
   const panStartY = useRef(0);
+  const tipsPagesScrollRef = useRef<ScrollView>(null);
 
   const openTipsModal = () => {
     playClickSound();
     setShowTipsModal(true);
+  };
+
+  const scrollToTipsPage = (page: 1 | 2 | 3) => {
+    playClickSound();
+    setTipPage(page);
+    tipsPagesScrollRef.current?.scrollTo({ x: (page - 1) * width, animated: true });
+  };
+
+  const handleTipsPageScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const x = e.nativeEvent.contentOffset.x;
+    const page = Math.round(x / width) + 1;
+    if (page >= 1 && page <= 3 && page !== tipPage) setTipPage(page);
   };
 
   const closeTipsModal = useCallback(() => {
@@ -171,7 +203,10 @@ export default function BatchingScreen() {
       toValue: SHEET_MAX_HEIGHT,
       duration: 250,
       useNativeDriver: true,
-    }).start(() => setShowTipsModal(false));
+    }).start(() => {
+      setShowTipsModal(false);
+      setTipPage(1);
+    });
   }, [sheetAnim]);
 
   useEffect(() => {
@@ -385,26 +420,60 @@ export default function BatchingScreen() {
                 <View style={styles.tipsSheetHandleBar} />
               </View>
               <ScrollView
+                ref={tipsPagesScrollRef}
+                horizontal
+                pagingEnabled
+                decelerationRate="fast"
+                showsHorizontalScrollIndicator={false}
+                onMomentumScrollEnd={handleTipsPageScroll}
+                onScrollEndDrag={handleTipsPageScroll}
                 style={styles.tipsScroll}
-                contentContainerStyle={[styles.tipsScrollContent, { paddingBottom: 24 + 60 }]}
-                showsVerticalScrollIndicator={false}
               >
-                <View style={styles.tipsCard}>
-                  <Text style={styles.tipsTitle}>SCRIPT SUCCESS TIPS</Text>
-                  <Text style={styles.tipsSubtitle}>ALGORITHM RETENTION FRAMEWORK</Text>
-                  {SCRIPT_TIPS.map((tip, idx) => (
-                    <View key={idx} style={styles.tipRow}>
-                      <View style={styles.tipIconWrap}>
-                        <Ionicons name={tip.icon as any} size={20} color="#FFD700" />
+                {[SCRIPT_TIPS_PAGE1, SCRIPT_TIPS_PAGE2, SCRIPT_TIPS_PAGE3].map((tips, pageIdx) => (
+                  <View key={pageIdx} style={[styles.tipsPageWrap, { width }]}>
+                    <ScrollView
+                      style={styles.tipsPageScroll}
+                      contentContainerStyle={[styles.tipsScrollContent, { paddingBottom: 24 + 60 }]}
+                      showsVerticalScrollIndicator={false}
+                    >
+                      <View style={styles.tipsCard}>
+                        <Text style={styles.tipsTitle}>SCRIPT SUCCESS TIPS</Text>
+                        <Text style={styles.tipsSubtitle}>{pageIdx === 0 ? 'SCRIPTING FRAMEWORK' : pageIdx === 1 ? 'ALGORITHM RETENTION FRAMEWORK' : 'BATCH FILMING TIPS'}</Text>
+                        {tips.map((tip, idx) => (
+                          <View key={idx} style={styles.tipRow}>
+                            <View style={styles.tipIconWrap}>
+                              <Ionicons name={tip.icon as any} size={20} color="#FFD700" />
+                            </View>
+                            <View style={styles.tipTextWrap}>
+                              <Text style={styles.tipTitle}>{tip.title}</Text>
+                              <Text style={styles.tipDesc}>{tip.description}</Text>
+                            </View>
+                          </View>
+                        ))}
                       </View>
-                      <View style={styles.tipTextWrap}>
-                        <Text style={styles.tipTitle}>{tip.title}</Text>
-                        <Text style={styles.tipDesc}>{tip.description}</Text>
-                      </View>
-                    </View>
-                  ))}
-                </View>
+                    </ScrollView>
+                  </View>
+                ))}
               </ScrollView>
+              <View style={styles.tipsPaginationWrap}>
+                <View style={styles.tipPagination}>
+                  <TouchableOpacity
+                    onPress={() => scrollToTipsPage(1)}
+                    style={[styles.tipPageDot, tipPage === 1 && styles.tipPageDotActive]}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  />
+                  <TouchableOpacity
+                    onPress={() => scrollToTipsPage(2)}
+                    style={[styles.tipPageDot, tipPage === 2 && styles.tipPageDotActive]}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  />
+                  <TouchableOpacity
+                    onPress={() => scrollToTipsPage(3)}
+                    style={[styles.tipPageDot, tipPage === 3 && styles.tipPageDotActive]}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  />
+                </View>
+              </View>
               <View style={styles.tipsCloseWrap}>
                 <TouchableOpacity style={styles.tipsCloseButton} onPress={closeTipsModal} activeOpacity={0.85}>
                   <Text style={styles.tipsCloseText}>CLOSE TIPS</Text>
@@ -742,6 +811,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.35)',
   },
   tipsScroll: { flex: 1 },
+  tipsPageWrap: { flex: 1 },
+  tipsPageScroll: { flex: 1 },
   tipsScrollContent: { paddingHorizontal: 20, paddingTop: 4 },
   tipsCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
@@ -789,6 +860,26 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     color: 'rgba(255, 255, 255, 0.9)',
+  },
+  tipsPaginationWrap: {
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  tipPagination: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10,
+  },
+  tipPageDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
+  },
+  tipPageDotActive: {
+    backgroundColor: '#FFD700',
   },
   tipsCloseWrap: {
     paddingHorizontal: 20,

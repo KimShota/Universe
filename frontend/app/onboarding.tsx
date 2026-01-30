@@ -73,6 +73,7 @@ export default function OnboardingScreen() {
   const [ageMax, setAgeMax] = useState('');
   const [genderMale, setGenderMale] = useState('');
   const [genderFemale, setGenderFemale] = useState('');
+  const [profession, setProfession] = useState('');
   const [avatarStruggle, setAvatarStruggle] = useState('');
   const [avatarDesire, setAvatarDesire] = useState('');
   const [avatarCreators, setAvatarCreators] = useState('');
@@ -100,6 +101,7 @@ export default function OnboardingScreen() {
     ageMax,
     genderMale,
     genderFemale,
+    profession,
     avatarStruggle,
     avatarDesire,
     avatarCreators,
@@ -219,6 +221,7 @@ export default function OnboardingScreen() {
           ageMax,
           genderMale,
           genderFemale,
+          profession,
         },
         psychographic: {
           struggle: avatarStruggle.trim(),
@@ -554,6 +557,15 @@ export default function OnboardingScreen() {
                     keyboardType="number-pad"
                   />
                 </View>
+
+                <Text style={styles.fieldLabel}>What profession(s) does your target avatar have?</Text>
+                <TextInput
+                  style={styles.input}
+                  value={profession}
+                  onChangeText={setProfession}
+                  placeholder="e.g. Entrepreneurs, marketers..."
+                  placeholderTextColor="rgba(255,255,255,0.45)"
+                />
 
                 <Text style={styles.fieldLabel}>What does your target avatar struggle with?</Text>
                 <TextInput

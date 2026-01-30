@@ -60,12 +60,14 @@ export default function CreatorUniverseScreen() {
     ageMax: string;
     genderMale: string;
     genderFemale: string;
+    profession: string;
   }>({
     region: [],
     ageMin: '',
     ageMax: '',
     genderMale: '',
     genderFemale: '',
+    profession: '',
   });
   const [psychographic, setPsychographic] = useState({
     struggle: '',
@@ -113,6 +115,7 @@ export default function CreatorUniverseScreen() {
           ageMax: String((d as { ageMax?: string }).ageMax ?? ''),
           genderMale: String((d as { genderMale?: string }).genderMale ?? ''),
           genderFemale: String((d as { genderFemale?: string }).genderFemale ?? ''),
+          profession: String((d as { profession?: string }).profession ?? ''),
         });
         const psych = avatarData.psychographic;
         setPsychographic({ struggle: psych?.struggle ?? '', desire: psych?.desire ?? '', creators: psych?.creators ?? '' });
@@ -607,6 +610,17 @@ export default function CreatorUniverseScreen() {
                           keyboardType="number-pad"
                         />
                       </View>
+                    </View>
+                    <View style={styles.avatarSection}>
+                      <Text style={styles.avatarFieldLabel}>Profession</Text>
+                      <TextInput
+                        style={styles.psychographicInput}
+                        value={demographic.profession}
+                        onChangeText={(t) => setDemographic({ ...demographic, profession: t })}
+                        onBlur={() => saveUniverse()}
+                        placeholder="e.g. Entrepreneurs, marketers..."
+                        placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                      />
                     </View>
                   </View>
                 </View>

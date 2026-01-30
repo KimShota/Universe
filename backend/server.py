@@ -124,13 +124,15 @@ class AnalysisEntry(BaseModel):
     title: Optional[str] = None
     reelLink: str = ""
     views: str = ""
-    hook: str = ""
+    visualHook: str = ""
+    textHook: str = ""
     format: str = ""
     duration: str = ""
     textDuration: str = ""
     pacing: str = ""
     audio: str = ""
     storyArc: str = ""
+    callToAction: str = ""
     notes: str = ""
     date: Optional[str] = None
 
