@@ -32,23 +32,20 @@ interface Script {
   id: string;
   title?: string;
   mission: string;
+  titleHook: string;
+  visualHook: string;
+  verbalHook: string;
+  problem: string;
+  promise: string;
+  credibility: string;
+  delivery: string;
+  callToAction: string;
   footageNeeded: string;
-  textVisual: string;
   audio: string;
   caption: string;
-  callToAction: string;
+  textVisual?: string;
   date?: string;
 }
-
-const FIELDS: { key: keyof Script; label: string; icon: string; placeholder: string; multiline?: boolean }[] = [
-  { key: 'title', label: 'TITLE', icon: 'create-outline', placeholder: 'Enter script title...' },
-  { key: 'mission', label: 'MISSION', icon: 'rocket-outline', placeholder: 'What is the objective of this content?', multiline: true },
-  { key: 'footageNeeded', label: 'FOOTAGE NEEDED', icon: 'videocam-outline', placeholder: 'Describe the B-roll and primary shots...', multiline: true },
-  { key: 'textVisual', label: 'TEXT VISUAL', icon: 'document-text-outline', placeholder: 'On-screen text and graphics...', multiline: true },
-  { key: 'audio', label: 'AUDIO', icon: 'mic-outline', placeholder: 'Voiceover, music, or SFX...', multiline: true },
-  { key: 'caption', label: 'CAPTION', icon: 'chatbubble-outline', placeholder: 'Draft your social media caption...', multiline: true },
-  { key: 'callToAction', label: 'CALL TO ACTION', icon: 'hand-left-outline', placeholder: 'What should viewers do next?', multiline: true },
-];
 
 const SCRIPT_TIPS_PAGE1: { icon: string; title: string; description: string }[] = [
   { icon: 'flag', title: 'YOUR GOALS WHEN SCRIPTING', description: "• Create a clear direction without over scripting\n• Identify your hook and core story arc\n• Map out scenes and angles before you film" },
@@ -76,6 +73,12 @@ const SCRIPT_TIPS_PAGE3: { icon: string; title: string; description: string }[] 
   { icon: 'videocam', title: 'FILM 3 ANGLES FOR EVERY SCENE', description: "• Wide shot: set context\n• Close up shot: highlights importance\n• POV shot: immerses the viewer" },
 ];
 
+const SCRIPT_TIPS_PAGE4: { icon: string; title: string; description: string }[] = [
+  { icon: 'copy-outline', title: 'CREATE REUSABLE TEMPLATES', description: "Templates are the biggest hack for editing at speed. You can use pre-made templates, or create your own. You can also create templates for caption styles, save your favorite sound effects etc." },
+  { icon: 'chatbubbles-outline', title: 'USE AUTO-CAPTIONS', description: "Creating captions manually from scratch is the biggest time-waster when editing. Use auto-caption tools built into editing apps and lightly clean them up." },
+  { icon: 'timer-outline', title: "DON'T AIM FOR PERFECTION", description: "Perfection kills speed. Set a time limit on the edit to stop yourself overthinking and letting perfectionism stop you from finishing the content.\n\n1 hour: script 3 videos\n1 hour: film 3 videos\n1 hour: edit 3 videos" },
+];
+
 export default function BatchingScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -100,7 +103,21 @@ export default function BatchingScreen() {
       if (response.ok) {
         const data = await response.json();
         if (data.scripts && data.scripts.length > 0) {
-          setScripts(data.scripts);
+          const normalized = (data.scripts as Script[]).map((s) => ({
+            ...s,
+            titleHook: s.titleHook ?? '',
+            visualHook: s.visualHook ?? '',
+            verbalHook: s.verbalHook ?? '',
+            problem: s.problem ?? '',
+            promise: s.promise ?? '',
+            credibility: s.credibility ?? '',
+            delivery: s.delivery ?? '',
+            footageNeeded: s.footageNeeded ?? '',
+            audio: s.audio ?? '',
+            caption: s.caption ?? '',
+            callToAction: s.callToAction ?? '',
+          }));
+          setScripts(normalized);
         }
       }
     } catch (error) {
@@ -129,11 +146,17 @@ export default function BatchingScreen() {
       id: Date.now().toString(),
       title: '',
       mission: '',
+      titleHook: '',
+      visualHook: '',
+      verbalHook: '',
+      problem: '',
+      promise: '',
+      credibility: '',
+      delivery: '',
+      callToAction: '',
       footageNeeded: '',
-      textVisual: '',
       audio: '',
       caption: '',
-      callToAction: '',
       date: new Date().toISOString().split('T')[0],
     };
     const newScripts = [...scripts, newScript];
@@ -185,7 +208,7 @@ export default function BatchingScreen() {
     setShowTipsModal(true);
   };
 
-  const scrollToTipsPage = (page: 1 | 2 | 3) => {
+  const scrollToTipsPage = (page: 1 | 2 | 3 | 4) => {
     playClickSound();
     setTipPage(page);
     tipsPagesScrollRef.current?.scrollTo({ x: (page - 1) * width, animated: true });
@@ -194,7 +217,7 @@ export default function BatchingScreen() {
   const handleTipsPageScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const x = e.nativeEvent.contentOffset.x;
     const page = Math.round(x / width) + 1;
-    if (page >= 1 && page <= 3 && page !== tipPage) setTipPage(page);
+    if (page >= 1 && page <= 4 && page !== tipPage) setTipPage(page);
   };
 
   const closeTipsModal = useCallback(() => {
@@ -257,11 +280,17 @@ export default function BatchingScreen() {
     id: '',
     title: '',
     mission: '',
+    titleHook: '',
+    visualHook: '',
+    verbalHook: '',
+    problem: '',
+    promise: '',
+    credibility: '',
+    delivery: '',
+    callToAction: '',
     footageNeeded: '',
-    textVisual: '',
     audio: '',
     caption: '',
-    callToAction: '',
     date: new Date().toISOString().split('T')[0],
   };
 
@@ -429,7 +458,7 @@ export default function BatchingScreen() {
                 onScrollEndDrag={handleTipsPageScroll}
                 style={styles.tipsScroll}
               >
-                {[SCRIPT_TIPS_PAGE1, SCRIPT_TIPS_PAGE2, SCRIPT_TIPS_PAGE3].map((tips, pageIdx) => (
+                {[SCRIPT_TIPS_PAGE1, SCRIPT_TIPS_PAGE2, SCRIPT_TIPS_PAGE3, SCRIPT_TIPS_PAGE4].map((tips, pageIdx) => (
                   <View key={pageIdx} style={[styles.tipsPageWrap, { width }]}>
                     <ScrollView
                       style={styles.tipsPageScroll}
@@ -438,7 +467,7 @@ export default function BatchingScreen() {
                     >
                       <View style={styles.tipsCard}>
                         <Text style={styles.tipsTitle}>SCRIPT SUCCESS TIPS</Text>
-                        <Text style={styles.tipsSubtitle}>{pageIdx === 0 ? 'SCRIPTING FRAMEWORK' : pageIdx === 1 ? 'ALGORITHM RETENTION FRAMEWORK' : 'BATCH FILMING TIPS'}</Text>
+                        <Text style={styles.tipsSubtitle}>{pageIdx === 0 ? 'SCRIPTING FRAMEWORK' : pageIdx === 1 ? 'ALGORITHM RETENTION FRAMEWORK' : pageIdx === 2 ? 'BATCH FILMING TIPS' : 'BATCH EDITING TIPS'}</Text>
                         {tips.map((tip, idx) => (
                           <View key={idx} style={styles.tipRow}>
                             <View style={styles.tipIconWrap}>
@@ -472,6 +501,11 @@ export default function BatchingScreen() {
                     style={[styles.tipPageDot, tipPage === 3 && styles.tipPageDotActive]}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   />
+                  <TouchableOpacity
+                    onPress={() => scrollToTipsPage(4)}
+                    style={[styles.tipPageDot, tipPage === 4 && styles.tipPageDotActive]}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  />
                 </View>
               </View>
               <View style={styles.tipsCloseWrap}>
@@ -489,22 +523,206 @@ export default function BatchingScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {FIELDS.map((f) => (
-            <View key={f.key} style={styles.fieldBlock}>
-              <View style={styles.fieldTitleRow}>
-                <Ionicons name={f.icon as any} size={18} color="#FFD700" />
-                <Text style={styles.fieldLabel}>{f.label}</Text>
+          {/* 1. Title */}
+          <View style={styles.scriptCard}>
+            <View style={styles.scriptSectionTitle}>
+              <View style={styles.scriptSectionIcon}>
+                <Ionicons name="create-outline" size={18} color="#FFD700" />
               </View>
+              <Text style={styles.scriptSectionLabel}>TITLE</Text>
+            </View>
+            <View style={styles.scriptField}>
+              <Text style={styles.scriptFieldLabel}>Title</Text>
               <TextInput
-                style={[styles.input, f.multiline && styles.inputMultiline]}
-                value={(currentScript[f.key] as string) ?? ''}
-                onChangeText={(t) => handleUpdateField(f.key, t)}
-                placeholder={f.placeholder}
+                style={styles.scriptInput}
+                value={currentScript.title ?? ''}
+                onChangeText={(t) => handleUpdateField('title', t)}
+                placeholder="Enter script title..."
                 placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                multiline={f.multiline}
               />
             </View>
-          ))}
+          </View>
+
+          {/* 2. Mission */}
+          <View style={styles.scriptCard}>
+            <View style={styles.scriptSectionTitle}>
+              <View style={styles.scriptSectionIcon}>
+                <Ionicons name="rocket-outline" size={18} color="#FFD700" />
+              </View>
+              <Text style={styles.scriptSectionLabel}>MISSION</Text>
+            </View>
+            <View style={styles.scriptField}>
+              <Text style={styles.scriptFieldLabel}>Mission</Text>
+              <TextInput
+                style={[styles.scriptInput, styles.scriptInputMultiline]}
+                value={currentScript.mission ?? ''}
+                onChangeText={(t) => handleUpdateField('mission', t)}
+                placeholder="What is the objective of this content?"
+                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                multiline
+              />
+            </View>
+          </View>
+
+          {/* 3. Hook */}
+          <View style={styles.scriptCard}>
+            <View style={styles.scriptSectionTitle}>
+              <View style={styles.scriptSectionIcon}>
+                <Ionicons name="sparkles" size={18} color="#FFD700" />
+              </View>
+              <Text style={styles.scriptSectionLabel}>HOOK</Text>
+            </View>
+            <View style={styles.scriptField}>
+              <Text style={styles.scriptFieldLabel}>Title Hook</Text>
+              <TextInput
+                style={styles.scriptInput}
+                value={currentScript.titleHook ?? ''}
+                onChangeText={(t) => handleUpdateField('titleHook', t)}
+                placeholder="On-screen text or caption hook..."
+                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+              />
+            </View>
+            <View style={styles.scriptField}>
+              <Text style={styles.scriptFieldLabel}>Visual Hook</Text>
+              <TextInput
+                style={[styles.scriptInput, styles.scriptInputMultiline]}
+                value={currentScript.visualHook ?? ''}
+                onChangeText={(t) => handleUpdateField('visualHook', t)}
+                placeholder="What viewers see in the first few seconds..."
+                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                multiline
+              />
+            </View>
+            <View style={styles.scriptField}>
+              <Text style={styles.scriptFieldLabel}>Verbal Hook</Text>
+              <TextInput
+                style={[styles.scriptInput, styles.scriptInputMultiline]}
+                value={currentScript.verbalHook ?? ''}
+                onChangeText={(t) => handleUpdateField('verbalHook', t)}
+                placeholder="What is said to grab attention..."
+                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                multiline
+              />
+            </View>
+          </View>
+
+          {/* 4. Storytelling Framework */}
+          <View style={styles.scriptCard}>
+            <View style={styles.scriptSectionTitle}>
+              <View style={styles.scriptSectionIcon}>
+                <Ionicons name="book-outline" size={18} color="#FFD700" />
+              </View>
+              <Text style={styles.scriptSectionLabel}>STORYTELLING FRAMEWORK</Text>
+            </View>
+            <View style={styles.scriptField}>
+              <Text style={styles.scriptFieldLabel}>Problem</Text>
+              <TextInput
+                style={[styles.scriptInput, styles.scriptInputMultiline]}
+                value={currentScript.problem ?? ''}
+                onChangeText={(t) => handleUpdateField('problem', t)}
+                placeholder="The pain point or struggle..."
+                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                multiline
+              />
+            </View>
+            <View style={styles.scriptField}>
+              <Text style={styles.scriptFieldLabel}>Promise</Text>
+              <TextInput
+                style={[styles.scriptInput, styles.scriptInputMultiline]}
+                value={currentScript.promise ?? ''}
+                onChangeText={(t) => handleUpdateField('promise', t)}
+                placeholder="The transformation or outcome..."
+                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                multiline
+              />
+            </View>
+            <View style={styles.scriptField}>
+              <Text style={styles.scriptFieldLabel}>Credibility</Text>
+              <TextInput
+                style={[styles.scriptInput, styles.scriptInputMultiline]}
+                value={currentScript.credibility ?? ''}
+                onChangeText={(t) => handleUpdateField('credibility', t)}
+                placeholder="Why you're the right person to deliver this..."
+                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                multiline
+              />
+            </View>
+            <View style={styles.scriptField}>
+              <Text style={styles.scriptFieldLabel}>Delivery</Text>
+              <TextInput
+                style={[styles.scriptInput, styles.scriptInputMultiline]}
+                value={currentScript.delivery ?? ''}
+                onChangeText={(t) => handleUpdateField('delivery', t)}
+                placeholder="The main content or solution..."
+                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                multiline
+              />
+            </View>
+            <View style={styles.scriptField}>
+              <Text style={styles.scriptFieldLabel}>Call To Action (CTA)</Text>
+              <TextInput
+                style={[styles.scriptInput, styles.scriptInputMultiline]}
+                value={currentScript.callToAction ?? ''}
+                onChangeText={(t) => handleUpdateField('callToAction', t)}
+                placeholder="What should viewers do next?"
+                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                multiline
+              />
+            </View>
+          </View>
+
+          {/* 5. Production */}
+          <View style={styles.scriptCard}>
+            <View style={styles.scriptSectionTitle}>
+              <View style={styles.scriptSectionIcon}>
+                <Ionicons name="videocam-outline" size={18} color="#FFD700" />
+              </View>
+              <Text style={styles.scriptSectionLabel}>PRODUCTION</Text>
+            </View>
+            <View style={styles.scriptField}>
+              <Text style={styles.scriptFieldLabel}>Footage Needed</Text>
+              <TextInput
+                style={[styles.scriptInput, styles.scriptInputMultiline]}
+                value={currentScript.footageNeeded ?? ''}
+                onChangeText={(t) => handleUpdateField('footageNeeded', t)}
+                placeholder="Describe the B-roll and primary shots..."
+                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                multiline
+              />
+            </View>
+            <View style={styles.scriptField}>
+              <Text style={styles.scriptFieldLabel}>Audio</Text>
+              <TextInput
+                style={[styles.scriptInput, styles.scriptInputMultiline]}
+                value={currentScript.audio ?? ''}
+                onChangeText={(t) => handleUpdateField('audio', t)}
+                placeholder="Voiceover, music, or SFX..."
+                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                multiline
+              />
+            </View>
+          </View>
+
+          {/* 6. Captions */}
+          <View style={styles.scriptCard}>
+            <View style={styles.scriptSectionTitle}>
+              <View style={styles.scriptSectionIcon}>
+                <Ionicons name="chatbubble-outline" size={18} color="#FFD700" />
+              </View>
+              <Text style={styles.scriptSectionLabel}>CAPTIONS</Text>
+            </View>
+            <View style={styles.scriptField}>
+              <Text style={styles.scriptFieldLabel}>Caption</Text>
+              <TextInput
+                style={[styles.scriptInput, styles.scriptInputMultiline]}
+                value={currentScript.caption ?? ''}
+                onChangeText={(t) => handleUpdateField('caption', t)}
+                placeholder="Draft your social media caption..."
+                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                multiline
+              />
+            </View>
+          </View>
         </ScrollView>
       </SafeAreaView>
     </UniverseBackground>
@@ -640,6 +858,53 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: '#FFD700',
+  },
+  scriptCard: {
+    backgroundColor: 'rgba(60, 45, 90, 0.5)',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.2)',
+  },
+  scriptSectionTitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  scriptSectionIcon: {
+    marginRight: 8,
+  },
+  scriptSectionLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#FFD700',
+    letterSpacing: 1,
+  },
+  scriptField: {
+    marginBottom: 16,
+  },
+  scriptFieldLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFD700',
+    letterSpacing: 0.8,
+    marginBottom: 8,
+  },
+  scriptInput: {
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 12,
+    padding: 14,
+    color: '#fff',
+    fontSize: 15,
+    minHeight: 48,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  scriptInputMultiline: {
+    minHeight: 88,
+    textAlignVertical: 'top',
+    paddingTop: 14,
   },
   fieldBlock: {
     marginBottom: 20,

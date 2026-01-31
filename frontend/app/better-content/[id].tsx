@@ -30,118 +30,95 @@ const USE_HOOKS_FLOW_SCREENS: Array<{
 }> = [
   {
     id: 1,
-    title: 'Screen 1 — What a Hook Actually Is',
-    shortTitle: 'What a Hook Actually Is',
+    title: 'What a Hook Is',
+    shortTitle: 'What a Hook Is',
     icon: 'flash-outline',
-    content: `A hook is anything in the first few seconds that stops someone from scrolling.
+    content: `A hook is something you say, do, or show on screen in the first few seconds of your video to grab the viewer's attention and stop them from scrolling.
 
-It doesn't have to be loud.
-It has to be relevant.
+Hooks can be spoken, written, audio, or visual.
 
-A hook can be:
-
-• Something you say (spoken line)
-• Something you show (visual action)
-• Something you write (on-screen text)
-• Something you do (movement or contrast)`,
-    takeaway: 'If the hook fails, the algorithm never gives the rest of your message a chance.',
+So the first 3 seconds are "make or break."`,
+    takeaway: 'The first 3 seconds decide if your message gets seen.',
   },
   {
     id: 2,
-    title: 'Screen 2 — Why Hooks Matter (Algorithm Reality)',
-    shortTitle: 'Why Hooks Matter',
-    icon: 'analytics-outline',
-    content: `The algorithm doesn't care how good your advice is.
+    title: 'Types of Hooks: Verbal',
+    shortTitle: 'Types of Hooks: Verbal',
+    icon: 'megaphone-outline',
+    content: `Telling the viewers why you are an expert
+"I've been in the gym for over 10 years and this is how I got my arms from this to this"
 
-It cares about retention.
+Asking the viewers a question
+"Did you know that ….."
+"What is the one gym machine you never use? Mine is …"
 
-That means:
+Positive statement
+"This is the best healthy smoothie recipe I've ever tried"
+"5 must-do if you're visiting Japan"
 
-• A great first 3 seconds buys attention
-• A boring middle still kills the video
-• Retention starts immediately, not later`,
-    takeaway: "Hooks don't make content clickbait. They protect your ideas from being ignored.",
+Negative or Controversial statement
+"This may be an unpopular opinion, but I hate the Rare Beauty blushes"
+"Don't make this mistake"
+
+Referencing something that viewers recognize
+"Let's recreate Sabrina Carpenter's makeup look"
+"Let's try the viral 75 Hard Challenge"
+
+Target a specific audience
+"If you're a beginner in the gym, these are the key things you need to know"
+"If you have sensitive skin, avoid these skincare products"
+
+Target the viewers pain point
+"You're not ugly. You just don't know how to style your curls."`,
+    takeaway: 'Match your hook type to your audience and content.',
   },
   {
     id: 3,
-    title: 'Screen 3 — What Strong Hooks Are Composed Of',
-    shortTitle: 'What Strong Hooks Are Composed Of',
-    icon: 'layers-outline',
-    content: `High-performing hooks are rarely random.
+    title: 'Visual Hooks',
+    shortTitle: 'Visual Hooks',
+    icon: 'eye-outline',
+    content: `Unusual camera angle
+A pattern disruptor looks visually different, immediately making you think, "I should stick around and watch this."
+• Top down shot
 
-They usually stack at least 3 of these elements:
+Eye catching visual
+There is something happening moving on screen.
 
-• A timeframe ("3 years", "today", "in 30 days")
-• A number or statistic
-• A before → after transformation
-• An open loop (something unresolved)`,
-    takeaway: 'Stacking creates tension. Tension creates curiosity. Curiosity creates watch time.',
+Doing an activity while talking (pope in the pool)
+There are two visuals in parallel. She is talking and telling you something is going to happen. You also want to know why she is cutting the apple — you follow along with that payoff, that transformation.
+
+Same idea: drinking coffee, making coffee, knitting, making something, doing makeup. You're doing something in real time and it serves as a separate hook in addition to what you're saying.`,
+    takeaway: 'Visual hooks create pattern interrupt. Activity while talking doubles the hook.',
   },
   {
     id: 4,
-    title: 'Screen 4 — Types of Hooks (How You Deliver It)',
-    shortTitle: 'Types of Hooks',
-    icon: 'megaphone-outline',
-    content: `Hooks can be delivered in different ways.
+    title: 'Text Hooks',
+    shortTitle: 'Text Hooks',
+    icon: 'text-outline',
+    content: `Targeting the viewer's pain point
 
-Spoken hooks
-Call out pain or belief
-"If you think you're not ___ enough for ___…"
+Giving context to the content
+If you can provide some context, it immediately lets viewers understand what they are looking for.
 
-Text hooks
-Clarify relevance instantly
-"I wasted 3 years doing this."
-
-Visual hooks
-Pattern interrupt
-Unusual angles, split screens, movement
-
-Audio hooks
-Rising sound → signals transformation
-Silence → creates tension`,
-    takeaway: 'The strongest hooks stack multiple types at once.',
+More visually dynamic
+There is something populated on screen effectively.`,
+    takeaway: 'Text hooks give instant context. Context reduces scroll.',
   },
   {
     id: 5,
-    title: 'Screen 5 — Open Loops & Rehooks (Keeping Attention)',
-    shortTitle: 'Open Loops & Rehooks',
-    icon: 'infinite-outline',
-    content: `An open loop promises value without revealing it yet.
+    title: 'How to Craft the Perfect Hook',
+    shortTitle: 'How to Craft the Perfect Hook',
+    icon: 'construct-outline',
+    content: `Step-by-step formula:
 
-You never say "Wait until the end." You imply it.
+• Identify audience pain or desire
 
-Examples:
-"This changed everything for me."
-"I didn't expect this outcome."
+• Spark curiosity
 
-Great videos also use rehooks:
-• Asking a question
-• Switching scenes
-• Introducing contrast`,
-    takeaway: 'Attention has a time limit. Something must pivot every ~5 seconds.',
-  },
-  {
-    id: 6,
-    title: 'Screen 6 — High-Converting Hook Formats',
-    shortTitle: 'High-Converting Hook Formats',
-    icon: 'film-outline',
-    content: `Some formats naturally hold attention better.
+• Use emotion or tension
 
-Silent film storytelling
-• Visual pain
-• Text explains struggle
-• Timestamp hints payoff
-• Rising music signals transformation
-
-Split-screen contrast
-• One problem
-• Two perspectives
-• Line-by-line contrast
-
-Action-based hooks
-• Doing something while talking
-• Two things happening in parallel`,
-    takeaway: "If traditional talking-head isn't working, change the format, not the message.",
+• Keep it short and strong`,
+    takeaway: 'Pain/desire + curiosity + emotion + brevity = scroll-stopping hook.',
   },
 ];
 
@@ -459,7 +436,7 @@ export default function BetterContentDetailScreen() {
   // 6-screen flow for "Use Hooks"
   if (id === 'use-hooks') {
     const currentScreen = USE_HOOKS_FLOW_SCREENS[useHooksStep - 1];
-    const isLastScreen = useHooksStep === 6;
+    const isLastScreen = useHooksStep === USE_HOOKS_FLOW_SCREENS.length;
 
     return (
       <UniverseBackground>

@@ -27,6 +27,8 @@ const HOW_TO_EDIT_OPTIONS = [
   { id: 'tools-and-softwares', title: 'Tools and Softwares' },
   { id: 'how-to-use-capcut', title: 'How to Use Capcut' },
   { id: 'how-to-use-davinci-resolve', title: 'How to Use Davinci Resolve' },
+  { id: 'how-to-optimize-filming', title: 'How to Optimize Filming' },
+  { id: 'batch-editing-tips', title: 'Batch Editing Tips' },
 ];
 
 // 10-screen flow for "How to Use Capcut"
@@ -302,6 +304,142 @@ Instagram Editor
   },
 ];
 
+// 3-screen flow for "How to Optimize Filming"
+const HOW_TO_OPTIMIZE_FILMING_FLOW_SCREENS: Array<{
+  id: number;
+  title: string;
+  shortTitle: string;
+  icon: string;
+  content: string;
+  takeaway?: string;
+}> = [
+  {
+    id: 1,
+    title: 'Framing',
+    shortTitle: 'Framing',
+    icon: 'scan-outline',
+    content: `Danger vs Safe Zones
+
+• Make sure everything important avoids the danger zone
+• Put text and graphics in the safe zone
+
+Additional tips:
+
+• Film in 4K gives you flexibility when editing
+• Have enough headspace for text!`,
+    takeaway:
+      'Keep key elements in the safe zone. Film in 4K and leave headspace for text.',
+  },
+  {
+    id: 2,
+    title: 'Lighting',
+    shortTitle: 'Lighting',
+    icon: 'sunny-outline',
+    content: `Good lighting:
+
+• Light facing you
+• Minimal shadows
+• Clear expressions
+• Engaging
+
+Bad lighting:
+
+• Harsh shadows
+• Uneven skin tones
+• Dark areas
+• Hard to focus on you
+
+Natural lighting or a ring light gives your video a more professional look.
+
+Natural light:
+
+• Face a window
+• Light should hit you from the front
+• Creates a soft, natural look
+
+Ring light:
+
+• Place it at eye level
+• Keep it directly in front of you
+• Avoid harsh brightness
+
+Good equipment:
+
+• LED panel
+• Portable light`,
+    takeaway:
+      'Face your light source. Natural light or a ring light at eye level creates a professional look.',
+  },
+  {
+    id: 3,
+    title: 'Audio',
+    shortTitle: 'Audio',
+    icon: 'mic-outline',
+    content: `Keep your audio volume consistent & reduce background noise.
+
+If speaking to the camera or doing a voiceover, make sure your backing audio isn't overpowering.
+
+Good equipment:
+
+• DJI mic mini
+• RODE Wireless GO`,
+    takeaway:
+      "Keep volume consistent. Don't let backing audio overpower your voice.",
+  },
+];
+
+// 3-screen flow for "Batch Editing Tips"
+const BATCH_EDITING_TIPS_FLOW_SCREENS: Array<{
+  id: number;
+  title: string;
+  shortTitle: string;
+  icon: string;
+  content: string;
+  takeaway?: string;
+}> = [
+  {
+    id: 1,
+    title: 'Create Reusable Templates',
+    shortTitle: 'Create Reusable Templates',
+    icon: 'copy-outline',
+    content: `Templates are the biggest hack for editing at speed.
+
+You can use pre-made templates, or create your own.
+
+You can also create templates for:
+• Caption styles
+• Save your favorite sound effects
+• And more`,
+    takeaway: 'Templates = speed. Build once, use many times.',
+  },
+  {
+    id: 2,
+    title: 'Use Auto-Captions',
+    shortTitle: 'Use Auto-Captions',
+    icon: 'chatbubbles-outline',
+    content: `Creating captions manually from scratch is the biggest time-waster when editing.
+
+Use auto-caption tools built into editing apps and lightly clean them up.`,
+    takeaway: 'Auto-captions + light cleanup. Never type from scratch.',
+  },
+  {
+    id: 3,
+    title: "Don't Aim for Perfection",
+    shortTitle: "Don't Aim for Perfection",
+    icon: 'timer-outline',
+    content: `Perfection kills speed.
+
+Set a time limit on the edit to stop yourself overthinking and letting perfectionism stop you from finishing the content.
+
+Time limits to try:
+
+• 1 hour: script 3 videos
+• 1 hour: film 3 videos
+• 1 hour: edit 3 videos`,
+    takeaway: 'Set limits. Done is better than perfect.',
+  },
+];
+
 const HOW_TO_EDIT_CONTENT: { [key: string]: string } = {};
 
 // 12-screen flow for "How to Use Davinci Resolve"
@@ -495,6 +633,8 @@ export default function HowToEditDetailScreen() {
   const [capcutStep, setCapcutStep] = useState(1);
   const [davinciStep, setDavinciStep] = useState(1);
   const [toolsStep, setToolsStep] = useState(1);
+  const [filmingStep, setFilmingStep] = useState(1);
+  const [batchEditingStep, setBatchEditingStep] = useState(1);
 
   // 2-screen flow for "Tools and Softwares"
   if (id === 'tools-and-softwares') {
@@ -899,6 +1039,276 @@ export default function HowToEditDetailScreen() {
     );
   }
 
+  // 3-screen flow for "How to Optimize Filming"
+  if (id === 'how-to-optimize-filming') {
+    const currentScreen =
+      HOW_TO_OPTIMIZE_FILMING_FLOW_SCREENS[filmingStep - 1];
+    const isLastScreen =
+      filmingStep === HOW_TO_OPTIMIZE_FILMING_FLOW_SCREENS.length;
+
+    return (
+      <UniverseBackground>
+        <SafeAreaView style={styles.container}>
+          <View style={styles.flowHeader}>
+            <TouchableOpacity
+              onPress={() => {
+                playClickSound();
+                router.back();
+              }}
+              style={styles.flowBackButton}
+            >
+              <Ionicons name="arrow-back" size={28} color="#FFD700" />
+            </TouchableOpacity>
+            <View style={styles.stepCounterWrap} pointerEvents="box-none">
+              <Text style={styles.stepCounter}>
+                {filmingStep} / {HOW_TO_OPTIMIZE_FILMING_FLOW_SCREENS.length}
+              </Text>
+            </View>
+            <View style={styles.headerSpacer} />
+          </View>
+
+          <View style={styles.flowContainer}>
+            <ScrollView
+              style={styles.flowScrollView}
+              contentContainerStyle={styles.flowContent}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.flowCard}>
+                <View style={styles.flowCardIconWrap}>
+                  <Ionicons
+                    name={currentScreen.icon as any}
+                    size={36}
+                    color="#FFD700"
+                  />
+                </View>
+                <Text style={styles.flowScreenTitle}>
+                  {currentScreen.shortTitle}
+                </Text>
+                <View style={styles.flowCardBody}>
+                  {currentScreen.content.split('\n\n').map((block, blockIdx) => {
+                    const lines = block.trim().split('\n');
+                    return (
+                      <View key={blockIdx} style={styles.flowBlock}>
+                        {lines.map((line, lineIdx) => {
+                          const trimmed = line.trim();
+                          if (!trimmed) return null;
+                          const isBullet = flowBulletMatch(line);
+                          const text = isBullet
+                            ? flowBulletText(line)
+                            : trimmed;
+                          return (
+                            <View
+                              key={lineIdx}
+                              style={[
+                                styles.flowLineRow,
+                                isBullet && styles.flowBulletRow,
+                              ]}
+                            >
+                              {isBullet && (
+                                <View style={styles.flowBullet} />
+                              )}
+                              <Text
+                                style={[
+                                  styles.flowBodyText,
+                                  isBullet && styles.flowBulletText,
+                                ]}
+                              >
+                                {text}
+                              </Text>
+                            </View>
+                          );
+                        })}
+                      </View>
+                    );
+                  })}
+                </View>
+                {currentScreen.takeaway ? (
+                  <View style={styles.takeawayBox}>
+                    <Ionicons
+                      name="bulb-outline"
+                      size={18}
+                      color="#FFD700"
+                    />
+                    <Text style={styles.takeawayText}>
+                      {currentScreen.takeaway}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            </ScrollView>
+
+            <View style={styles.flowButtonContainer}>
+              {isLastScreen ? (
+                <TouchableOpacity
+                  style={styles.doneButton}
+                  onPress={() => {
+                    playClickSound();
+                    router.back();
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.doneButtonText}>Done</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={styles.continueButton}
+                  onPress={() => {
+                    playClickSound();
+                    setFilmingStep(filmingStep + 1);
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.continueButtonText}>Continue</Text>
+                  <Ionicons
+                    name="arrow-forward"
+                    size={20}
+                    color="#0a0e27"
+                    style={styles.continueIcon}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </SafeAreaView>
+      </UniverseBackground>
+    );
+  }
+
+  // 3-screen flow for "Batch Editing Tips"
+  if (id === 'batch-editing-tips') {
+    const currentScreen =
+      BATCH_EDITING_TIPS_FLOW_SCREENS[batchEditingStep - 1];
+    const isLastScreen =
+      batchEditingStep === BATCH_EDITING_TIPS_FLOW_SCREENS.length;
+
+    return (
+      <UniverseBackground>
+        <SafeAreaView style={styles.container}>
+          <View style={styles.flowHeader}>
+            <TouchableOpacity
+              onPress={() => {
+                playClickSound();
+                router.back();
+              }}
+              style={styles.flowBackButton}
+            >
+              <Ionicons name="arrow-back" size={28} color="#FFD700" />
+            </TouchableOpacity>
+            <View style={styles.stepCounterWrap} pointerEvents="box-none">
+              <Text style={styles.stepCounter}>
+                {batchEditingStep} / {BATCH_EDITING_TIPS_FLOW_SCREENS.length}
+              </Text>
+            </View>
+            <View style={styles.headerSpacer} />
+          </View>
+
+          <View style={styles.flowContainer}>
+            <ScrollView
+              style={styles.flowScrollView}
+              contentContainerStyle={styles.flowContent}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.flowCard}>
+                <View style={styles.flowCardIconWrap}>
+                  <Ionicons
+                    name={currentScreen.icon as any}
+                    size={36}
+                    color="#FFD700"
+                  />
+                </View>
+                <Text style={styles.flowScreenTitle}>
+                  {currentScreen.shortTitle}
+                </Text>
+                <View style={styles.flowCardBody}>
+                  {currentScreen.content.split('\n\n').map((block, blockIdx) => {
+                    const lines = block.trim().split('\n');
+                    return (
+                      <View key={blockIdx} style={styles.flowBlock}>
+                        {lines.map((line, lineIdx) => {
+                          const trimmed = line.trim();
+                          if (!trimmed) return null;
+                          const isBullet = flowBulletMatch(line);
+                          const text = isBullet
+                            ? flowBulletText(line)
+                            : trimmed;
+                          return (
+                            <View
+                              key={lineIdx}
+                              style={[
+                                styles.flowLineRow,
+                                isBullet && styles.flowBulletRow,
+                              ]}
+                            >
+                              {isBullet && (
+                                <View style={styles.flowBullet} />
+                              )}
+                              <Text
+                                style={[
+                                  styles.flowBodyText,
+                                  isBullet && styles.flowBulletText,
+                                ]}
+                              >
+                                {text}
+                              </Text>
+                            </View>
+                          );
+                        })}
+                      </View>
+                    );
+                  })}
+                </View>
+                {currentScreen.takeaway ? (
+                  <View style={styles.takeawayBox}>
+                    <Ionicons
+                      name="bulb-outline"
+                      size={18}
+                      color="#FFD700"
+                    />
+                    <Text style={styles.takeawayText}>
+                      {currentScreen.takeaway}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            </ScrollView>
+
+            <View style={styles.flowButtonContainer}>
+              {isLastScreen ? (
+                <TouchableOpacity
+                  style={styles.doneButton}
+                  onPress={() => {
+                    playClickSound();
+                    router.back();
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.doneButtonText}>Done</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={styles.continueButton}
+                  onPress={() => {
+                    playClickSound();
+                    setBatchEditingStep(batchEditingStep + 1);
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.continueButtonText}>Continue</Text>
+                  <Ionicons
+                    name="arrow-forward"
+                    size={20}
+                    color="#0a0e27"
+                    style={styles.continueIcon}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </SafeAreaView>
+      </UniverseBackground>
+    );
+  }
+
   const content =
     HOW_TO_EDIT_CONTENT[id || ''] || 'Content not found.';
   const option = HOW_TO_EDIT_OPTIONS.find((opt) => opt.id === id);
@@ -918,7 +1328,7 @@ export default function HowToEditDetailScreen() {
           </TouchableOpacity>
           <View style={styles.titleContainer}>
             <Text style={styles.title} numberOfLines={2}>
-              {option?.title || 'How to Edit'}
+              {option?.title || 'How to Edit & Film'}
             </Text>
           </View>
         </View>

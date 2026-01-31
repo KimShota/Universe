@@ -95,7 +95,7 @@ export const CONTENT_TIPS = [
   },
   {
     id: 'how-to-edit',
-    title: 'How to edit',
+    title: 'How to edit & film',
     content: "**Editing for Maximum Engagement**\n\nEditing transforms raw footage into engaging content:\n\n**Pacing:**\n- Cut out pauses and ums\n- Keep it fast-paced\n- Every second should add value\n- If you're bored, viewers are too\n\n**Visual Interest:**\n- Add text overlays for key points\n- Use jump cuts for energy\n- Include B-roll when relevant\n- Zoom in for emphasis\n\n**Audio:**\n- Normalize audio levels\n- Add background music (low volume)\n- Use sound effects sparingly\n- Clear voice is priority\n\n**Captions:**\n- Add subtitles (80% watch without sound)\n- Make captions easy to read\n- Use contrasting colors\n\n**Length:**\n- Shorter is usually better\n- Each platform has sweet spots\n- Cut ruthlessly\n\n**Tools:** CapCut, Adobe Premiere Rush, InShot - all beginner-friendly.",
     quiz: [
       {

@@ -19,6 +19,8 @@ const HOW_TO_EDIT_OPTIONS = [
   { id: 'tools-and-softwares', title: 'Tools and Softwares' },
   { id: 'how-to-use-capcut', title: 'How to Use Capcut' },
   { id: 'how-to-use-davinci-resolve', title: 'How to Use Davinci Resolve' },
+  { id: 'how-to-optimize-filming', title: 'How to Optimize Filming' },
+  { id: 'batch-editing-tips', title: 'Batch Editing Tips' },
 ];
 
 export default function HowToEditScreen() {
@@ -38,7 +40,7 @@ export default function HowToEditScreen() {
             <Ionicons name="arrow-back" size={28} color="#FFD700" />
           </TouchableOpacity>
           <Image source={POLARBEAR} style={styles.polarbearImage} resizeMode="contain" />
-          <Text style={styles.title}>How to Edit</Text>
+          <Text style={styles.title}>How to Edit & Film</Text>
         </View>
 
         <ScrollView

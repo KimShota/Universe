@@ -31,7 +31,7 @@ const REGION_LAYOUT: string[][] = [
 ];
 
 type ScreenType = 'vision' | 'avatar' | 'identity';
-type InfoScreenType = 'vision' | 'avatar' | 'identity';
+type InfoScreenType = 'why' | 'vision' | 'avatar' | 'identity';
 
 export default function CreatorUniverseScreen() {
   const router = useRouter();
@@ -39,7 +39,7 @@ export default function CreatorUniverseScreen() {
   const infoScrollRef = useRef<ScrollView>(null);
   const [activeScreen, setActiveScreen] = useState<ScreenType>('vision');
   const [showInfoModal, setShowInfoModal] = useState(false);
-  const [infoActiveScreen, setInfoActiveScreen] = useState<InfoScreenType>('vision');
+  const [infoActiveScreen, setInfoActiveScreen] = useState<InfoScreenType>('why');
   const [deleteModeVision, setDeleteModeVision] = useState(false);
   const [deleteModeAvatar, setDeleteModeAvatar] = useState(false);
   const [deleteModeIdentity, setDeleteModeIdentity] = useState(false);
@@ -198,20 +198,20 @@ export default function CreatorUniverseScreen() {
   const handleInfoScreenChange = (screen: InfoScreenType) => {
     playClickSound();
     setInfoActiveScreen(screen);
-    const i = screen === 'vision' ? 0 : screen === 'avatar' ? 1 : 2;
+    const i = screen === 'why' ? 0 : screen === 'vision' ? 1 : screen === 'avatar' ? 2 : 3;
     infoScrollRef.current?.scrollTo({ x: i * INFO_PAGE_WIDTH, animated: true });
   };
 
   const handleInfoScroll = (event: any) => {
     const offsetX = event.nativeEvent.contentOffset.x;
-    const i = Math.round(offsetX / INFO_PAGE_WIDTH);
-    const screens: InfoScreenType[] = ['vision', 'avatar', 'identity'];
-    setInfoActiveScreen(screens[i]);
+    const i = Math.min(Math.round(offsetX / INFO_PAGE_WIDTH), 3);
+    const screens: InfoScreenType[] = ['why', 'vision', 'avatar', 'identity'];
+    setInfoActiveScreen(screens[i] ?? 'why');
   };
 
   const openInfoModal = () => {
     playClickSound();
-    setInfoActiveScreen('vision');
+    setInfoActiveScreen('why');
     setShowInfoModal(true);
   };
 
@@ -782,6 +782,13 @@ export default function CreatorUniverseScreen() {
             </View>
             <View style={styles.infoTabContainer}>
               <TouchableOpacity
+                style={[styles.infoTab, infoActiveScreen === 'why' && styles.infoTabActive]}
+                onPress={() => handleInfoScreenChange('why')}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.infoTabText, infoActiveScreen === 'why' && styles.infoTabTextActive]}>Why</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
                 style={[styles.infoTab, infoActiveScreen === 'vision' && styles.infoTabActive]}
                 onPress={() => handleInfoScreenChange('vision')}
                 activeOpacity={0.8}
@@ -812,6 +819,32 @@ export default function CreatorUniverseScreen() {
               scrollEventThrottle={16}
               style={styles.infoHorizontalScroll}
             >
+              {/* Why */}
+              <View style={styles.infoScreen}>
+                <ScrollView style={styles.infoScroll} contentContainerStyle={styles.infoContent}>
+                  <Text style={styles.infoScreenTitle}>Why do we need the Creator Universe?</Text>
+                  <Text style={styles.infoBody}>
+                    Do you need millions of followers to be successful on social media? The answer is no because you could have millions of wrong followers. What you need to do is to build the right audience, so you are building A COMMUNITY.
+                  </Text>
+                  <Text style={styles.infoBody}>
+                    You can achieve this by understanding what content your target audience wants to consume from you AND delivering it to them in the right format & messaging. This is why it is so important to understand what a good messaging framework is and what the winning formats for them are. The Creator Universe exists to give you a STRONG MESSAGE.
+                  </Text>
+                  <Text style={styles.infoSectionTitle}>Content that attracts the RIGHT audience = Message + Format</Text>
+                  <Text style={styles.infoBody}>
+                    Message: What are you saying? What value are you giving?
+                  </Text>
+                  <Text style={styles.infoBody}>
+                    Format: How are you presenting it (b-roll, talking-head, voiceover)? What is the hook? Story? Visuals?
+                  </Text>
+                  <Text style={styles.infoSectionTitle}>A strong message comes from your Creator Universe</Text>
+                  <Text style={styles.infoBody}>
+                    Whenever you are trying to come up with content ideas, use the Creator Universe. You can simply follow this formula to generate content ideas:
+                  </Text>
+                  <Text style={styles.infoTip}>
+                    Content Idea = topic + struggle + desire
+                  </Text>
+                </ScrollView>
+              </View>
               {/* Vision */}
               <View style={styles.infoScreen}>
                 <ScrollView style={styles.infoScroll} contentContainerStyle={styles.infoContent}>

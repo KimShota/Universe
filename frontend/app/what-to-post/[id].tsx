@@ -440,6 +440,87 @@ Remember: Good content solves a real problem, is easy to understand, feels relev
   },
 ];
 
+// 7-screen flow for "How to Repurpose One Video to Create 7 Different Videos"
+const REPURPOSE_VIDEO_FLOW_SCREENS: Array<{
+  id: number;
+  title: string;
+  shortTitle: string;
+  icon: string;
+  content: string;
+  takeaway?: string;
+}> = [
+  {
+    id: 1,
+    title: 'Source',
+    shortTitle: 'Source',
+    icon: 'videocam-outline',
+    content: `This is the vlog itself where you spent the most amount of time creating.
+
+This is your main piece of content — the foundation for everything else.`,
+    takeaway: 'One strong vlog becomes the source for 7 different videos.',
+  },
+  {
+    id: 2,
+    title: 'Green Screen',
+    shortTitle: 'Green Screen',
+    icon: 'easel-outline',
+    content: `Take one clip, react to it, and explain exactly why you do what you do.
+
+Use a green screen to overlay yourself on your own footage and add commentary or insights.`,
+    takeaway: 'React to your own content — viewers love the meta perspective.',
+  },
+  {
+    id: 3,
+    title: 'Lessons',
+    shortTitle: 'Lessons',
+    icon: 'school-outline',
+    content: `Take screenshots of your vlog and repurpose it for carousel where you're solving a very particular problem and giving key takeaways.
+
+Transform moments into educational slide posts.`,
+    takeaway: 'Carousels solve problems. Pull your best moments into lessons.',
+  },
+  {
+    id: 4,
+    title: 'The Caption',
+    shortTitle: 'The Caption',
+    icon: 'chatbubble-outline',
+    content: `You take one b-roll from your vlog and repurpose to have one singular text on screen and then the value provided in the caption.
+
+Minimal on-screen text. The caption does the teaching.`,
+    takeaway: 'One clip + one line of text + value in caption = new post.',
+  },
+  {
+    id: 5,
+    title: 'The Storytelling',
+    shortTitle: 'The Storytelling',
+    icon: 'git-branch-outline',
+    content: `Reorder the clips of your vlog, add a different message, and now you have a completely different piece of content.
+
+Same footage. New narrative. New angle.`,
+    takeaway: 'Reordering + new message = entirely new video.',
+  },
+  {
+    id: 6,
+    title: 'Split Screens',
+    shortTitle: 'Split Screens',
+    icon: 'grid-outline',
+    content: `Contrast two perspectives on one idea and add some music.
+
+Show before/after, either/or, or two sides of the same story.`,
+    takeaway: 'Split screens create contrast. Add music for emotion.',
+  },
+  {
+    id: 7,
+    title: 'Story Frames',
+    shortTitle: 'Story Frames',
+    icon: 'images-outline',
+    content: `Take screenshots of your vlog, add a quote, add a teaching framework or use it for behind the scenes moment.
+
+Perfect for quotes, frameworks, or BTS content.`,
+    takeaway: 'Screenshots + quote or framework = quick repurposed content.',
+  },
+];
+
 const WHAT_TO_POST_CONTENT: { [key: string]: string } = {};
 
 export default function WhatToPostDetailScreen() {
@@ -448,6 +529,7 @@ export default function WhatToPostDetailScreen() {
   const [defineUniverseStep, setDefineUniverseStep] = useState(1);
   const [useUniverseStep, setUseUniverseStep] = useState(1);
   const [whatTypesStep, setWhatTypesStep] = useState(1);
+  const [repurposeVideoStep, setRepurposeVideoStep] = useState(1);
 
   // 12-screen flow for "Define Your Creator Universe"
   if (id === 'define-your-creator-universe') {
@@ -818,6 +900,140 @@ export default function WhatToPostDetailScreen() {
     );
   }
 
+  // 7-screen flow for "How to Repurpose One Video to Create 7 Different Videos"
+  if (id === 'repurpose-one-video-seven-ways') {
+    const currentScreen = REPURPOSE_VIDEO_FLOW_SCREENS[repurposeVideoStep - 1];
+    const isLastScreen =
+      repurposeVideoStep === REPURPOSE_VIDEO_FLOW_SCREENS.length;
+
+    return (
+      <UniverseBackground>
+        <SafeAreaView style={styles.container}>
+          <View style={styles.flowHeader}>
+            <TouchableOpacity
+              onPress={() => {
+                playClickSound();
+                router.back();
+              }}
+              style={styles.flowBackButton}
+            >
+              <Ionicons name="arrow-back" size={28} color="#FFD700" />
+            </TouchableOpacity>
+            <View style={styles.stepCounterWrap} pointerEvents="box-none">
+              <Text style={styles.stepCounter}>
+                {repurposeVideoStep} / {REPURPOSE_VIDEO_FLOW_SCREENS.length}
+              </Text>
+            </View>
+            <View style={styles.headerSpacer} />
+          </View>
+
+          <View style={styles.flowContainer}>
+            <ScrollView
+              style={styles.flowScrollView}
+              contentContainerStyle={styles.flowContent}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.flowCard}>
+                <View style={styles.flowCardIconWrap}>
+                  <Ionicons
+                    name={currentScreen.icon as any}
+                    size={36}
+                    color="#FFD700"
+                  />
+                </View>
+                <Text style={styles.flowScreenTitle}>
+                  {currentScreen.shortTitle}
+                </Text>
+                <View style={styles.flowCardBody}>
+                  {currentScreen.content.split('\n\n').map((block, blockIdx) => {
+                    const lines = block.trim().split('\n');
+                    return (
+                      <View key={blockIdx} style={styles.flowBlock}>
+                        {lines.map((line, lineIdx) => {
+                          const trimmed = line.trim();
+                          if (!trimmed) return null;
+                          const isBullet = flowBulletMatch(line);
+                          const text = isBullet
+                            ? flowBulletText(line)
+                            : trimmed;
+                          return (
+                            <View
+                              key={lineIdx}
+                              style={[
+                                styles.flowLineRow,
+                                isBullet && styles.flowBulletRow,
+                              ]}
+                            >
+                              {isBullet && (
+                                <View style={styles.flowBullet} />
+                              )}
+                              <Text
+                                style={[
+                                  styles.flowBodyText,
+                                  isBullet && styles.flowBulletText,
+                                ]}
+                              >
+                                {text}
+                              </Text>
+                            </View>
+                          );
+                        })}
+                      </View>
+                    );
+                  })}
+                </View>
+                {currentScreen.takeaway ? (
+                  <View style={styles.takeawayBox}>
+                    <Ionicons
+                      name="bulb-outline"
+                      size={18}
+                      color="#FFD700"
+                    />
+                    <Text style={styles.takeawayText}>
+                      {currentScreen.takeaway}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            </ScrollView>
+
+            <View style={styles.flowButtonContainer}>
+              {isLastScreen ? (
+                <TouchableOpacity
+                  style={styles.doneButton}
+                  onPress={() => {
+                    playClickSound();
+                    router.back();
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.doneButtonText}>Done</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={styles.continueButton}
+                  onPress={() => {
+                    playClickSound();
+                    setRepurposeVideoStep(repurposeVideoStep + 1);
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.continueButtonText}>Continue</Text>
+                  <Ionicons
+                    name="arrow-forward"
+                    size={20}
+                    color="#0a0e27"
+                    style={styles.continueIcon}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </SafeAreaView>
+      </UniverseBackground>
+    );
+  }
+
   const content = WHAT_TO_POST_CONTENT[id || ''] || 'Content not found.';
   const option = WHAT_TO_POST_OPTIONS.find((opt) => opt.id === id);
 
@@ -903,6 +1119,11 @@ const WHAT_TO_POST_OPTIONS = [
     id: 'what-types-of-content',
     title: 'What Types of Content to Post',
     icon: 'list-outline',
+  },
+  {
+    id: 'repurpose-one-video-seven-ways',
+    title: 'How to Repurpose One Video to Create 7 Different Videos',
+    icon: 'copy-outline',
   },
 ];
 

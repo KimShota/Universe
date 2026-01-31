@@ -428,6 +428,19 @@ export default function MainScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity
+                style={styles.assetsMenuItem}
+                onPress={() => {
+                  playClickSound();
+                  setShowAssetsMenu(false);
+                  router.push('/auto-script-generator');
+                }}
+              >
+                <Ionicons name="document-text-outline" size={24} color="#FFD700" />
+                <Text style={styles.assetsMenuItemText}>Auto-Script Generator</Text>
+                <Ionicons name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.5)" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
                 style={styles.closeButton}
                 onPress={() => {
                   playClickSound();

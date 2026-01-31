@@ -150,11 +150,18 @@ class Script(BaseModel):
     id: str
     title: Optional[str] = ""
     mission: Optional[str] = ""
+    titleHook: Optional[str] = ""
+    visualHook: Optional[str] = ""
+    verbalHook: Optional[str] = ""
+    problem: Optional[str] = ""
+    promise: Optional[str] = ""
+    credibility: Optional[str] = ""
+    delivery: Optional[str] = ""
+    callToAction: Optional[str] = ""
     footageNeeded: Optional[str] = ""
-    textVisual: Optional[str] = ""
     audio: Optional[str] = ""
     caption: Optional[str] = ""
-    callToAction: Optional[str] = ""
+    textVisual: Optional[str] = ""
     date: Optional[str] = None
 
 class ScriptRequest(BaseModel):

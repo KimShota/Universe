@@ -31,6 +31,11 @@ const WHAT_TO_POST_OPTIONS = [
     title: 'What Types of Content to Post',
     icon: 'list-outline',
   },
+  {
+    id: 'repurpose-one-video-seven-ways',
+    title: 'How to Repurpose One Video to Create 7 Different Videos',
+    icon: 'copy-outline',
+  },
 ];
 
 export default function WhatToPostScreen() {
