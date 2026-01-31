@@ -47,10 +47,10 @@ export default function CreatorUniverseScreen() {
   // Vision screen state
   const [goal, setGoal] = useState('');
   const [pillars, setPillars] = useState([
-    { title: 'Content Pillar 1', ideas: [''] },
-    { title: 'Content Pillar 2', ideas: [''] },
-    { title: 'Content Pillar 3', ideas: [''] },
-    { title: 'Content Pillar 4', ideas: [''] },
+    { title: '', ideas: [''] },
+    { title: '', ideas: [''] },
+    { title: '', ideas: [''] },
+    { title: '', ideas: [''] },
   ]);
 
   // Avatar screen state — region supports multiple selections
@@ -99,7 +99,15 @@ export default function CreatorUniverseScreen() {
       // Vision
       setGoal(data.overarching_goal || '');
       if (data.content_pillars && data.content_pillars.length > 0) {
-        setPillars(data.content_pillars);
+        const normalized = data.content_pillars.map((p: { title?: string; ideas?: string[] }) => {
+          const t = (p.title || '').trim();
+          const isPlaceholder = /^Content Pillar \d+$/i.test(t);
+          return {
+            title: isPlaceholder ? '' : (p.title || ''),
+            ideas: p.ideas && p.ideas.length > 0 ? p.ideas : [''],
+          };
+        });
+        setPillars(normalized);
       }
       
       // Avatar — support legacy audience
@@ -395,7 +403,8 @@ export default function CreatorUniverseScreen() {
                       value={pillar.title}
                       onChangeText={(text) => updatePillarTitle(index, text)}
                       onBlur={() => saveUniverse()}
-                      placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                      placeholder={`Content Pillar ${index + 1}`}
+                      placeholderTextColor="rgba(255, 215, 0, 0.5)"
                       multiline
                       numberOfLines={2}
                     />

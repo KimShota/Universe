@@ -19,6 +19,146 @@ const BETTER_CONTENT_OPTIONS = [
   { id: 'analyzing-comments', title: 'Analyzing Comments' },
 ];
 
+// Verbal hook type with examples (for custom UI)
+type VerbalHookItem = { type: string; icon: string; examples: string[] };
+
+// Visual hook type (for custom UI)
+type VisualHookItem = { type: string; icon: string; description: string; examples?: string[] };
+
+// Text hook type (for custom UI)
+type TextHookItem = { type: string; icon: string; description: string };
+
+// Perfect hook step (for custom UI)
+type PerfectHookStep = { step: number; icon: string; title: string };
+
+// What a Hook Is custom content
+type WhatIsHookContent = {
+  definition: string;
+  hookTypes: { label: string; icon: string }[];
+  keyMoment: string;
+};
+
+const WHAT_IS_HOOK_CONTENT: WhatIsHookContent = {
+  definition:
+    "A hook is something you say, do, or show on screen in the first few seconds of your video to grab the viewer's attention and stop them from scrolling.",
+  hookTypes: [
+    { label: 'Spoken', icon: 'mic-outline' },
+    { label: 'Written', icon: 'document-text-outline' },
+    { label: 'Audio', icon: 'volume-high-outline' },
+    { label: 'Visual', icon: 'eye-outline' },
+  ],
+  keyMoment: 'The first 3 seconds are "make or break."',
+};
+
+const VERBAL_HOOK_ITEMS: VerbalHookItem[] = [
+  {
+    type: 'Telling the viewers why you are an expert',
+    icon: 'ribbon-outline',
+    examples: [
+      "I've been in the gym for over 10 years and this is how I got my arms from this to this",
+    ],
+  },
+  {
+    type: 'Asking the viewers a question',
+    icon: 'help-circle-outline',
+    examples: [
+      'Did you know that …..',
+      "What is the one gym machine you never use? Mine is …",
+    ],
+  },
+  {
+    type: 'Positive statement',
+    icon: 'add-circle-outline',
+    examples: [
+      "This is the best healthy smoothie recipe I've ever tried",
+      "5 must-do if you're visiting Japan",
+    ],
+  },
+  {
+    type: 'Negative or Controversial statement',
+    icon: 'flash-outline',
+    examples: [
+      "This may be an unpopular opinion, but I hate the Rare Beauty blushes",
+      "Don't make this mistake",
+    ],
+  },
+  {
+    type: 'Referencing something that viewers recognize',
+    icon: 'eye-outline',
+    examples: [
+      "Let's recreate Sabrina Carpenter's makeup look",
+      "Let's try the viral 75 Hard Challenge",
+    ],
+  },
+  {
+    type: 'Target a specific audience',
+    icon: 'people-outline',
+    examples: [
+      "If you're a beginner in the gym, these are the key things you need to know",
+      "If you have sensitive skin, avoid these skincare products",
+    ],
+  },
+  {
+    type: 'Target the viewers pain point',
+    icon: 'heart-outline',
+    examples: [
+      "You're not ugly. You just don't know how to style your curls.",
+    ],
+  },
+];
+
+const VISUAL_HOOK_ITEMS: VisualHookItem[] = [
+  {
+    type: 'Unusual camera angle',
+    icon: 'videocam-outline',
+    description:
+      'A pattern disruptor looks visually different, immediately making you think, "I should stick around and watch this."',
+    examples: ['Top down shot'],
+  },
+  {
+    type: 'Eye catching visual',
+    icon: 'sparkles-outline',
+    description:
+      'There is something happening moving on screen.',
+  },
+  {
+    type: 'Doing an activity while talking',
+    icon: 'hand-left-outline',
+    description:
+      "There are two visuals in parallel. She is talking and telling you something is going to happen. You also want to know why she is cutting the apple — you follow along with that payoff, that transformation.",
+    examples: [
+      'Same idea: drinking coffee, making coffee, knitting, making something, doing makeup.',
+      "You're doing something in real time and it serves as a separate hook in addition to what you're saying.",
+    ],
+  },
+];
+
+const TEXT_HOOK_ITEMS: TextHookItem[] = [
+  {
+    type: "Targeting the viewer's pain point",
+    icon: 'heart-broken-outline',
+    description: "Speak directly to what your audience struggles with. The right text hook stops the scroll by naming their problem.",
+  },
+  {
+    type: 'Giving context to the content',
+    icon: 'document-text-outline',
+    description:
+      "If you can provide some context, it immediately lets viewers understand what they are looking for.",
+  },
+  {
+    type: 'More visually dynamic',
+    icon: 'layers-outline',
+    description: "There is something populated on screen effectively.",
+  },
+];
+
+const PERFECT_HOOK_STEPS: PerfectHookStep[] = [
+  { step: 1, icon: 'heart-outline', title: 'Identify audience pain or desire' },
+  { step: 2, icon: 'search-outline', title: 'Spark curiosity' },
+  { step: 3, icon: 'flash-outline', title: 'Use emotion or tension' },
+  { step: 4, icon: 'contract-outline', title: 'Keep it short and strong' },
+];
+
 // 6-screen flow for "Use Hooks"
 const USE_HOOKS_FLOW_SCREENS: Array<{
   id: number;
@@ -27,98 +167,56 @@ const USE_HOOKS_FLOW_SCREENS: Array<{
   icon: string;
   content: string;
   takeaway?: string;
+  verbalHookItems?: VerbalHookItem[];
+  visualHookItems?: VisualHookItem[];
+  textHookItems?: TextHookItem[];
+  perfectHookSteps?: PerfectHookStep[];
+  whatIsHookContent?: WhatIsHookContent;
 }> = [
   {
     id: 1,
     title: 'What a Hook Is',
     shortTitle: 'What a Hook Is',
     icon: 'flash-outline',
-    content: `A hook is something you say, do, or show on screen in the first few seconds of your video to grab the viewer's attention and stop them from scrolling.
-
-Hooks can be spoken, written, audio, or visual.
-
-So the first 3 seconds are "make or break."`,
+    content: '',
     takeaway: 'The first 3 seconds decide if your message gets seen.',
+    whatIsHookContent: WHAT_IS_HOOK_CONTENT,
   },
   {
     id: 2,
     title: 'Types of Hooks: Verbal',
     shortTitle: 'Types of Hooks: Verbal',
     icon: 'megaphone-outline',
-    content: `Telling the viewers why you are an expert
-"I've been in the gym for over 10 years and this is how I got my arms from this to this"
-
-Asking the viewers a question
-"Did you know that ….."
-"What is the one gym machine you never use? Mine is …"
-
-Positive statement
-"This is the best healthy smoothie recipe I've ever tried"
-"5 must-do if you're visiting Japan"
-
-Negative or Controversial statement
-"This may be an unpopular opinion, but I hate the Rare Beauty blushes"
-"Don't make this mistake"
-
-Referencing something that viewers recognize
-"Let's recreate Sabrina Carpenter's makeup look"
-"Let's try the viral 75 Hard Challenge"
-
-Target a specific audience
-"If you're a beginner in the gym, these are the key things you need to know"
-"If you have sensitive skin, avoid these skincare products"
-
-Target the viewers pain point
-"You're not ugly. You just don't know how to style your curls."`,
+    content: '',
     takeaway: 'Match your hook type to your audience and content.',
+    verbalHookItems: VERBAL_HOOK_ITEMS,
   },
   {
     id: 3,
     title: 'Visual Hooks',
     shortTitle: 'Visual Hooks',
     icon: 'eye-outline',
-    content: `Unusual camera angle
-A pattern disruptor looks visually different, immediately making you think, "I should stick around and watch this."
-• Top down shot
-
-Eye catching visual
-There is something happening moving on screen.
-
-Doing an activity while talking (pope in the pool)
-There are two visuals in parallel. She is talking and telling you something is going to happen. You also want to know why she is cutting the apple — you follow along with that payoff, that transformation.
-
-Same idea: drinking coffee, making coffee, knitting, making something, doing makeup. You're doing something in real time and it serves as a separate hook in addition to what you're saying.`,
+    content: '',
     takeaway: 'Visual hooks create pattern interrupt. Activity while talking doubles the hook.',
+    visualHookItems: VISUAL_HOOK_ITEMS,
   },
   {
     id: 4,
     title: 'Text Hooks',
     shortTitle: 'Text Hooks',
     icon: 'text-outline',
-    content: `Targeting the viewer's pain point
-
-Giving context to the content
-If you can provide some context, it immediately lets viewers understand what they are looking for.
-
-More visually dynamic
-There is something populated on screen effectively.`,
+    content: '',
     takeaway: 'Text hooks give instant context. Context reduces scroll.',
+    textHookItems: TEXT_HOOK_ITEMS,
   },
   {
     id: 5,
     title: 'How to Craft the Perfect Hook',
     shortTitle: 'How to Craft the Perfect Hook',
     icon: 'construct-outline',
-    content: `Step-by-step formula:
-
-• Identify audience pain or desire
-
-• Spark curiosity
-
-• Use emotion or tension
-
-• Keep it short and strong`,
+    content: '',
     takeaway: 'Pain/desire + curiosity + emotion + brevity = scroll-stopping hook.',
+    perfectHookSteps: PERFECT_HOOK_STEPS,
   },
 ];
 
@@ -475,40 +573,158 @@ export default function BetterContentDetailScreen() {
                 </View>
                 <Text style={styles.flowScreenTitle}>{currentScreen.shortTitle}</Text>
                 <View style={styles.flowCardBody}>
-                  {currentScreen.content.split('\n\n').map((block, blockIdx) => {
-                    const lines = block.trim().split('\n');
-                    return (
-                      <View key={blockIdx} style={styles.flowBlock}>
-                        {lines.map((line, lineIdx) => {
-                          const trimmed = line.trim();
-                          if (!trimmed) return null;
-                          const isBullet = flowBulletMatch(line);
-                          const text = isBullet ? flowBulletText(line) : trimmed;
-                          return (
-                            <View
-                              key={lineIdx}
-                              style={[
-                                styles.flowLineRow,
-                                isBullet && styles.flowBulletRow,
-                              ]}
-                            >
-                              {isBullet && (
-                                <View style={styles.flowBullet} />
-                              )}
-                              <Text
+                  {currentScreen.whatIsHookContent ? (
+                    <View style={styles.whatIsHookWrap}>
+                      <View style={styles.whatIsHookDefinitionCard}>
+                        <Text style={styles.whatIsHookDefinition}>
+                          {currentScreen.whatIsHookContent.definition}
+                        </Text>
+                      </View>
+                      <Text style={styles.whatIsHookTypesLabel}>Hooks can be:</Text>
+                      <View style={styles.whatIsHookTypesRow}>
+                        {currentScreen.whatIsHookContent.hookTypes.map((t, idx) => (
+                          <View key={idx} style={styles.whatIsHookTypePill}>
+                            <View style={styles.whatIsHookTypeIconWrap}>
+                              <Ionicons name={t.icon as any} size={20} color="#FFD700" />
+                            </View>
+                            <Text style={styles.whatIsHookTypeLabel}>{t.label}</Text>
+                          </View>
+                        ))}
+                      </View>
+                      <View style={styles.whatIsHookKeyMoment}>
+                        <Ionicons name="time-outline" size={24} color="#FFD700" />
+                        <Text style={styles.whatIsHookKeyMomentText}>
+                          {currentScreen.whatIsHookContent.keyMoment}
+                        </Text>
+                      </View>
+                    </View>
+                  ) : currentScreen.verbalHookItems ? (
+                    <View style={styles.verbalHooksWrap}>
+                      {currentScreen.verbalHookItems.map((item, idx) => (
+                        <View key={idx} style={styles.verbalHookCard}>
+                          <View style={styles.verbalHookHeader}>
+                            <View style={styles.verbalHookIconWrap}>
+                              <Ionicons
+                                name={item.icon as any}
+                                size={18}
+                                color="#FFD700"
+                              />
+                            </View>
+                            <Text style={styles.verbalHookType}>{item.type}</Text>
+                          </View>
+                          <View style={styles.verbalHookExamples}>
+                            {item.examples.map((ex, exIdx) => (
+                              <View key={exIdx} style={styles.verbalHookQuote}>
+                                <Text style={styles.verbalHookQuoteText}>{`"${ex}"`}</Text>
+                              </View>
+                            ))}
+                          </View>
+                        </View>
+                      ))}
+                    </View>
+                  ) : currentScreen.visualHookItems ? (
+                    <View style={styles.visualHooksWrap}>
+                      {currentScreen.visualHookItems.map((item, idx) => (
+                        <View key={idx} style={styles.visualHookCard}>
+                          <View style={styles.visualHookHeader}>
+                            <View style={styles.visualHookIconWrap}>
+                              <Ionicons
+                                name={item.icon as any}
+                                size={20}
+                                color="#FFD700"
+                              />
+                            </View>
+                            <Text style={styles.visualHookType}>{item.type}</Text>
+                          </View>
+                          <Text style={styles.visualHookDescription}>{item.description}</Text>
+                          {item.examples && item.examples.length > 0 ? (
+                            <View style={styles.visualHookExamples}>
+                              {item.examples.map((ex, exIdx) => (
+                                <View key={exIdx} style={styles.visualHookExampleRow}>
+                                  <View style={styles.visualHookExampleBullet} />
+                                  <Text style={styles.visualHookExampleText}>{ex}</Text>
+                                </View>
+                              ))}
+                            </View>
+                          ) : null}
+                        </View>
+                      ))}
+                    </View>
+                  ) : currentScreen.textHookItems ? (
+                    <View style={styles.textHooksWrap}>
+                      {currentScreen.textHookItems.map((item, idx) => (
+                        <View key={idx} style={styles.textHookCard}>
+                          <View style={styles.textHookHeader}>
+                            <View style={styles.textHookIconWrap}>
+                              <Ionicons
+                                name={item.icon as any}
+                                size={20}
+                                color="#FFD700"
+                              />
+                            </View>
+                            <Text style={styles.textHookType}>{item.type}</Text>
+                          </View>
+                          <Text style={styles.textHookDescription}>{item.description}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  ) : currentScreen.perfectHookSteps ? (
+                    <View style={styles.perfectHookWrap}>
+                      <Text style={styles.perfectHookSubtitle}>Step-by-step formula</Text>
+                      {currentScreen.perfectHookSteps.map((item, idx) => (
+                        <View key={idx} style={styles.perfectHookStepCard}>
+                          <View style={styles.perfectHookStepNumber}>
+                            <Text style={styles.perfectHookStepNumberText}>{item.step}</Text>
+                          </View>
+                          <View style={styles.perfectHookStepContent}>
+                            <View style={styles.perfectHookStepIconWrap}>
+                              <Ionicons
+                                name={item.icon as any}
+                                size={22}
+                                color="#FFD700"
+                              />
+                            </View>
+                            <Text style={styles.perfectHookStepTitle}>{item.title}</Text>
+                          </View>
+                        </View>
+                      ))}
+                    </View>
+                  ) : (
+                    currentScreen.content.split('\n\n').map((block, blockIdx) => {
+                      const lines = block.trim().split('\n');
+                      return (
+                        <View key={blockIdx} style={styles.flowBlock}>
+                          {lines.map((line, lineIdx) => {
+                            const trimmed = line.trim();
+                            if (!trimmed) return null;
+                            const isBullet = flowBulletMatch(line);
+                            const text = isBullet ? flowBulletText(line) : trimmed;
+                            return (
+                              <View
+                                key={lineIdx}
                                 style={[
-                                  styles.flowBodyText,
-                                  isBullet && styles.flowBulletText,
+                                  styles.flowLineRow,
+                                  isBullet && styles.flowBulletRow,
                                 ]}
                               >
-                                {text}
-                              </Text>
-                            </View>
-                          );
-                        })}
-                      </View>
-                    );
-                  })}
+                                {isBullet && (
+                                  <View style={styles.flowBullet} />
+                                )}
+                                <Text
+                                  style={[
+                                    styles.flowBodyText,
+                                    isBullet && styles.flowBulletText,
+                                  ]}
+                                >
+                                  {text}
+                                </Text>
+                              </View>
+                            );
+                          })}
+                        </View>
+                      );
+                    })
+                  )}
                 </View>
                 {currentScreen.takeaway ? (
                   <View style={styles.takeawayBox}>
@@ -968,6 +1184,277 @@ const styles = StyleSheet.create({
   },
   flowBulletText: {
     flex: 1,
+  },
+  whatIsHookWrap: {
+    gap: 18,
+  },
+  whatIsHookDefinitionCard: {
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    borderRadius: 14,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.2)',
+    borderLeftWidth: 4,
+    borderLeftColor: '#FFD700',
+  },
+  whatIsHookDefinition: {
+    fontSize: 16,
+    lineHeight: 26,
+    color: 'rgba(255, 255, 255, 0.95)',
+  },
+  whatIsHookTypesLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'rgba(255, 215, 0, 0.9)',
+  },
+  whatIsHookTypesRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  whatIsHookTypePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.2)',
+  },
+  whatIsHookTypeIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  whatIsHookTypeLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FFD700',
+  },
+  whatIsHookKeyMoment: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: 'rgba(255, 215, 0, 0.08)',
+    borderRadius: 14,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.25)',
+  },
+  whatIsHookKeyMomentText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFD700',
+    flex: 1,
+    lineHeight: 24,
+  },
+  verbalHooksWrap: {
+    gap: 14,
+  },
+  verbalHookCard: {
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.15)',
+  },
+  verbalHookHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 10,
+  },
+  verbalHookIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  verbalHookType: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFD700',
+    flex: 1,
+    lineHeight: 20,
+  },
+  verbalHookExamples: {
+    gap: 8,
+  },
+  verbalHookQuote: {
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderLeftWidth: 3,
+    borderLeftColor: 'rgba(255, 215, 0, 0.5)',
+  },
+  verbalHookQuoteText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontStyle: 'italic',
+  },
+  visualHooksWrap: {
+    gap: 16,
+  },
+  visualHookCard: {
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    borderRadius: 14,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.15)',
+  },
+  visualHookHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 10,
+  },
+  visualHookIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  visualHookType: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFD700',
+    flex: 1,
+    lineHeight: 22,
+  },
+  visualHookDescription: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: 'rgba(255, 255, 255, 0.92)',
+    marginBottom: 4,
+  },
+  visualHookExamples: {
+    marginTop: 8,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 215, 0, 0.12)',
+    gap: 6,
+  },
+  visualHookExampleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  visualHookExampleBullet: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255, 215, 0, 0.7)',
+    marginTop: 8,
+  },
+  visualHookExampleText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: 'rgba(255, 255, 255, 0.85)',
+    flex: 1,
+    fontStyle: 'italic',
+  },
+  textHooksWrap: {
+    gap: 14,
+  },
+  textHookCard: {
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    borderRadius: 14,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.15)',
+  },
+  textHookHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 10,
+  },
+  textHookIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  textHookType: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFD700',
+    flex: 1,
+    lineHeight: 22,
+  },
+  textHookDescription: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: 'rgba(255, 255, 255, 0.92)',
+  },
+  perfectHookWrap: {
+    gap: 12,
+  },
+  perfectHookSubtitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'rgba(255, 215, 0, 0.9)',
+    marginBottom: 4,
+    letterSpacing: 0.5,
+  },
+  perfectHookStepCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.15)',
+    gap: 14,
+  },
+  perfectHookStepNumber: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 215, 0, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  perfectHookStepNumberText: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#FFD700',
+  },
+  perfectHookStepContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  perfectHookStepIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 215, 0, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  perfectHookStepTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.95)',
+    flex: 1,
+    lineHeight: 22,
   },
   takeawayBox: {
     flexDirection: 'row',

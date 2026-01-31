@@ -395,7 +395,7 @@ export default function SOSFlowScreen() {
                   }}
                   activeOpacity={0.85}
                 >
-                  <Text style={styles.letGoRitualButtonText}>Let Go Ritual</Text>
+                  <Text style={styles.letGoRitualButtonText}>Let Go</Text>
                 </TouchableOpacity>
               ) : (
                 <TouchableOpacity
@@ -467,7 +467,7 @@ export default function SOSFlowScreen() {
                   }}
                   activeOpacity={0.85}
                 >
-                  <Text style={styles.letGoRitualButtonText}>Let Go Ritual</Text>
+                  <Text style={styles.letGoRitualButtonText}>Let Go</Text>
                 </TouchableOpacity>
               ) : (
                 <TouchableOpacity
@@ -566,7 +566,7 @@ export default function SOSFlowScreen() {
                   }}
                   activeOpacity={0.85}
                 >
-                  <Text style={styles.letGoRitualButtonText}>Let Go Ritual</Text>
+                  <Text style={styles.letGoRitualButtonText}>Let Go</Text>
                 </TouchableOpacity>
               ) : (
                 <TouchableOpacity
@@ -638,7 +638,7 @@ export default function SOSFlowScreen() {
                   }}
                   activeOpacity={0.85}
                 >
-                  <Text style={styles.letGoRitualButtonText}>Let Go Ritual</Text>
+                  <Text style={styles.letGoRitualButtonText}>Let Go</Text>
                 </TouchableOpacity>
               ) : (
                 <TouchableOpacity

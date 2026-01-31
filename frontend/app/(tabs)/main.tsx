@@ -198,13 +198,17 @@ export default function MainScreen() {
                     },
                     step.completed && styles.stepCompleted,
                     step.current && styles.stepCurrent,
+                    !step.completed && styles.stepShadowed,
                   ]}
                   onPress={() => handlePlanetPress(step.id)}
                   disabled={!step.current || missionCompleted}
                 >
                   <Image
                     source={PLANETS[step.id % PLANETS.length]}
-                    style={styles.planetImage}
+                    style={[
+                      styles.planetImage,
+                      !step.completed && styles.planetImageShadowed,
+                    ]}
                     resizeMode="cover"
                   />
                   {step.completed && <Text style={styles.checkmark}>✓</Text>}
@@ -542,6 +546,16 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 40,
+  },
+  planetImageShadowed: {
+    opacity: 0.4,
+  },
+  stepShadowed: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 12,
   },
   stepCompleted: {},
   stepCurrent: {
