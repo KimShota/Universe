@@ -29,7 +29,8 @@ if not db_name:
         "Please create a .env file in the backend directory with DB_NAME=universe"
     )
 
-client = AsyncIOMotorClient(mongo_url)
+import certifi
+client = AsyncIOMotorClient(mongo_url, tlsCAFile=certifi.where())
 db = client[db_name]
 
 # Create the main app without a prefix
