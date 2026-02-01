@@ -31,10 +31,31 @@ if not db_name:
 
 import certifi
 
-# On Render, skip tlsCAFile so tlsAllowInvalidCertificates in URL can fix SSL handshake
-if os.environ.get("RENDER"):
-    client = AsyncIOMotorClient(mongo_url)
+# #region agent log
+def _agent_log(location: str, message: str, data: dict):
+    import json
+    try:
+        with open("/Users/matsumotoshota/Universe/.cursor/debug.log", "a") as f:
+            f.write(json.dumps({"location": location, "message": message, "data": data, "timestamp": __import__("time").time()}) + "\n")
+    except Exception:
+        pass
+# #endregion
+
+_is_render = bool(os.environ.get("RENDER"))
+# On Render: disable cert verification and OCSP to fix TLSV1_ALERT_INTERNAL_ERROR
+if _is_render:
+    # #region agent log
+    _agent_log("server.py:client", "Render path: tlsAllowInvalidCertificates + tlsDisableOCSPEndpointCheck", {"RENDER": _is_render})
+    # #endregion
+    client = AsyncIOMotorClient(
+        mongo_url,
+        tlsAllowInvalidCertificates=True,
+        tlsDisableOCSPEndpointCheck=True,
+    )
 else:
+    # #region agent log
+    _agent_log("server.py:client", "Local path: certifi", {"RENDER": _is_render})
+    # #endregion
     client = AsyncIOMotorClient(mongo_url, tlsCAFile=certifi.where())
 db = client[db_name]
 
@@ -919,10 +940,18 @@ async def root():
 async def health_check():
     """Health check endpoint with database status"""
     try:
-        # Check MongoDB connection
+        # #region agent log
+        _agent_log("server.py:health_check", "ping attempt", {})
+        # #endregion
         await db.command("ping")
+        # #region agent log
+        _agent_log("server.py:health_check", "ping success", {})
+        # #endregion
         return {"status": "healthy", "database": "connected"}
     except Exception as e:
+        # #region agent log
+        _agent_log("server.py:health_check", "ping failed", {"error": str(e)[:200]})
+        # #endregion
         return {"status": "unhealthy", "database": "disconnected", "error": str(e)}
 
 # ==================== INCLUDE ROUTER ====================
