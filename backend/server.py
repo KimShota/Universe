@@ -42,16 +42,12 @@ def _agent_log(location: str, message: str, data: dict):
 # #endregion
 
 _is_render = bool(os.environ.get("RENDER"))
-# On Render: disable cert verification and OCSP to fix TLSV1_ALERT_INTERNAL_ERROR
+# On Render: disable cert verification to fix SSL handshake
 if _is_render:
     # #region agent log
-    _agent_log("server.py:client", "Render path: tlsAllowInvalidCertificates + tlsDisableOCSPEndpointCheck", {"RENDER": _is_render})
+    _agent_log("server.py:client", "Render path: tlsAllowInvalidCertificates", {"RENDER": _is_render})
     # #endregion
-    client = AsyncIOMotorClient(
-        mongo_url,
-        tlsAllowInvalidCertificates=True,
-        tlsDisableOCSPEndpointCheck=True,
-    )
+    client = AsyncIOMotorClient(mongo_url, tlsAllowInvalidCertificates=True)
 else:
     # #region agent log
     _agent_log("server.py:client", "Local path: certifi", {"RENDER": _is_render})
