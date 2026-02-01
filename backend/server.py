@@ -1,7 +1,6 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Cookie, Response, Depends, Header
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
@@ -14,26 +13,8 @@ import httpx
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
-mongo_url = os.environ.get('MONGO_URL')
-if not mongo_url:
-    raise ValueError(
-        "MONGO_URL environment variable is not set. "
-        "Please create a .env file in the backend directory with MONGO_URL=mongodb://localhost:27017"
-    )
-
-db_name = os.environ.get('DB_NAME')
-if not db_name:
-    raise ValueError(
-        "DB_NAME environment variable is not set. "
-        "Please create a .env file in the backend directory with DB_NAME=universe"
-    )
-
-import certifi
-
-# Use certifi for TLS CA (fixes SSL handshake on Render + MongoDB Atlas)
-client = AsyncIOMotorClient(mongo_url, tlsCAFile=certifi.where())
-db = client[db_name]
+# Supabase (db.py loads and validates SUPABASE_URL, SUPABASE_SERVICE_KEY)
+import db as db_layer
 
 # Create the main app without a prefix
 app = FastAPI()
@@ -198,10 +179,7 @@ async def get_current_user(
         raise HTTPException(status_code=401, detail="Not authenticated")
     
     # Find session in database
-    session = await db.user_sessions.find_one(
-        {"session_token": token},
-        {"_id": 0}
-    )
+    session = await db_layer.session_find_by_token(token)
     
     if not session:
         raise HTTPException(status_code=401, detail="Invalid session")
@@ -215,10 +193,7 @@ async def get_current_user(
         raise HTTPException(status_code=401, detail="Session expired")
     
     # Get user from database
-    user_doc = await db.users.find_one(
-        {"user_id": session["user_id"]},
-        {"_id": 0}
-    )
+    user_doc = await db_layer.user_find_by_id(session["user_id"])
     
     if not user_doc:
         raise HTTPException(status_code=404, detail="User not found")
@@ -268,10 +243,7 @@ async def exchange_session(session_id: str, response: Response):
     # Database operations with error handling
     try:
         # Check if user exists
-        existing_user = await db.users.find_one(
-            {"email": session_data.email},
-            {"_id": 0}
-        )
+        existing_user = await db_layer.user_find_by_email(session_data.email)
         
         if existing_user:
             try:
@@ -294,7 +266,7 @@ async def exchange_session(session_id: str, response: Response):
                     created_at=datetime.now(timezone.utc)
                 )
                 
-                await db.users.insert_one(user.dict())
+                await db_layer.user_insert(user.model_dump())
                 
                 # Initialize Creator's Universe
                 creator_universe = CreatorUniverse(
@@ -310,14 +282,14 @@ async def exchange_session(session_id: str, response: Response):
                     identity=None,
                     updated_at=datetime.now(timezone.utc)
                 )
-                await db.creator_universe.insert_one(creator_universe.dict())
+                await db_layer.creator_universe_insert(creator_universe.model_dump())
             except Exception as e:
                 logging.error(f"Failed to create new user: {e}")
                 raise HTTPException(status_code=500, detail=f"Failed to create user: {str(e)}")
         
         # Create or update session
         try:
-            await db.user_sessions.delete_many({"user_id": user.user_id})
+            await db_layer.session_delete_by_user(user.user_id)
             
             session = UserSession(
                 user_id=user.user_id,
@@ -326,7 +298,7 @@ async def exchange_session(session_id: str, response: Response):
                 created_at=datetime.now(timezone.utc)
             )
             
-            await db.user_sessions.insert_one(session.dict())
+            await db_layer.session_insert(session.model_dump())
         except Exception as e:
             logging.error(f"Failed to create session: {e}")
             raise HTTPException(status_code=500, detail=f"Failed to create session: {str(e)}")
@@ -358,7 +330,7 @@ async def get_me(current_user: User = Depends(get_current_user)):
 @api_router.post("/auth/logout")
 async def logout(response: Response, current_user: User = Depends(get_current_user)):
     """Logout user"""
-    await db.user_sessions.delete_many({"user_id": current_user.user_id})
+    await db_layer.session_delete_by_user(current_user.user_id)
     response.delete_cookie(key="session_token", path="/")
     return {"message": "Logged out successfully"}
 
@@ -371,17 +343,17 @@ async def delete_account(
     """Permanently delete user account and all associated data"""
     user_id = current_user.user_id
 
-    # Delete all user data across collections
-    await db.user_sessions.delete_many({"user_id": user_id})
-    await db.creator_universe.delete_many({"user_id": user_id})
-    await db.analysis_entries.delete_many({"user_id": user_id})
-    await db.schedule.delete_many({"user_id": user_id})
-    await db.story_finder.delete_many({"user_id": user_id})
-    await db.content_tips_progress.delete_many({"user_id": user_id})
-    await db.batching_scripts.delete_many({"user_id": user_id})
-    await db.missions.delete_many({"user_id": user_id})
-    await db.sos_completions.delete_many({"user_id": user_id})
-    await db.users.delete_one({"user_id": user_id})
+    # Delete all user data across tables
+    await db_layer.session_delete_by_user(user_id)
+    await db_layer.creator_universe_delete_by_user(user_id)
+    await db_layer.analysis_delete_by_user(user_id)
+    await db_layer.schedule_delete_by_user(user_id)
+    await db_layer.story_finder_delete_by_user(user_id)
+    await db_layer.content_tips_delete_by_user(user_id)
+    await db_layer.batching_delete_by_user(user_id)
+    await db_layer.mission_delete_by_user(user_id)
+    await db_layer.sos_delete_by_user(user_id)
+    await db_layer.user_delete(user_id)
 
     response.delete_cookie(key="session_token", path="/")
     return {"message": "Account deleted successfully"}
@@ -406,20 +378,14 @@ async def complete_mission(
     today = request.date
     
     # Check if mission already completed today
-    existing_mission = await db.missions.find_one(
-        {"user_id": current_user.user_id, "date": today},
-        {"_id": 0}
-    )
+    existing_mission = await db_layer.mission_find(current_user.user_id, today)
     
     if existing_mission and existing_mission.get("completed"):
         raise HTTPException(status_code=400, detail="Mission already completed today")
     
     # Mark mission complete
     if existing_mission:
-        await db.missions.update_one(
-            {"user_id": current_user.user_id, "date": today},
-            {"$set": {"completed": True}}
-        )
+        await db_layer.mission_update_completed(current_user.user_id, today)
     else:
         mission = Mission(
             user_id=current_user.user_id,
@@ -427,7 +393,7 @@ async def complete_mission(
             completed=True,
             created_at=datetime.now(timezone.utc)
         )
-        await db.missions.insert_one(mission.dict())
+        await db_layer.mission_upsert(mission.model_dump())
     
     # Update user progress
     update_data = {
@@ -452,16 +418,10 @@ async def complete_mission(
         # First post
         update_data["streak"] = 1
     
-    await db.users.update_one(
-        {"user_id": current_user.user_id},
-        {"$set": update_data}
-    )
+    await db_layer.user_update(current_user.user_id, update_data)
     
     # Get updated user
-    updated_user = await db.users.find_one(
-        {"user_id": current_user.user_id},
-        {"_id": 0}
-    )
+    updated_user = await db_layer.user_find_by_id(current_user.user_id)
     
     return {
         "message": "Mission completed!",
@@ -475,10 +435,7 @@ async def get_today_mission(current_user: User = Depends(get_current_user)):
     
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
-    mission = await db.missions.find_one(
-        {"user_id": current_user.user_id, "date": today},
-        {"_id": 0}
-    )
+    mission = await db_layer.mission_find(current_user.user_id, today)
     
     if mission:
         return {"completed": mission.get("completed", False), "date": today}
@@ -503,19 +460,13 @@ async def complete_sos(
         completed_at=datetime.now(timezone.utc)
     )
     
-    await db.sos_completions.insert_one(sos_completion.dict())
+    await db_layer.sos_insert(sos_completion.model_dump())
     
     # Award coins
-    await db.users.update_one(
-        {"user_id": current_user.user_id},
-        {"$inc": {"coins": 10}}
-    )
+    await db_layer.user_increment_coins(current_user.user_id, 10)
     
     # Get updated user
-    updated_user = await db.users.find_one(
-        {"user_id": current_user.user_id},
-        {"_id": 0}
-    )
+    updated_user = await db_layer.user_find_by_id(current_user.user_id)
     
     return {
         "message": "SOS completed! You've earned 10 coins.",
@@ -527,10 +478,7 @@ async def complete_sos(
 async def get_sos_history(current_user: User = Depends(get_current_user)):
     """Get user's SOS completion history"""
     
-    history = await db.sos_completions.find(
-        {"user_id": current_user.user_id},
-        {"_id": 0}
-    ).sort("completed_at", -1).to_list(100)
+    history = await db_layer.sos_list(current_user.user_id, 100)
     
     return {"history": history}
 
@@ -540,10 +488,7 @@ async def get_sos_history(current_user: User = Depends(get_current_user)):
 async def get_creator_universe(current_user: User = Depends(get_current_user)):
     """Get user's creator universe"""
     
-    universe = await db.creator_universe.find_one(
-        {"user_id": current_user.user_id},
-        {"_id": 0}
-    )
+    universe = await db_layer.creator_universe_find(current_user.user_id)
     
     if not universe:
         # Create default
@@ -560,7 +505,7 @@ async def get_creator_universe(current_user: User = Depends(get_current_user)):
             identity=None,
             updated_at=datetime.now(timezone.utc)
         )
-        await db.creator_universe.insert_one(universe.dict())
+        await db_layer.creator_universe_insert(universe.model_dump())
     
     return universe
 
@@ -585,16 +530,10 @@ async def update_creator_universe(
     if request.identity is not None:
         update_data["identity"] = request.identity
     
-    await db.creator_universe.update_one(
-        {"user_id": current_user.user_id},
-        {"$set": update_data}
-    )
+    await db_layer.creator_universe_update(current_user.user_id, update_data)
     
     # Get updated universe
-    universe = await db.creator_universe.find_one(
-        {"user_id": current_user.user_id},
-        {"_id": 0}
-    )
+    universe = await db_layer.creator_universe_find(current_user.user_id)
     
     return universe
 
@@ -604,10 +543,7 @@ async def update_creator_universe(
 async def get_analysis_entries(current_user: User = Depends(get_current_user)):
     """Get user's analysis entries"""
     
-    entries = await db.analysis_entries.find(
-        {"user_id": current_user.user_id},
-        {"_id": 0, "user_id": 0}
-    ).to_list(100)
+    entries = await db_layer.analysis_list(current_user.user_id, 100)
     
     return {"entries": entries}
 
@@ -618,15 +554,10 @@ async def save_analysis_entry(
 ):
     """Save analysis entry"""
     
-    entry_dict = request.entry.dict()
-    entry_dict["user_id"] = current_user.user_id
+    entry_dict = request.entry.model_dump()
     
     # Update or insert entry
-    await db.analysis_entries.update_one(
-        {"user_id": current_user.user_id, "id": request.entry.id},
-        {"$set": entry_dict},
-        upsert=True
-    )
+    await db_layer.analysis_upsert(current_user.user_id, request.entry.id, entry_dict)
     
     return {"message": "Analysis entry saved successfully", "entry": request.entry}
 
@@ -637,30 +568,9 @@ async def delete_analysis_entry(
 ):
     """Delete analysis entry"""
     
-    # Get all user entries to find the matching one
-    all_entries = await db.analysis_entries.find(
-        {"user_id": current_user.user_id}
-    ).to_list(100)
+    deleted = await db_layer.analysis_delete(current_user.user_id, entry_id)
     
-    # Find entry with matching ID (handling type conversion)
-    matching_entry = None
-    for e in all_entries:
-        entry_id_in_db = e.get("id")
-        # Try both string and numeric comparison
-        if str(entry_id_in_db) == entry_id or (entry_id.isdigit() and entry_id_in_db == int(entry_id)):
-            matching_entry = e
-            break
-    
-    if not matching_entry:
-        raise HTTPException(status_code=404, detail="Analysis entry not found")
-    
-    # Delete using the actual ID format from database
-    actual_id = matching_entry.get("id")
-    result = await db.analysis_entries.delete_one(
-        {"user_id": current_user.user_id, "id": actual_id}
-    )
-    
-    if result.deleted_count == 0:
+    if not deleted:
         raise HTTPException(status_code=404, detail="Analysis entry not found")
     
     return {"message": "Analysis entry deleted successfully"}
@@ -671,10 +581,7 @@ async def delete_analysis_entry(
 async def get_schedule(current_user: User = Depends(get_current_user)):
     """Get user's schedule data"""
     
-    schedule = await db.schedule.find_one(
-        {"user_id": current_user.user_id},
-        {"_id": 0}
-    )
+    schedule = await db_layer.schedule_find(current_user.user_id)
     
     if not schedule:
         # Create default
@@ -691,7 +598,7 @@ async def get_schedule(current_user: User = Depends(get_current_user)):
             },
             "updated_at": datetime.now(timezone.utc)
         }
-        await db.schedule.insert_one(default_schedule)
+        await db_layer.schedule_insert(default_schedule)
         return default_schedule
     
     return schedule
@@ -708,29 +615,14 @@ async def update_schedule(
         "updated_at": datetime.now(timezone.utc)
     }
     
-    # Check if schedule exists
-    existing = await db.schedule.find_one(
-        {"user_id": current_user.user_id},
-        {"_id": 0}
-    )
-    
-    if existing:
-        await db.schedule.update_one(
-            {"user_id": current_user.user_id},
-            {"$set": update_data}
-        )
-    else:
-        schedule_data = {
-            "user_id": current_user.user_id,
-            **update_data
-        }
-        await db.schedule.insert_one(schedule_data)
+    schedule_data = {
+        "user_id": current_user.user_id,
+        **update_data
+    }
+    await db_layer.schedule_upsert(schedule_data)
     
     # Get updated schedule
-    schedule = await db.schedule.find_one(
-        {"user_id": current_user.user_id},
-        {"_id": 0}
-    )
+    schedule = await db_layer.schedule_find(current_user.user_id)
     
     return schedule
 
@@ -739,10 +631,7 @@ async def update_schedule(
 @api_router.get("/story-finder")
 async def get_story_finder(current_user: User = Depends(get_current_user)):
     """Get user's Story Finder rows"""
-    doc = await db.story_finder.find_one(
-        {"user_id": current_user.user_id},
-        {"_id": 0, "user_id": 0}
-    )
+    doc = await db_layer.story_finder_find(current_user.user_id)
     if not doc or "rows" not in doc:
         return {"rows": []}
     return {"rows": doc["rows"]}
@@ -753,22 +642,8 @@ async def update_story_finder(
     current_user: User = Depends(get_current_user)
 ):
     """Update Story Finder rows"""
-    rows = [r.dict() for r in request.rows]
-    update_data = {
-        "rows": rows,
-        "updated_at": datetime.now(timezone.utc),
-    }
-    existing = await db.story_finder.find_one({"user_id": current_user.user_id})
-    if existing:
-        await db.story_finder.update_one(
-            {"user_id": current_user.user_id},
-            {"$set": update_data}
-        )
-    else:
-        await db.story_finder.insert_one({
-            "user_id": current_user.user_id,
-            **update_data,
-        })
+    rows = [r.model_dump() for r in request.rows]
+    await db_layer.story_finder_upsert(current_user.user_id, rows, datetime.now(timezone.utc))
     return {"rows": rows}
 
 # ==================== CONTENT TIPS ROUTES ====================
@@ -781,10 +656,7 @@ async def complete_quiz(
     """Complete content tip quiz"""
     
     # Check if already completed
-    existing = await db.content_tips_progress.find_one(
-        {"user_id": current_user.user_id, "tip_id": request.tip_id},
-        {"_id": 0}
-    )
+    existing = await db_layer.content_tips_find(current_user.user_id, request.tip_id)
     
     if existing and existing.get("quiz_completed"):
         return {
@@ -802,24 +674,15 @@ async def complete_quiz(
     )
     
     if existing:
-        await db.content_tips_progress.update_one(
-            {"user_id": current_user.user_id, "tip_id": request.tip_id},
-            {"$set": progress.dict()}
-        )
+        await db_layer.content_tips_update(current_user.user_id, request.tip_id, progress.model_dump())
     else:
-        await db.content_tips_progress.insert_one(progress.dict())
+        await db_layer.content_tips_insert(progress.model_dump())
     
     # Award coins
-    await db.users.update_one(
-        {"user_id": current_user.user_id},
-        {"$inc": {"coins": 10}}
-    )
+    await db_layer.user_increment_coins(current_user.user_id, 10)
     
     # Get updated user
-    updated_user = await db.users.find_one(
-        {"user_id": current_user.user_id},
-        {"_id": 0}
-    )
+    updated_user = await db_layer.user_find_by_id(current_user.user_id)
     
     return {
         "message": "Quiz completed! You've earned 10 coins.",
@@ -831,10 +694,7 @@ async def complete_quiz(
 async def get_content_tips_progress(current_user: User = Depends(get_current_user)):
     """Get user's content tips progress"""
     
-    progress = await db.content_tips_progress.find(
-        {"user_id": current_user.user_id},
-        {"_id": 0}
-    ).to_list(100)
+    progress = await db_layer.content_tips_list(current_user.user_id)
     
     return {"progress": progress}
 
@@ -844,10 +704,7 @@ async def get_content_tips_progress(current_user: User = Depends(get_current_use
 async def get_batching_scripts(current_user: User = Depends(get_current_user)):
     """Get user's batching scripts"""
     
-    scripts = await db.batching_scripts.find(
-        {"user_id": current_user.user_id},
-        {"_id": 0, "user_id": 0}
-    ).to_list(100)
+    scripts = await db_layer.batching_list(current_user.user_id)
     
     return {"scripts": scripts}
 
@@ -858,15 +715,10 @@ async def save_batching_script(
 ):
     """Save or update a batching script"""
     
-    script_dict = request.script.dict()
-    script_dict["user_id"] = current_user.user_id
+    script_dict = request.script.model_dump()
     
     # Update or insert script
-    await db.batching_scripts.update_one(
-        {"user_id": current_user.user_id, "id": request.script.id},
-        {"$set": script_dict},
-        upsert=True
-    )
+    await db_layer.batching_upsert(current_user.user_id, request.script.id, script_dict)
     
     return {"message": "Script saved successfully", "script": request.script}
 
@@ -877,30 +729,9 @@ async def delete_batching_script(
 ):
     """Delete a batching script"""
     
-    # Get all user scripts to find the matching one
-    all_scripts = await db.batching_scripts.find(
-        {"user_id": current_user.user_id}
-    ).to_list(100)
+    deleted = await db_layer.batching_delete(current_user.user_id, script_id)
     
-    # Find script with matching ID (handling type conversion)
-    matching_script = None
-    for s in all_scripts:
-        script_id_in_db = s.get("id")
-        # Try both string and numeric comparison
-        if str(script_id_in_db) == script_id or (script_id.isdigit() and script_id_in_db == int(script_id)):
-            matching_script = s
-            break
-    
-    if not matching_script:
-        raise HTTPException(status_code=404, detail="Script not found")
-    
-    # Delete using the actual ID format from database
-    actual_id = matching_script.get("id")
-    result = await db.batching_scripts.delete_one(
-        {"user_id": current_user.user_id, "id": actual_id}
-    )
-    
-    if result.deleted_count == 0:
+    if not deleted:
         raise HTTPException(status_code=404, detail="Script not found")
     
     return {"message": "Script deleted successfully"}
@@ -916,8 +747,10 @@ async def root():
 async def health_check():
     """Health check endpoint with database status"""
     try:
-        await db.command("ping")
-        return {"status": "healthy", "database": "connected"}
+        ok = await db_layer.db_ping()
+        if ok:
+            return {"status": "healthy", "database": "connected"}
+        return {"status": "unhealthy", "database": "disconnected", "error": "ping failed"}
     except Exception as e:
         return {"status": "unhealthy", "database": "disconnected", "error": str(e)}
 
@@ -940,6 +773,3 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    client.close()

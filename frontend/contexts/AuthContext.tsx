@@ -1,16 +1,20 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import Constants from 'expo-constants';
+import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '../lib/supabase';
+import { isValidDeepLink, parseAuthTokensFromUrl } from '../lib/deepLink';
+import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://192.168.0.15:8000';
-const AUTH_URL = 'https://auth.emergentagent.com';
-
+// Required so the in-app browser closes and delivers the redirect URL to the app
 WebBrowser.maybeCompleteAuthSession();
 
-interface User {
-  user_id: string;
+const APP_SCHEME = 'frontend';
+
+export interface User {
+  id: string;
   email: string;
   name: string;
   picture?: string;
@@ -30,289 +34,156 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function profileToUser(profile: Record<string, unknown> | null): User | null {
+  if (!profile) return null;
+  return {
+    id: String(profile.id),
+    email: String(profile.email ?? ''),
+    name: String(profile.name ?? 'User'),
+    picture: profile.picture ? String(profile.picture) : undefined,
+    streak: Number(profile.streak ?? 0),
+    coins: Number(profile.coins ?? 0),
+    current_planet: Number(profile.current_planet ?? 0),
+    last_post_date: profile.last_post_date ? String(profile.last_post_date) : undefined,
+  };
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchProfile = async (authUser: SupabaseUser): Promise<User | null> => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', authUser.id)
+      .single();
+
+    if (error || !data) {
+      return profileToUser({
+        id: authUser.id,
+        email: authUser.email ?? '',
+        name: authUser.user_metadata?.full_name ?? authUser.user_metadata?.name ?? 'User',
+        picture: authUser.user_metadata?.avatar_url,
+        streak: 0,
+        coins: 0,
+        current_planet: 0,
+      });
+    }
+    return profileToUser(data);
+  };
+
+  const syncSession = async (session: Session | null) => {
+    if (!session?.user) {
+      setUser(null);
+      return;
+    }
+    const profile = await fetchProfile(session.user);
+    setUser(profile);
+  };
+
   useEffect(() => {
-    checkExistingSession();
-    
-    // Handle deep links for mobile
-    const subscription = Linking.addEventListener('url', handleDeepLink);
-    
-    return () => {
-      subscription.remove();
-    };
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      syncSession(session).finally(() => setLoading(false));
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      syncSession(session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const handleDeepLink = async (event: { url: string }) => {
-    await processAuthRedirect(event.url);
-  };
-
-  const checkExistingSession = async () => {
-    try {
-      if (!BACKEND_URL) {
-        console.error('BACKEND_URL is not set. Please create a .env file with EXPO_PUBLIC_BACKEND_URL');
-        setLoading(false);
+  useEffect(() => {
+    const handleDeepLink = async (event: { url: string }) => {
+      const url = event.url;
+      if (!url.includes('access_token')) return;
+      if (!isValidDeepLink(url)) {
+        console.warn('[Auth] Rejected deep link with disallowed scheme:', url?.split('?')[0]);
         return;
       }
-
-      const sessionToken = await AsyncStorage.getItem('session_token');
-      
-      if (sessionToken) {
-        // Call /api/auth/me directly with 65s timeout (supports Render cold start ~50s)
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 65000);
-        
-        try {
-        const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
-          headers: {
-            'Authorization': `Bearer ${sessionToken}`
-            },
-            signal: controller.signal
+      const { accessToken, refreshToken } = parseAuthTokensFromUrl(url);
+      if (accessToken && refreshToken) {
+        const { data, error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
         });
-          
-          clearTimeout(timeoutId);
-        
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-        } else {
-          await AsyncStorage.removeItem('session_token');
+        if (!error && data.session) {
+          await syncSession(data.session);
         }
-        } catch (fetchError: any) {
-          clearTimeout(timeoutId);
-          
-          // タイムアウトエラーの処理
-          if (fetchError.name === 'AbortError' || 
-              fetchError.message === 'Network request timed out' ||
-              fetchError.message?.includes('timeout')) {
-            console.warn('Request timeout: Backend server may be unreachable at', BACKEND_URL);
-            console.warn('Please check:');
-            console.warn('1. Backend server is running');
-            console.warn('2. Correct IP address in .env file (current network)');
-            console.warn('3. Both devices are on the same network');
-            console.warn('4. Firewall is not blocking the connection');
-            // タイムアウト時はセッショントークンを削除してログイン画面に戻す
-            await AsyncStorage.removeItem('session_token').catch(() => {});
-          } else if (fetchError.message === 'Network request failed' || fetchError.message?.includes('Failed to fetch')) {
-            console.error('Network error: Could not connect to backend server');
-            console.error(`Backend URL: ${BACKEND_URL}`);
-            console.error('Please check:');
-            console.error('1. Backend server is running');
-            console.error('2. Correct IP address in .env file');
-            console.error('3. Both devices are on the same network');
-            await AsyncStorage.removeItem('session_token').catch(() => {});
-          } else {
-            console.error('Fetch error:', fetchError);
-          }
-        }
-      } else {
-        // セッショントークンがない場合は即座にローディングを停止
-        setLoading(false);
-        return;
       }
-    } catch (error) {
-      console.error('Error checking session:', error);
-      // エラーが発生しても必ずローディングを停止
-      await AsyncStorage.removeItem('session_token').catch(() => {});
-    } finally {
-      // 必ずローディングを停止
-      setLoading(false);
-    }
-  };
+    };
 
-  const processAuthRedirect = async (url: string) => {
-    try {
-      // Extract session_id from URL (supports both hash and query)
-      let sessionId = null;
-      
-      if (url.includes('#session_id=')) {
-        sessionId = url.split('#session_id=')[1].split('&')[0];
-      } else if (url.includes('?session_id=')) {
-        sessionId = url.split('?session_id=')[1].split('&')[0];
-      }
-      
-      if (!sessionId) {
-        console.warn('No session_id found in URL');
-        return;
-      }
-      
-      if (!BACKEND_URL) {
-        console.error('BACKEND_URL is not set. Please create a .env file with EXPO_PUBLIC_BACKEND_URL');
-        return;
-      }
-      
-      console.log('Attempting to connect to:', `${BACKEND_URL}/api/auth/session`);
-      
-      // Exchange session_id for user data with timeout and retry logic
-      const maxRetries = 3;
-      let lastError: any = null;
-      
-      for (let attempt = 0; attempt < maxRetries; attempt++) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 65000); // 65s for Render cold start
-          
-          const response = await fetch(`${BACKEND_URL}/api/auth/session?session_id=${sessionId}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            signal: controller.signal
-          });
-          
-          clearTimeout(timeoutId);
-        
-          if (!response.ok) {
-            let errorText = '';
-            try {
-              errorText = await response.text();
-            } catch (e) {
-              errorText = 'Could not read error message';
-            }
-            
-            console.error(`Auth API error: ${response.status} - ${errorText}`);
-            
-            // 500エラーの場合は詳細な情報を表示
-            if (response.status === 500) {
-              console.error('Server error (500): The backend server encountered an internal error.');
-              console.error('Possible causes:');
-              console.error('1. MongoDB connection issue');
-              console.error('2. Emergent Auth API connection issue');
-              console.error('3. Database operation failed');
-              console.error('Error details:', errorText);
-            }
-            
-            // エラーが発生した場合でも、ユーザーに通知してログイン画面に戻す
-            return;
-          }
-          
-          const data = await response.json();
-          await AsyncStorage.setItem('session_token', data.session_token);
-          setUser(data.user);
-          return; // 成功したら終了
-          
-        } catch (fetchError: any) {
-          lastError = fetchError;
-          
-          if (fetchError.name === 'AbortError') {
-            console.warn(`Request timeout (attempt ${attempt + 1}/${maxRetries})`);
-            if (attempt < maxRetries - 1) {
-              await new Promise(resolve => setTimeout(resolve, 2000)); // 2秒待機してリトライ
-              continue;
-            } else {
-              console.error('Request timeout: Backend server took too long to respond after retries');
-              console.error('Please check:');
-              console.error(`1. Backend server is running at ${BACKEND_URL}`);
-              console.error('2. Both devices are on the same network');
-              console.error('3. Firewall is not blocking the connection');
-              console.error('4. Backend server is accessible from this device');
-            }
-          } else if (fetchError.message === 'Network request failed' || fetchError.message?.includes('Failed to fetch')) {
-            console.warn(`Network error (attempt ${attempt + 1}/${maxRetries}):`, fetchError.message);
-            if (attempt < maxRetries - 1) {
-              await new Promise(resolve => setTimeout(resolve, 2000)); // 2秒待機してリトライ
-              continue;
-            } else {
-              console.error('Network error: Could not connect to backend server after retries');
-              console.error(`Backend URL: ${BACKEND_URL}`);
-              console.error('Please check:');
-              console.error('1. Backend server is running');
-              console.error('2. Correct IP address in .env file');
-              console.error('3. Both devices are on the same network');
-            }
-          } else {
-            console.error('Error processing auth redirect:', fetchError);
-            break; // 予期しないエラーはリトライしない
-          }
-        }
-      }
-      
-      // すべてのリトライが失敗した場合
-      if (lastError) {
-        console.error('Failed to process auth redirect after all retries');
-      }
-      
-    } catch (error) {
-      console.error('Error processing auth redirect:', error);
-      if (error instanceof TypeError && error.message === 'Network request failed') {
-        console.error('Network error: Make sure the backend server is running at', BACKEND_URL);
-        console.error('If using a mobile device/emulator, use your computer\'s IP address instead of localhost');
-      }
-    }
-  };
+    const sub = Linking.addEventListener('url', handleDeepLink);
+    return () => sub.remove();
+  }, []);
 
   const login = async () => {
     try {
-      const redirectUrl = Platform.OS === 'web' 
-        ? `${BACKEND_URL}/` 
-        : Linking.createURL('/');
-      
-      const authUrl = `${AUTH_URL}/?redirect=${encodeURIComponent(redirectUrl)}`;
-      
+      let redirectUrl: string;
       if (Platform.OS === 'web') {
-        // Web: Use window redirect
-        window.location.href = authUrl;
+        redirectUrl = typeof window !== 'undefined' ? window.location.origin + '/' : '';
       } else {
-        // Mobile: Use WebBrowser
-        const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUrl);
-        
+        const isStandalone = Constants.executionEnvironment === 'standalone' || Constants.executionEnvironment === 'bare';
+        redirectUrl = isStandalone
+          ? `${APP_SCHEME}://`
+          : AuthSession.makeRedirectUri({ path: '/', preferLocalhost: false });
+      }
+
+      console.log('[OAuth] Add this URL to Supabase Redirect URLs:', redirectUrl);
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: Platform.OS !== 'web',
+        },
+      });
+
+      if (error) {
+        console.error('Login error:', error);
+        return;
+      }
+
+      if (Platform.OS !== 'web' && data.url) {
+        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
+        console.log('[OAuth] Result type:', result.type);
+        if (result.type === 'success') {
+          console.log('[OAuth] Result URL received');
+        } else {
+          console.log('[OAuth] Result (not success):', result);
+        }
         if (result.type === 'success' && result.url) {
-          await processAuthRedirect(result.url);
+          const url = result.url;
+          if (!isValidDeepLink(url)) {
+            console.warn('[Auth] Rejected OAuth redirect with disallowed scheme');
+            return;
+          }
+          const { accessToken, refreshToken } = parseAuthTokensFromUrl(url);
+          if (accessToken && refreshToken) {
+            await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+            await syncSession((await supabase.auth.getSession()).data.session);
+          }
         }
       }
-    } catch (error) {
-      console.error('Login error:', error);
+    } catch (err) {
+      console.error('Login error:', err);
     }
   };
 
   const logout = async () => {
-    try {
-      const sessionToken = await AsyncStorage.getItem('session_token');
-      
-      if (sessionToken) {
-        await fetch(`${BACKEND_URL}/api/auth/logout`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${sessionToken}`
-          }
-        });
-      }
-      
-      await AsyncStorage.removeItem('session_token');
-      setUser(null);
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
+    await supabase.auth.signOut();
+    setUser(null);
   };
 
   const refreshUser = async () => {
-    try {
-      if (!BACKEND_URL) {
-        console.error('BACKEND_URL is not set. Please create a .env file with EXPO_PUBLIC_BACKEND_URL');
-        return;
-      }
-
-      const sessionToken = await AsyncStorage.getItem('session_token');
-      
-      if (sessionToken) {
-        const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
-          headers: {
-            'Authorization': `Bearer ${sessionToken}`
-          }
-        });
-        
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-        }
-      }
-    } catch (error) {
-      console.error('Error refreshing user:', error);
-      if (error instanceof TypeError && error.message === 'Network request failed') {
-        console.error('Network error: Make sure the backend server is running at', BACKEND_URL);
-      }
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      const profile = await fetchProfile(session.user);
+      setUser(profile);
     }
   };
 

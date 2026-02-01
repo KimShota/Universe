@@ -11,14 +11,13 @@ import {
   Modal,
 } from 'react-native';
 import { UniverseBackground } from '../../components/UniverseBackground';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '../../lib/supabase';
 import Svg, { Line } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { playClickSound } from '../../utils/soundEffects';
 
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 const { width, height } = Dimensions.get('window');
 const INFO_PAGE_WIDTH = Math.min(width - 40, 500);
 
@@ -90,11 +89,29 @@ export default function CreatorUniverseScreen() {
 
   const loadUniverse = useCallback(async () => {
     try {
-      const sessionToken = await AsyncStorage.getItem('session_token');
-      const response = await fetch(`${BACKEND_URL}/api/creator-universe`, {
-        headers: { Authorization: `Bearer ${sessionToken}` },
-      });
-      const data = await response.json();
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+      const { data, error } = await supabase
+        .from('creator_universe')
+        .select('*')
+        .eq('user_id', authUser.id)
+        .maybeSingle();
+      if (error || !data) {
+        const defaultPillars = [
+          { title: 'Content Pillar 1', ideas: [] as string[] },
+          { title: 'Content Pillar 2', ideas: [] as string[] },
+          { title: 'Content Pillar 3', ideas: [] as string[] },
+          { title: 'Content Pillar 4', ideas: [] as string[] },
+        ];
+        await supabase.from('creator_universe').insert({
+          user_id: authUser.id,
+          overarching_goal: '',
+          content_pillars: defaultPillars,
+        });
+        setGoal('');
+        setPillars(defaultPillars.map((p) => ({ title: p.title, ideas: p.ideas.length ? p.ideas : [''] })));
+        return;
+      }
       
       // Vision
       setGoal(data.overarching_goal || '');
@@ -163,27 +180,25 @@ export default function CreatorUniverseScreen() {
     identity?: typeof identity;
   }) => {
     try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
       const g = overrides?.overarching_goal ?? goal;
       const d = overrides?.demographic ?? demographic;
       const p = overrides?.psychographic ?? psychographic;
       const u = overrides?.identity ?? identity;
-      const sessionToken = await AsyncStorage.getItem('session_token');
-      await fetch(`${BACKEND_URL}/api/creator-universe`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionToken}`,
-        },
-        body: JSON.stringify({
-          overarching_goal: g,
-          content_pillars: pillars,
-          avatar: {
-            demographic: d,
-            psychographic: p,
+      await supabase
+        .from('creator_universe')
+        .upsert(
+          {
+            user_id: authUser.id,
+            overarching_goal: g,
+            content_pillars: pillars,
+            avatar: { demographic: d, psychographic: p },
+            identity: u,
+            updated_at: new Date().toISOString(),
           },
-          identity: u,
-        }),
-      });
+          { onConflict: 'user_id' }
+        );
     } catch (error) {
       console.error('Error saving universe:', error);
     }

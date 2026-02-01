@@ -13,9 +13,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { UniverseBackground } from '../components/UniverseBackground';
+import { supabase } from '../lib/supabase';
 import { playClickSound } from '../utils/soundEffects';
 
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
 const ONBOARDING_DONE_KEY = 'onboarding:done';
 const ONBOARDING_BRANCH_KEY = 'onboarding:branch';
@@ -198,20 +198,17 @@ export default function OnboardingScreen() {
   const completeOnboarding = async () => {
     playClickSound();
     try {
-      const sessionToken = await AsyncStorage.getItem('session_token');
-      // Map onboarding Page 1 → Vision:
-      // - ethos/message → overarching_goal
-      // - skill → Content Pillar 1 title
-      // - passion → Content Pillar 2 title
-      // - struggle → Content Pillar 3 title
-      // - interest → Content Pillar 4 title
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) {
+        router.replace('/(tabs)/main');
+        return;
+      }
       const content_pillars = [
         { title: skillPeopleComeFor.trim() || 'Content Pillar 1', ideas: [] as string[] },
         { title: passion.trim() || 'Content Pillar 2', ideas: [] as string[] },
         { title: currentStruggle.trim() || 'Content Pillar 3', ideas: [] as string[] },
         { title: interest.trim() || 'Content Pillar 4', ideas: [] as string[] },
       ];
-
       const avatar = {
         demographic: {
           region: regions,
@@ -227,7 +224,6 @@ export default function OnboardingScreen() {
           creators: avatarCreators.trim(),
         },
       };
-
       const identity = {
         pain: [struggledWith].map((s) => s.trim()).filter(Boolean),
         passion: [passionateNow].map((s) => s.trim()).filter(Boolean),
@@ -235,32 +231,27 @@ export default function OnboardingScreen() {
         skill: [goodAt].map((s) => s.trim()).filter(Boolean),
       };
 
-      const res = await fetch(`${BACKEND_URL}/api/creator-universe`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionToken}`,
-        },
-        body: JSON.stringify({
+      const { error } = await supabase.from('creator_universe').upsert(
+        {
+          user_id: authUser.id,
           overarching_goal: messageEthos.trim(),
           content_pillars,
           avatar,
           identity,
-        }),
-      });
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id' }
+      );
 
-      if (!res.ok) {
-        const text = await res.text().catch(() => '');
-        console.error('Onboarding save failed:', res.status, text);
+      if (error) {
+        console.error('Onboarding save failed:', error);
       } else {
         await AsyncStorage.setItem(ONBOARDING_DONE_KEY, '1');
         await AsyncStorage.removeItem(ONBOARDING_DRAFT_KEY).catch(() => {});
       }
-
     } catch (e) {
       console.error('Onboarding complete error:', e);
     }
-
     router.replace('/(tabs)/main');
   };
 

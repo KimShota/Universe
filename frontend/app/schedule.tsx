@@ -19,15 +19,14 @@ import {
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { UniverseBackground } from '../components/UniverseBackground';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '../lib/supabase';
 import { useRouter } from 'expo-router';
 import { playClickSound } from '../utils/soundEffects';
 
 const { width, height } = Dimensions.get('window');
 const SHEET_MAX_HEIGHT = Math.min(height * 0.92, height - 60);
 const CARD_WIDTH = width - 40;
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 const SAVE_DEBOUNCE_MS = 500;
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const;
@@ -177,28 +176,31 @@ export default function ScheduleScreen() {
 
   const loadSchedule = async () => {
     try {
-      const sessionToken = await AsyncStorage.getItem('session_token');
-      const response = await fetch(`${BACKEND_URL}/api/schedule`, {
-        headers: { Authorization: `Bearer ${sessionToken}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        const scheduleData = data.schedule;
-        if (!scheduleData) return;
-        if (scheduleData.idea && scheduleData.format) {
-          const next: ScheduleData = {};
-          DAY_NAMES.forEach((d) => {
-            next[d] = {
-              idea: scheduleData.idea[d] || '',
-              format: scheduleData.format[d] || '',
-            };
-          });
-          setSchedule(next);
-        } else {
-          setSchedule(scheduleData);
-        }
-        hasLoadedRef.current = true;
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+      const { data } = await supabase
+        .from('schedule')
+        .select('schedule')
+        .eq('user_id', authUser.id)
+        .maybeSingle();
+      const scheduleData = data?.schedule;
+      if (!scheduleData) {
+        const defaultSched: ScheduleData = Object.fromEntries(
+          DAY_NAMES.map((d) => [d, { idea: '', format: '' }])
+        );
+        await supabase.from('schedule').insert({ user_id: authUser.id, schedule: defaultSched });
+        setSchedule(defaultSched);
+      } else if ((scheduleData as { idea?: Record<string, string> }).idea) {
+        const s = scheduleData as { idea: Record<string, string>; format: Record<string, string> };
+        const next: ScheduleData = {};
+        DAY_NAMES.forEach((d) => {
+          next[d] = { idea: s.idea?.[d] || '', format: s.format?.[d] || '' };
+        });
+        setSchedule(next);
+      } else {
+        setSchedule(scheduleData as ScheduleData);
       }
+      hasLoadedRef.current = true;
     } catch (e) {
       console.error('Error loading schedule:', e);
     }
@@ -207,18 +209,15 @@ export default function ScheduleScreen() {
   const saveSchedule = async (override?: ScheduleData) => {
     const payload = override ?? schedule;
     try {
-      const sessionToken = await AsyncStorage.getItem('session_token');
-      const res = await fetch(`${BACKEND_URL}/api/schedule`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionToken}`,
-        },
-        body: JSON.stringify({ schedule: payload }),
-      });
-      if (res.ok) {
-        setLastSaved(Date.now());
-      }
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+      const { error } = await supabase
+        .from('schedule')
+        .upsert(
+          { user_id: authUser.id, schedule: payload, updated_at: new Date().toISOString() },
+          { onConflict: 'user_id' }
+        );
+      if (!error) setLastSaved(Date.now());
     } catch (e) {
       console.error('Error saving schedule:', e);
     }

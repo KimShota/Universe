@@ -17,6 +17,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '../lib/supabase';
 import { UniverseBackground } from '../components/UniverseBackground';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -24,7 +25,6 @@ const SAD_STAR = require('../Media/crying-star.png');
 const HAPPY_STAR = require('../Media/happy-star.png');
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
 const FEARS_STORAGE_KEY = (issueId: string) => `sos:${issueId}:fears`;
 
@@ -190,20 +190,24 @@ export default function AffirmationScreen() {
 
   const handleGoHome = async () => {
     try {
-      const sessionToken = await AsyncStorage.getItem('session_token');
-      await fetch(`${BACKEND_URL}/api/sos/complete`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionToken}`,
-        },
-        body: JSON.stringify({
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
+        await supabase.from('sos_completions').insert({
+          user_id: authUser.id,
           issue_type: resolvedIssueId,
           asteroids: fears,
           affirmations,
-        }),
-      });
-      await refreshUser();
+          completed_at: new Date().toISOString(),
+        });
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('coins')
+          .eq('id', authUser.id)
+          .single();
+        const curCoins = profile?.coins ?? 0;
+        await supabase.from('profiles').update({ coins: curCoins + 10 }).eq('id', authUser.id);
+        await refreshUser();
+      }
     } catch {
       // ignore (still allow navigation)
     }

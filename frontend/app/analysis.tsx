@@ -19,14 +19,13 @@ import {
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { UniverseBackground } from '../components/UniverseBackground';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '../lib/supabase';
 import { useRouter } from 'expo-router';
 import { playClickSound } from '../utils/soundEffects';
 
 const { width, height } = Dimensions.get('window');
 const SHEET_MAX_HEIGHT = Math.min(height * 0.92, height - 60);
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
 interface AnalysisEntry {
   id: string;
@@ -142,27 +141,27 @@ export default function AnalysisScreen() {
 
   const loadEntries = async () => {
     try {
-      const sessionToken = await AsyncStorage.getItem('session_token');
-      const response = await fetch(`${BACKEND_URL}/api/analysis/entries`, {
-        headers: { Authorization: `Bearer ${sessionToken}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        if (data.entries && data.entries.length > 0) {
-          const normalized = data.entries.map((e: AnalysisEntry & { hook?: string }) => {
-            const legacyHook = e.hook ?? '';
-            return {
-              ...e,
-              storyArc: e.storyArc ?? '',
-              pacing: e.pacing ?? '',
-              textDuration: e.textDuration ?? '',
-              visualHook: e.visualHook ?? legacyHook,
-              textHook: e.textHook ?? '',
-              callToAction: e.callToAction ?? '',
-            };
-          });
-          setEntries(normalized);
-        }
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+      const { data: rows } = await supabase
+        .from('analysis_entries')
+        .select('entry_id, data')
+        .eq('user_id', authUser.id);
+      if (rows && rows.length > 0) {
+        const normalized = rows.map((r: { entry_id: string; data: Record<string, unknown> }) => {
+          const e = { id: r.entry_id, ...r.data } as AnalysisEntry & { hook?: string };
+          const legacyHook = e.hook ?? '';
+          return {
+            ...e,
+            storyArc: e.storyArc ?? '',
+            pacing: e.pacing ?? '',
+            textDuration: e.textDuration ?? '',
+            visualHook: e.visualHook ?? legacyHook,
+            textHook: e.textHook ?? '',
+            callToAction: e.callToAction ?? '',
+          };
+        });
+        setEntries(normalized);
       }
     } catch (error) {
       console.error('Error loading entries:', error);
@@ -171,15 +170,13 @@ export default function AnalysisScreen() {
 
   const saveEntry = async (entry: AnalysisEntry) => {
     try {
-      const sessionToken = await AsyncStorage.getItem('session_token');
-      await fetch(`${BACKEND_URL}/api/analysis/entries`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionToken}`,
-        },
-        body: JSON.stringify({ entry }),
-      });
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+      const { id, ...rest } = entry;
+      await supabase.from('analysis_entries').upsert(
+        { user_id: authUser.id, entry_id: id, data: rest },
+        { onConflict: 'user_id,entry_id' }
+      );
     } catch (error) {
       console.error('Error saving entry:', error);
     }
@@ -226,22 +223,19 @@ export default function AnalysisScreen() {
     if (!entryId) return;
     playClickSound();
     try {
-      const sessionToken = await AsyncStorage.getItem('session_token');
-      const response = await fetch(`${BACKEND_URL}/api/analysis/entries/${entryId}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${sessionToken}`,
-        },
-      });
-      
-      if (response.ok) {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+      const { error } = await supabase
+        .from('analysis_entries')
+        .delete()
+        .eq('user_id', authUser.id)
+        .eq('entry_id', entryId);
+      if (!error) {
         setEntries(entries.filter(entry => entry.id !== entryId));
         if (selectedEntryId === entryId) {
           setShowEntryDetail(false);
           setSelectedEntryId(null);
         }
-      } else {
-        console.error('Error deleting entry:', await response.text());
       }
     } catch (error) {
       console.error('Error deleting entry:', error);

@@ -14,13 +14,12 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { UniverseBackground } from '../../components/UniverseBackground';
 import { SOS_ISSUES } from '../../constants/content';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 import { playClickSound } from '../../utils/soundEffects';
 import Svg, { Line } from 'react-native-svg';
 
 const { width } = Dimensions.get('window');
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
 // 9-screen flow content for "Hate comments hurt"
 const HATE_FLOW_SCREENS = [
@@ -301,19 +300,22 @@ export default function SOSFlowScreen() {
 
   const handleComplete = async () => {
     try {
-      const sessionToken = await AsyncStorage.getItem('session_token');
-      await fetch(`${BACKEND_URL}/api/sos/complete`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionToken}`,
-        },
-        body: JSON.stringify({
-          issue_type: issue.id,
-          asteroids,
-          affirmations,
-        }),
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+      await supabase.from('sos_completions').insert({
+        user_id: authUser.id,
+        issue_type: issue.id,
+        asteroids,
+        affirmations,
+        completed_at: new Date().toISOString(),
       });
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('coins')
+        .eq('id', authUser.id)
+        .single();
+      const curCoins = profile?.coins ?? 0;
+      await supabase.from('profiles').update({ coins: curCoins + 10 }).eq('id', authUser.id);
       await refreshUser();
       router.push('/(tabs)/main');
     } catch (error) {

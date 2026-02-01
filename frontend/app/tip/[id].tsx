@@ -12,10 +12,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { UniverseBackground } from '../../components/UniverseBackground';
 import { CONTENT_TIPS } from '../../constants/content';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../contexts/AuthContext';
-
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+import { supabase } from '../../lib/supabase';
 
 export default function TipDetailScreen() {
   const params = useLocalSearchParams<{ id?: string | string[] }>();
@@ -61,19 +59,35 @@ export default function TipDetailScreen() {
   const handleQuizComplete = async () => {
     try {
       if (tip.quiz?.length) {
-        const sessionToken = await AsyncStorage.getItem('session_token');
-        await fetch(`${BACKEND_URL}/api/content-tips/quiz`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${sessionToken}`,
-          },
-          body: JSON.stringify({
-            tip_id: tip.id,
-            score,
-          }),
-        });
-        await refreshUser();
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser) {
+          const { data: existing } = await supabase
+            .from('content_tips_progress')
+            .select('quiz_completed')
+            .eq('user_id', authUser.id)
+            .eq('tip_id', tip.id)
+            .maybeSingle();
+          if (!existing?.quiz_completed) {
+            await supabase.from('content_tips_progress').upsert(
+              {
+                user_id: authUser.id,
+                tip_id: tip.id,
+                quiz_completed: true,
+                quiz_score: score,
+                completed_at: new Date().toISOString(),
+              },
+              { onConflict: 'user_id,tip_id' }
+            );
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('coins')
+              .eq('id', authUser.id)
+              .single();
+            const curCoins = profile?.coins ?? 0;
+            await supabase.from('profiles').update({ coins: curCoins + 10 }).eq('id', authUser.id);
+          }
+          await refreshUser();
+        }
       }
       setShowQuiz(false);
       setQuizComplete(false);
@@ -151,7 +165,7 @@ export default function TipDetailScreen() {
                 <>
                   <Text style={styles.quizCompleteTitle}>Quiz Complete!</Text>
                   <Text style={styles.scoreText}>
-                    You scored {score} out of {tip.quiz.length}
+                    You scored {score} out of {tip.quiz?.length ?? 0}
                   </Text>
                   <TouchableOpacity
                     style={styles.closeQuizButton}

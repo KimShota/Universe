@@ -19,16 +19,14 @@ import {
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { UniverseBackground } from '../components/UniverseBackground';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '../lib/supabase';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { playClickSound } from '../utils/soundEffects';
 
 const { width, height } = Dimensions.get('window');
 const SHEET_MAX_HEIGHT = Math.min(height * 0.92, height - 60);
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
-
 const CARD_PADDING = 20;
 const CARD_WIDTH = width - CARD_PADDING * 2;
 
@@ -112,14 +110,14 @@ export default function StoryFinderScreen() {
 
   const loadMessage = useCallback(async () => {
     try {
-      const sessionToken = await AsyncStorage.getItem('session_token');
-      const res = await fetch(`${BACKEND_URL}/api/creator-universe`, {
-        headers: { Authorization: `Bearer ${sessionToken}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setMessage(data.overarching_goal ?? '');
-      }
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+      const { data } = await supabase
+        .from('creator_universe')
+        .select('overarching_goal')
+        .eq('user_id', authUser.id)
+        .maybeSingle();
+      setMessage(data?.overarching_goal ?? '');
     } catch (e) {
       console.error('Error loading message:', e);
     }
@@ -127,21 +125,21 @@ export default function StoryFinderScreen() {
 
   const loadRows = useCallback(async () => {
     try {
-      const sessionToken = await AsyncStorage.getItem('session_token');
-      const res = await fetch(`${BACKEND_URL}/api/story-finder`, {
-        headers: { Authorization: `Bearer ${sessionToken}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const raw = (data.rows ?? []) as StoryRow[];
-        setRows(raw.map((r) => ({
-          id: r.id,
-          problem: r.problem ?? '',
-          pursuit: r.pursuit ?? '',
-          payoff: r.payoff ?? '',
-          your_story: r.your_story ?? '',
-        })));
-      }
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+      const { data } = await supabase
+        .from('story_finder')
+        .select('rows')
+        .eq('user_id', authUser.id)
+        .maybeSingle();
+      const raw = ((data?.rows ?? []) as StoryRow[]);
+      setRows(raw.map((r) => ({
+        id: r.id ?? Date.now().toString(),
+        problem: r.problem ?? '',
+        pursuit: r.pursuit ?? '',
+        payoff: r.payoff ?? '',
+        your_story: r.your_story ?? '',
+      })));
     } catch (e) {
       console.error('Error loading story finder:', e);
     }
@@ -156,15 +154,14 @@ export default function StoryFinderScreen() {
 
   const saveRows = async (next: StoryRow[]) => {
     try {
-      const sessionToken = await AsyncStorage.getItem('session_token');
-      await fetch(`${BACKEND_URL}/api/story-finder`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionToken}`,
-        },
-        body: JSON.stringify({ rows: next }),
-      });
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+      await supabase
+        .from('story_finder')
+        .upsert(
+          { user_id: authUser.id, rows: next, updated_at: new Date().toISOString() },
+          { onConflict: 'user_id' }
+        );
     } catch (e) {
       console.error('Error saving story finder:', e);
     }
@@ -172,8 +169,9 @@ export default function StoryFinderScreen() {
 
   const updateCell = (rowIndex: number, key: RowKey, value: string) => {
     const next = [...rows];
-    if (!next[rowIndex]) return;
-    (next[rowIndex] as Record<string, string>)[key] = value;
+    const row = next[rowIndex];
+    if (!row) return;
+    next[rowIndex] = { ...row, [key]: value };
     setRows(next);
     saveRows(next);
   };
@@ -350,7 +348,7 @@ export default function StoryFinderScreen() {
                           </View>
                           <TextInput
                             style={styles.sectionInput}
-                            value={(row as Record<string, string>)[s.key] ?? ''}
+                            value={row[s.key] ?? ''}
                             onChangeText={(v) => updateCell(idx, s.key, v)}
                             placeholder={s.placeholder}
                             placeholderTextColor="rgba(255, 255, 255, 0.4)"
@@ -366,7 +364,7 @@ export default function StoryFinderScreen() {
                         </View>
                         <TextInput
                           style={[styles.sectionInput, styles.storyInput]}
-                          value={(row as Record<string, string>)[STORY_SECTION.key] ?? ''}
+                          value={row[STORY_SECTION.key] ?? ''}
                           onChangeText={(v) => updateCell(idx, STORY_SECTION.key, v)}
                           placeholder={STORY_SECTION.placeholder}
                           placeholderTextColor="rgba(255, 255, 255, 0.4)"

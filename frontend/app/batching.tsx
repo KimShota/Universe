@@ -21,13 +21,11 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { UniverseBackground } from '../components/UniverseBackground';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { playClickSound } from '../utils/soundEffects';
+import { supabase } from '../lib/supabase';
 
 const { width, height } = Dimensions.get('window');
 const SHEET_MAX_HEIGHT = Math.min(height * 0.92, height - 60);
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
-
 interface Script {
   id: string;
   title?: string;
@@ -96,29 +94,29 @@ export default function BatchingScreen() {
 
   const loadScripts = async () => {
     try {
-      const sessionToken = await AsyncStorage.getItem('session_token');
-      const response = await fetch(`${BACKEND_URL}/api/batching/scripts`, {
-        headers: { Authorization: `Bearer ${sessionToken}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        if (data.scripts && data.scripts.length > 0) {
-          const normalized = (data.scripts as Script[]).map((s) => ({
-            ...s,
-            titleHook: s.titleHook ?? '',
-            visualHook: s.visualHook ?? '',
-            verbalHook: s.verbalHook ?? '',
-            problem: s.problem ?? '',
-            promise: s.promise ?? '',
-            credibility: s.credibility ?? '',
-            delivery: s.delivery ?? '',
-            footageNeeded: s.footageNeeded ?? '',
-            audio: s.audio ?? '',
-            caption: s.caption ?? '',
-            callToAction: s.callToAction ?? '',
-          }));
-          setScripts(normalized);
-        }
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+      const { data: rows } = await supabase
+        .from('batching_scripts')
+        .select('script_id, data')
+        .eq('user_id', authUser.id);
+      if (rows && rows.length > 0) {
+        const normalized = (rows as { script_id: string; data: Record<string, unknown> }[]).map((r) => ({
+          id: r.script_id,
+          ...r.data,
+          titleHook: (r.data?.titleHook as string) ?? '',
+          visualHook: (r.data?.visualHook as string) ?? '',
+          verbalHook: (r.data?.verbalHook as string) ?? '',
+          problem: (r.data?.problem as string) ?? '',
+          promise: (r.data?.promise as string) ?? '',
+          credibility: (r.data?.credibility as string) ?? '',
+          delivery: (r.data?.delivery as string) ?? '',
+          footageNeeded: (r.data?.footageNeeded as string) ?? '',
+          audio: (r.data?.audio as string) ?? '',
+          caption: (r.data?.caption as string) ?? '',
+          callToAction: (r.data?.callToAction as string) ?? '',
+        })) as Script[];
+        setScripts(normalized);
       }
     } catch (error) {
       console.error('Error loading scripts:', error);
@@ -127,15 +125,13 @@ export default function BatchingScreen() {
 
   const saveScript = async (script: Script) => {
     try {
-      const sessionToken = await AsyncStorage.getItem('session_token');
-      await fetch(`${BACKEND_URL}/api/batching/scripts`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionToken}`,
-        },
-        body: JSON.stringify({ script }),
-      });
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+      const { id, ...rest } = script;
+      await supabase.from('batching_scripts').upsert(
+        { user_id: authUser.id, script_id: id, data: rest },
+        { onConflict: 'user_id,script_id' }
+      );
     } catch (error) {
       console.error('Error saving script:', error);
     }
@@ -180,19 +176,19 @@ export default function BatchingScreen() {
     if (!scriptId) return;
     playClickSound();
     try {
-      const sessionToken = await AsyncStorage.getItem('session_token');
-      const response = await fetch(`${BACKEND_URL}/api/batching/scripts/${scriptId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${sessionToken}` },
-      });
-      if (response.ok) {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+      const { error } = await supabase
+        .from('batching_scripts')
+        .delete()
+        .eq('user_id', authUser.id)
+        .eq('script_id', scriptId);
+      if (!error) {
         setScripts(scripts.filter(script => script.id !== scriptId));
         if (selectedScriptId === scriptId) {
           setShowScriptDetail(false);
           setSelectedScriptId(null);
         }
-      } else {
-        console.error('Error deleting script:', await response.text());
       }
     } catch (error) {
       console.error('Error deleting script:', error);

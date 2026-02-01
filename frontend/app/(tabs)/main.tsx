@@ -15,12 +15,12 @@ import { UniverseBackground } from '../../components/UniverseBackground';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
+import { supabase } from '../../lib/supabase';
 import Svg, { Line } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { playClickSound } from '../../utils/soundEffects';
 
 const { width } = Dimensions.get('window');
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
 const PLANETS = [
   require('../../Media/mercury.png'),
@@ -48,12 +48,16 @@ export default function MainScreen() {
 
   const checkTodayMission = async () => {
     try {
-      const sessionToken = await AsyncStorage.getItem('session_token');
-      const response = await fetch(`${BACKEND_URL}/api/mission/today`, {
-        headers: { Authorization: `Bearer ${sessionToken}` },
-      });
-      const data = await response.json();
-      setMissionCompleted(data.completed);
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+      const today = new Date().toISOString().split('T')[0];
+      const { data } = await supabase
+        .from('missions')
+        .select('completed')
+        .eq('user_id', authUser.id)
+        .eq('date', today)
+        .maybeSingle();
+      setMissionCompleted(data?.completed ?? false);
     } catch (error) {
       console.error('Error checking mission:', error);
     }
@@ -69,23 +73,52 @@ export default function MainScreen() {
   const handleMissionComplete = async () => {
     playClickSound();
     try {
-      const sessionToken = await AsyncStorage.getItem('session_token');
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
       const today = new Date().toISOString().split('T')[0];
-      
-      const response = await fetch(`${BACKEND_URL}/api/mission/complete`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionToken}`,
-        },
-        body: JSON.stringify({ date: today }),
-      });
 
-      if (response.ok) {
-        setMissionCompleted(true);
-        setShowMissionModal(false);
-        await refreshUser();
+      const { data: existing } = await supabase
+        .from('missions')
+        .select('completed')
+        .eq('user_id', authUser.id)
+        .eq('date', today)
+        .maybeSingle();
+
+      if (existing?.completed) return;
+
+      await supabase.from('missions').upsert(
+        { user_id: authUser.id, date: today, completed: true },
+        { onConflict: 'user_id,date' }
+      );
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('coins, current_planet, last_post_date, streak')
+        .eq('id', authUser.id)
+        .single();
+
+      const cur = profile ?? { coins: 0, current_planet: 0, last_post_date: null, streak: 0 };
+      let newStreak = 1;
+      if (cur.last_post_date) {
+        const last = new Date(cur.last_post_date);
+        const todayDate = new Date(today);
+        const daysDiff = Math.floor((todayDate.getTime() - last.getTime()) / (24 * 60 * 60 * 1000));
+        newStreak = daysDiff === 1 ? (cur.streak ?? 0) + 1 : 1;
       }
+
+      await supabase
+        .from('profiles')
+        .update({
+          coins: (cur.coins ?? 0) + 10,
+          current_planet: (cur.current_planet ?? 0) + 1,
+          last_post_date: today,
+          streak: newStreak,
+        })
+        .eq('id', authUser.id);
+
+      setMissionCompleted(true);
+      setShowMissionModal(false);
+      await refreshUser();
     } catch (error) {
       console.error('Error completing mission:', error);
     }
@@ -370,21 +403,21 @@ export default function MainScreen() {
                         style: 'destructive',
                         onPress: async () => {
                           try {
-                            const sessionToken = await AsyncStorage.getItem('session_token');
-                            const response = await fetch(`${BACKEND_URL}/api/auth/account`, {
-                              method: 'DELETE',
-                              headers: {
-                                Authorization: `Bearer ${sessionToken}`,
-                              },
-                            });
-                            if (response.ok) {
-                              await AsyncStorage.removeItem('session_token');
-                              setShowMenu(false);
-                              await logout();
-                              router.replace('/');
-                            } else {
-                              Alert.alert('Error', 'Failed to delete account. Please try again.');
-                            }
+                            const { data: { user: authUser } } = await supabase.auth.getUser();
+                            if (!authUser) return;
+                            const uid = authUser.id;
+                            await supabase.from('missions').delete().eq('user_id', uid);
+                            await supabase.from('sos_completions').delete().eq('user_id', uid);
+                            await supabase.from('creator_universe').delete().eq('user_id', uid);
+                            await supabase.from('analysis_entries').delete().eq('user_id', uid);
+                            await supabase.from('schedule').delete().eq('user_id', uid);
+                            await supabase.from('story_finder').delete().eq('user_id', uid);
+                            await supabase.from('content_tips_progress').delete().eq('user_id', uid);
+                            await supabase.from('batching_scripts').delete().eq('user_id', uid);
+                            await supabase.from('profiles').delete().eq('id', uid);
+                            setShowMenu(false);
+                            await logout();
+                            router.replace('/');
                           } catch (error) {
                             Alert.alert('Error', 'Failed to delete account. Please try again.');
                           }

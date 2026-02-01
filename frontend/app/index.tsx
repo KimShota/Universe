@@ -9,6 +9,7 @@ import {
   ScrollView,
   SafeAreaView,
 } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import { UniverseBackground } from '../components/UniverseBackground';
@@ -28,6 +29,10 @@ const FEATURES = [
 export default function LoginScreen() {
   const { user, loading, login } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    WebBrowser.maybeCompleteAuthSession();
+  }, []);
 
   useEffect(() => {
     if (!user || loading) return;
