@@ -8,6 +8,7 @@ import {
   Modal,
   Dimensions,
   Image,
+  Alert,
 } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { UniverseBackground } from '../../components/UniverseBackground';
@@ -210,7 +211,6 @@ export default function MainScreen() {
                     ]}
                     resizeMode="cover"
                   />
-                  {step.completed && <Text style={styles.checkmark}>✓</Text>}
                 </TouchableOpacity>
               ))}
             </View>
@@ -338,17 +338,6 @@ export default function MainScreen() {
 
               <TouchableOpacity
                 style={styles.homeMenuButton}
-                onPress={() => {
-                  playClickSound();
-                  setShowMenu(false);
-                }}
-              >
-                <Ionicons name="home-outline" size={24} color="#FFD700" />
-                <Text style={styles.homeMenuButtonText}>Home</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.homeMenuButton}
                 onPress={async () => {
                   playClickSound();
                   try {
@@ -368,10 +357,54 @@ export default function MainScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.logoutButton}
+                style={styles.deleteAccountButton}
                 onPress={() => {
                   playClickSound();
-                  logout();
+                  Alert.alert(
+                    'Delete Account',
+                    'Are you sure? This will permanently delete your account and all your data. This action cannot be undone.',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Delete',
+                        style: 'destructive',
+                        onPress: async () => {
+                          try {
+                            const sessionToken = await AsyncStorage.getItem('session_token');
+                            const response = await fetch(`${BACKEND_URL}/api/auth/account`, {
+                              method: 'DELETE',
+                              headers: {
+                                Authorization: `Bearer ${sessionToken}`,
+                              },
+                            });
+                            if (response.ok) {
+                              await AsyncStorage.removeItem('session_token');
+                              setShowMenu(false);
+                              await logout();
+                              router.replace('/');
+                            } else {
+                              Alert.alert('Error', 'Failed to delete account. Please try again.');
+                            }
+                          } catch (error) {
+                            Alert.alert('Error', 'Failed to delete account. Please try again.');
+                          }
+                        },
+                      },
+                    ]
+                  );
+                }}
+              >
+                <Ionicons name="trash-outline" size={24} color="#ff6b6b" />
+                <Text style={styles.deleteAccountButtonText}>Delete Account</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.logoutButton}
+                onPress={async () => {
+                  playClickSound();
+                  setShowMenu(false);
+                  await logout();
+                  router.replace('/');
                 }}
               >
                 <Text style={styles.logoutButtonText}>Logout</Text>
@@ -586,12 +619,6 @@ const styles = StyleSheet.create({
   },
   stepTextCurrent: {
     color: '#fbbf24',
-  },
-  checkmark: {
-    position: 'absolute',
-    fontSize: 32,
-    color: '#4ade80',
-    fontWeight: '700',
   },
   bottomNav: {
     position: 'absolute',
@@ -891,6 +918,22 @@ const styles = StyleSheet.create({
   },
   homeMenuButtonText: {
     color: '#FFD700',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  deleteAccountButton: {
+    backgroundColor: 'rgba(255, 107, 107, 0.15)',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 12,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  deleteAccountButtonText: {
+    color: '#ff6b6b',
     fontSize: 18,
     fontWeight: 'bold',
   },

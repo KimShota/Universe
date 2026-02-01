@@ -6,21 +6,18 @@ import {
   ScrollView,
   TouchableOpacity,
   SafeAreaView,
-  Image,
 } from 'react-native';
 import { UniverseBackground } from '../../components/UniverseBackground';
 import { useRouter } from 'expo-router';
-
-const POLARBEAR = require('../../Media/polarbear1.png');
 import { Ionicons } from '@expo/vector-icons';
 import { playClickSound } from '../../utils/soundEffects';
 
 const HOW_TO_EDIT_OPTIONS = [
-  { id: 'tools-and-softwares', title: 'Tools and Softwares' },
-  { id: 'how-to-use-capcut', title: 'How to Use Capcut' },
-  { id: 'how-to-use-davinci-resolve', title: 'How to Use Davinci Resolve' },
-  { id: 'how-to-optimize-filming', title: 'How to Optimize Filming' },
-  { id: 'batch-editing-tips', title: 'Batch Editing Tips' },
+  { id: 'tools-and-softwares', title: 'Tools and Softwares', icon: 'hardware-chip-outline' },
+  { id: 'how-to-use-capcut', title: 'How to Use Capcut', icon: 'videocam-outline' },
+  { id: 'how-to-use-davinci-resolve', title: 'How to Use Davinci Resolve', icon: 'film-outline' },
+  { id: 'how-to-optimize-filming', title: 'How to Optimize Filming', icon: 'camera-outline' },
+  { id: 'batch-editing-tips', title: 'Batch Editing Tips', icon: 'copy-outline' },
 ];
 
 export default function HowToEditScreen() {
@@ -39,30 +36,34 @@ export default function HowToEditScreen() {
           >
             <Ionicons name="arrow-back" size={28} color="#FFD700" />
           </TouchableOpacity>
-          <Image source={POLARBEAR} style={styles.polarbearImage} resizeMode="contain" />
           <Text style={styles.title}>How to Edit & Film</Text>
+          <Text style={styles.subtitle}>Master editing tools and filming techniques</Text>
         </View>
 
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.buttonsContainer}
+          contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
         >
           {HOW_TO_EDIT_OPTIONS.map((option) => (
             <TouchableOpacity
               key={option.id}
-              style={styles.optionButton}
+              style={styles.optionCard}
               onPress={() => {
                 playClickSound();
                 router.push(`/how-to-edit/${option.id}`);
               }}
-              activeOpacity={0.8}
+              activeOpacity={0.85}
             >
-              <Text style={styles.optionButtonText}>{option.title}</Text>
+              <View style={styles.optionIconWrap}>
+                <Ionicons name={option.icon as any} size={24} color="#FFD700" />
+              </View>
+              <Text style={styles.optionCardTitle}>{option.title}</Text>
               <Ionicons
                 name="chevron-forward"
-                size={24}
-                color="rgba(255, 255, 255, 0.5)"
+                size={20}
+                color="rgba(255, 215, 0, 0.5)"
+                style={styles.optionChevron}
               />
             </TouchableOpacity>
           ))}
@@ -78,51 +79,59 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    paddingVertical: 24,
-    position: 'relative',
+    paddingVertical: 20,
     paddingHorizontal: 20,
+    position: 'relative',
   },
   backButton: {
     position: 'absolute',
     left: 20,
-    top: 24,
+    top: 20,
     zIndex: 1,
-  },
-  polarbearImage: {
-    width: 56,
-    height: 56,
-    marginBottom: 8,
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: '800',
     color: '#FFD700',
-    textAlign: 'center',
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   scrollView: {
     flex: 1,
   },
-  buttonsContainer: {
-    paddingHorizontal: 20,
+  contentContainer: {
+    padding: 20,
     paddingBottom: 40,
-    gap: 16,
+    gap: 12,
   },
-  optionButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    paddingVertical: 28,
-    paddingHorizontal: 24,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 215, 0, 0.4)',
+  optionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 100,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    padding: 18,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.2)',
   },
-  optionButtonText: {
-    color: '#FFFFFF',
-    fontSize: 19,
-    fontWeight: '600',
+  optionIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 215, 0, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  optionCardTitle: {
     flex: 1,
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  optionChevron: {
+    marginLeft: 8,
   },
 });

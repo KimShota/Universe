@@ -6,12 +6,9 @@ import {
   ScrollView,
   TouchableOpacity,
   SafeAreaView,
-  Image,
 } from 'react-native';
 import { UniverseBackground } from '../../components/UniverseBackground';
 import { useRouter } from 'expo-router';
-
-const POLARBEAR = require('../../Media/polarbear1.png');
 import { Ionicons } from '@expo/vector-icons';
 import { playClickSound } from '../../utils/soundEffects';
 
@@ -44,30 +41,34 @@ export default function HowToScriptScreen() {
           >
             <Ionicons name="arrow-back" size={28} color="#FFD700" />
           </TouchableOpacity>
-          <Image source={POLARBEAR} style={styles.polarbearImage} resizeMode="contain" />
           <Text style={styles.title}>How to Script</Text>
+          <Text style={styles.subtitle}>Craft scripts that capture and keep attention</Text>
         </View>
 
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
         >
           {HOW_TO_SCRIPT_OPTIONS.map((option) => (
             <TouchableOpacity
               key={option.id}
-              style={styles.optionButton}
+              style={styles.optionCard}
               onPress={() => {
                 playClickSound();
                 router.push(`/how-to-script/${option.id}`);
               }}
-              activeOpacity={0.7}
+              activeOpacity={0.85}
             >
-              <Ionicons name={option.icon as any} size={28} color="#FFD700" />
-              <Text style={styles.optionButtonText}>{option.title}</Text>
+              <View style={styles.optionIconWrap}>
+                <Ionicons name={option.icon as any} size={24} color="#FFD700" />
+              </View>
+              <Text style={styles.optionCardTitle}>{option.title}</Text>
               <Ionicons
                 name="chevron-forward"
                 size={20}
-                color="rgba(255, 255, 255, 0.5)"
+                color="rgba(255, 215, 0, 0.5)"
+                style={styles.optionChevron}
               />
             </TouchableOpacity>
           ))}
@@ -83,52 +84,59 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    paddingVertical: 24,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
     position: 'relative',
   },
   backButton: {
     position: 'absolute',
     left: 20,
-    top: 24,
+    top: 20,
     zIndex: 1,
-  },
-  polarbearImage: {
-    width: 56,
-    height: 56,
-    marginBottom: 8,
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: '800',
     color: '#FFD700',
-    textAlign: 'center',
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   scrollView: {
     flex: 1,
   },
   contentContainer: {
     padding: 20,
-    gap: 16,
+    paddingBottom: 40,
+    gap: 12,
   },
-  optionButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    padding: 20,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
+  optionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    padding: 18,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.2)',
   },
-  optionButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
+  optionIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 215, 0, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  optionCardTitle: {
     flex: 1,
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  optionChevron: {
+    marginLeft: 8,
   },
 });

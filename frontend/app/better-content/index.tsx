@@ -6,20 +6,17 @@ import {
   ScrollView,
   TouchableOpacity,
   SafeAreaView,
-  Image,
 } from 'react-native';
 import { UniverseBackground } from '../../components/UniverseBackground';
 import { useRouter } from 'expo-router';
-
-const POLARBEAR = require('../../Media/polarbear1.png');
 import { Ionicons } from '@expo/vector-icons';
 import { playClickSound } from '../../utils/soundEffects';
 
 const BETTER_CONTENT_OPTIONS = [
-  { id: 'use-hooks', title: 'Use Hooks' },
-  { id: 'study-creators-7x7', title: 'Study Creators Objectively (7×7)' },
-  { id: 'understanding-your-audience', title: 'Understanding Your Audience' },
-  { id: 'analyzing-comments', title: 'Analyzing Comments' },
+  { id: 'use-hooks', title: 'Use Hooks', icon: 'flash-outline' },
+  { id: 'study-creators-7x7', title: 'Study Creators Objectively (7×7)', icon: 'school-outline' },
+  { id: 'understanding-your-audience', title: 'Understanding Your Audience', icon: 'people-outline' },
+  { id: 'analyzing-comments', title: 'Analyzing Comments', icon: 'chatbubble-ellipses-outline' },
 ];
 
 export default function BetterContentScreen() {
@@ -38,30 +35,34 @@ export default function BetterContentScreen() {
           >
             <Ionicons name="arrow-back" size={28} color="#FFD700" />
           </TouchableOpacity>
-          <Image source={POLARBEAR} style={styles.polarbearImage} resizeMode="contain" />
           <Text style={styles.title}>How to Make Better Content</Text>
+          <Text style={styles.subtitle}>Level up your content creation skills</Text>
         </View>
 
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.buttonsContainer}
+          contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
         >
           {BETTER_CONTENT_OPTIONS.map((option) => (
             <TouchableOpacity
               key={option.id}
-              style={styles.optionButton}
+              style={styles.optionCard}
               onPress={() => {
                 playClickSound();
                 router.push(`/better-content/${option.id}`);
               }}
-              activeOpacity={0.8}
+              activeOpacity={0.85}
             >
-              <Text style={styles.optionButtonText}>{option.title}</Text>
+              <View style={styles.optionIconWrap}>
+                <Ionicons name={option.icon as any} size={24} color="#FFD700" />
+              </View>
+              <Text style={styles.optionCardTitle}>{option.title}</Text>
               <Ionicons
                 name="chevron-forward"
-                size={24}
-                color="rgba(255, 255, 255, 0.5)"
+                size={20}
+                color="rgba(255, 215, 0, 0.5)"
+                style={styles.optionChevron}
               />
             </TouchableOpacity>
           ))}
@@ -77,51 +78,59 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    paddingVertical: 24,
-    position: 'relative',
+    paddingVertical: 20,
     paddingHorizontal: 20,
+    position: 'relative',
   },
   backButton: {
     position: 'absolute',
     left: 20,
-    top: 24,
+    top: 20,
     zIndex: 1,
-  },
-  polarbearImage: {
-    width: 56,
-    height: 56,
-    marginBottom: 8,
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: '800',
     color: '#FFD700',
-    textAlign: 'center',
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   scrollView: {
     flex: 1,
   },
-  buttonsContainer: {
-    paddingHorizontal: 20,
+  contentContainer: {
+    padding: 20,
     paddingBottom: 40,
-    gap: 16,
+    gap: 12,
   },
-  optionButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    paddingVertical: 28,
-    paddingHorizontal: 24,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 215, 0, 0.4)',
+  optionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 100,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    padding: 18,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.2)',
   },
-  optionButtonText: {
-    color: '#FFFFFF',
-    fontSize: 19,
-    fontWeight: '600',
+  optionIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 215, 0, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  optionCardTitle: {
     flex: 1,
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  optionChevron: {
+    marginLeft: 8,
   },
 });

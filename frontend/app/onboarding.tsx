@@ -66,6 +66,7 @@ export default function OnboardingScreen() {
   const [skillPeopleComeFor, setSkillPeopleComeFor] = useState('');
   const [passion, setPassion] = useState('');
   const [currentStruggle, setCurrentStruggle] = useState('');
+  const [interest, setInterest] = useState('');
 
   // Page 2 — Target Avatar
   const [regions, setRegions] = useState<string[]>([]);
@@ -83,7 +84,6 @@ export default function OnboardingScreen() {
   const [passionateNow, setPassionateNow] = useState('');
   const [experience, setExperience] = useState('');
   const [goodAt, setGoodAt] = useState('');
-  const [comeToYouFor, setComeToYouFor] = useState('');
 
   const { width } = Dimensions.get('window');
   const contentMaxWidth = useMemo(() => Math.min(width - 32, 520), [width]);
@@ -96,6 +96,7 @@ export default function OnboardingScreen() {
     skillPeopleComeFor,
     passion,
     currentStruggle,
+    interest,
     regions,
     ageMin,
     ageMax,
@@ -109,7 +110,6 @@ export default function OnboardingScreen() {
     passionateNow,
     experience,
     goodAt,
-    comeToYouFor,
   });
 
   const persistDraft = async () => {
@@ -151,6 +151,7 @@ export default function OnboardingScreen() {
               if (typeof d.skillPeopleComeFor === 'string') setSkillPeopleComeFor(d.skillPeopleComeFor);
               if (typeof d.passion === 'string') setPassion(d.passion);
               if (typeof d.currentStruggle === 'string') setCurrentStruggle(d.currentStruggle);
+              if (typeof d.interest === 'string') setInterest(d.interest);
               if (Array.isArray(d.regions)) setRegions(d.regions);
               if (typeof d.ageMin === 'string') setAgeMin(d.ageMin);
               if (typeof d.ageMax === 'string') setAgeMax(d.ageMax);
@@ -163,7 +164,6 @@ export default function OnboardingScreen() {
               if (typeof d.passionateNow === 'string') setPassionateNow(d.passionateNow);
               if (typeof d.experience === 'string') setExperience(d.experience);
               if (typeof d.goodAt === 'string') setGoodAt(d.goodAt);
-              if (typeof d.comeToYouFor === 'string') setComeToYouFor(d.comeToYouFor);
             }
           } catch {
             // ignore
@@ -201,17 +201,15 @@ export default function OnboardingScreen() {
       const sessionToken = await AsyncStorage.getItem('session_token');
       // Map onboarding Page 1 → Vision:
       // - ethos/message → overarching_goal
-      // - "skill people come to you for" → Skill pillar idea
-      // - passion → Passion pillar idea
-      // - current struggle → Story pillar idea
-      const skillIdea = skillPeopleComeFor.trim();
-      const passionIdea = passion.trim();
-      const storyIdea = currentStruggle.trim();
+      // - skill → Content Pillar 1 title
+      // - passion → Content Pillar 2 title
+      // - struggle → Content Pillar 3 title
+      // - interest → Content Pillar 4 title
       const content_pillars = [
-        { title: 'Skill', ideas: skillIdea ? [skillIdea] : ([] as string[]) },
-        { title: 'Passion', ideas: passionIdea ? [passionIdea] : ([] as string[]) },
-        { title: 'Story', ideas: storyIdea ? [storyIdea] : ([] as string[]) },
-        { title: 'Interest', ideas: [] as string[] },
+        { title: skillPeopleComeFor.trim() || 'Content Pillar 1', ideas: [] as string[] },
+        { title: passion.trim() || 'Content Pillar 2', ideas: [] as string[] },
+        { title: currentStruggle.trim() || 'Content Pillar 3', ideas: [] as string[] },
+        { title: interest.trim() || 'Content Pillar 4', ideas: [] as string[] },
       ];
 
       const avatar = {
@@ -231,10 +229,10 @@ export default function OnboardingScreen() {
       };
 
       const identity = {
-        pain: [currentStruggle, struggledWith].map((s) => s.trim()).filter(Boolean),
-        passion: [passion, passionateNow].map((s) => s.trim()).filter(Boolean),
+        pain: [struggledWith].map((s) => s.trim()).filter(Boolean),
+        passion: [passionateNow].map((s) => s.trim()).filter(Boolean),
         experience: [experience].map((s) => s.trim()).filter(Boolean),
-        skill: [skillPeopleComeFor, goodAt, comeToYouFor].map((s) => s.trim()).filter(Boolean),
+        skill: [goodAt].map((s) => s.trim()).filter(Boolean),
       };
 
       const res = await fetch(`${BACKEND_URL}/api/creator-universe`, {
@@ -456,6 +454,15 @@ export default function OnboardingScreen() {
                   placeholderTextColor="rgba(255,255,255,0.45)"
                   multiline
                 />
+                <Text style={styles.fieldLabel}>What is your interest?</Text>
+                <TextInput
+                  style={styles.input}
+                  value={interest}
+                  onChangeText={setInterest}
+                  placeholder="What topics or areas interest you?"
+                  placeholderTextColor="rgba(255,255,255,0.45)"
+                  multiline
+                />
 
                 <TouchableOpacity
                   style={styles.primaryButton}
@@ -642,20 +649,12 @@ export default function OnboardingScreen() {
                   multiline
                 />
                 <Text style={styles.fieldLabel}>What are you good at?</Text>
+                <Text style={styles.hintText}>What do people come to you for?</Text>
                 <TextInput
                   style={styles.input}
                   value={goodAt}
                   onChangeText={setGoodAt}
                   placeholder="What can you teach?"
-                  placeholderTextColor="rgba(255,255,255,0.45)"
-                  multiline
-                />
-                <Text style={styles.fieldLabel}>What do people come to you for?</Text>
-                <TextInput
-                  style={styles.input}
-                  value={comeToYouFor}
-                  onChangeText={setComeToYouFor}
-                  placeholder="Your go-to expertise"
                   placeholderTextColor="rgba(255,255,255,0.45)"
                   multiline
                 />
@@ -819,6 +818,12 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 8,
     letterSpacing: 0.2,
+  },
+  hintText: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 13,
+    fontStyle: 'italic',
+    marginBottom: 8,
   },
   input: {
     backgroundColor: 'rgba(255,255,255,0.06)',

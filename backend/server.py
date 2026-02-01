@@ -359,6 +359,31 @@ async def logout(response: Response, current_user: User = Depends(get_current_us
     response.delete_cookie(key="session_token", path="/")
     return {"message": "Logged out successfully"}
 
+
+@api_router.delete("/auth/account")
+async def delete_account(
+    response: Response,
+    current_user: User = Depends(get_current_user),
+):
+    """Permanently delete user account and all associated data"""
+    user_id = current_user.user_id
+
+    # Delete all user data across collections
+    await db.user_sessions.delete_many({"user_id": user_id})
+    await db.creator_universe.delete_many({"user_id": user_id})
+    await db.analysis_entries.delete_many({"user_id": user_id})
+    await db.schedule.delete_many({"user_id": user_id})
+    await db.story_finder.delete_many({"user_id": user_id})
+    await db.content_tips_progress.delete_many({"user_id": user_id})
+    await db.batching_scripts.delete_many({"user_id": user_id})
+    await db.missions.delete_many({"user_id": user_id})
+    await db.sos_completions.delete_many({"user_id": user_id})
+    await db.users.delete_one({"user_id": user_id})
+
+    response.delete_cookie(key="session_token", path="/")
+    return {"message": "Account deleted successfully"}
+
+
 # ==================== USER ROUTES ====================
 
 @api_router.get("/user/profile", response_model=User)

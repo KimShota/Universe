@@ -57,7 +57,14 @@ export default function LoginScreen() {
   }
 
   if (user) {
-    return null;
+    return (
+      <UniverseBackground>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#FFD700" />
+          <Text style={styles.loadingText}>Loading Universe...</Text>
+        </View>
+      </UniverseBackground>
+    );
   }
 
   return (
