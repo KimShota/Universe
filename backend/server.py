@@ -31,28 +31,8 @@ if not db_name:
 
 import certifi
 
-# #region agent log
-def _agent_log(location: str, message: str, data: dict):
-    import json
-    try:
-        with open("/Users/matsumotoshota/Universe/.cursor/debug.log", "a") as f:
-            f.write(json.dumps({"location": location, "message": message, "data": data, "timestamp": __import__("time").time()}) + "\n")
-    except Exception:
-        pass
-# #endregion
-
-_is_render = bool(os.environ.get("RENDER"))
-# On Render: disable cert verification to fix SSL handshake
-if _is_render:
-    # #region agent log
-    _agent_log("server.py:client", "Render path: tlsAllowInvalidCertificates", {"RENDER": _is_render})
-    # #endregion
-    client = AsyncIOMotorClient(mongo_url, tlsAllowInvalidCertificates=True)
-else:
-    # #region agent log
-    _agent_log("server.py:client", "Local path: certifi", {"RENDER": _is_render})
-    # #endregion
-    client = AsyncIOMotorClient(mongo_url, tlsCAFile=certifi.where())
+# Use certifi for TLS CA (fixes SSL handshake on Render + MongoDB Atlas)
+client = AsyncIOMotorClient(mongo_url, tlsCAFile=certifi.where())
 db = client[db_name]
 
 # Create the main app without a prefix
@@ -936,18 +916,9 @@ async def root():
 async def health_check():
     """Health check endpoint with database status"""
     try:
-        # #region agent log
-        _agent_log("server.py:health_check", "ping attempt", {})
-        # #endregion
         await db.command("ping")
-        # #region agent log
-        _agent_log("server.py:health_check", "ping success", {})
-        # #endregion
         return {"status": "healthy", "database": "connected"}
     except Exception as e:
-        # #region agent log
-        _agent_log("server.py:health_check", "ping failed", {"error": str(e)[:200]})
-        # #endregion
         return {"status": "unhealthy", "database": "disconnected", "error": str(e)}
 
 # ==================== INCLUDE ROUTER ====================
