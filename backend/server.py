@@ -30,7 +30,12 @@ if not db_name:
     )
 
 import certifi
-client = AsyncIOMotorClient(mongo_url, tlsCAFile=certifi.where())
+
+# On Render, skip tlsCAFile so tlsAllowInvalidCertificates in URL can fix SSL handshake
+if os.environ.get("RENDER"):
+    client = AsyncIOMotorClient(mongo_url)
+else:
+    client = AsyncIOMotorClient(mongo_url, tlsCAFile=certifi.where())
 db = client[db_name]
 
 # Create the main app without a prefix

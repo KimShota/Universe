@@ -49,41 +49,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await processAuthRedirect(event.url);
   };
 
-  const checkBackendHealth = async (retries = 3): Promise<boolean> => {
-    if (!BACKEND_URL) {
-      return false;
-    }
-
-    for (let i = 0; i < retries; i++) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒でヘルスチェック
-        
-        const response = await fetch(`${BACKEND_URL}/health`, {
-          method: 'GET',
-          signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
-        
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Backend health check:', data);
-          return true;
-        }
-      } catch (error: any) {
-        if (i < retries - 1) {
-          console.log(`Health check failed, retrying... (${i + 1}/${retries})`);
-          await new Promise(resolve => setTimeout(resolve, 1000)); // 1秒待機
-        } else {
-          console.warn('Backend server health check failed:', error.message);
-        }
-      }
-    }
-    
-    return false;
-  };
-
   const checkExistingSession = async () => {
     try {
       if (!BACKEND_URL) {
@@ -95,19 +60,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const sessionToken = await AsyncStorage.getItem('session_token');
       
       if (sessionToken) {
-        // まずヘルスチェックを実行（軽量なので短いタイムアウト）
-        const isHealthy = await checkBackendHealth(2);
-        
-        if (!isHealthy) {
-          console.warn('Backend server is not responding. Clearing session token.');
-          await AsyncStorage.removeItem('session_token').catch(() => {});
-          setLoading(false);
-          return;
-        }
-        
-        // タイムアウトを15秒に設定（3秒から延長）
+        // Call /api/auth/me directly with 65s timeout (supports Render cold start ~50s)
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        const timeoutId = setTimeout(() => controller.abort(), 65000);
         
         try {
         const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
@@ -188,17 +143,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
       
-      // まずヘルスチェックを実行
-      console.log('Checking backend server health...');
-      const isHealthy = await checkBackendHealth();
-      
-      if (!isHealthy) {
-        console.error('Backend server is not responding. Please ensure the server is running.');
-        console.error(`Expected URL: ${BACKEND_URL}`);
-        console.error('To start the server, run: cd backend && uvicorn server:app --host 0.0.0.0 --port 8000');
-        return;
-      }
-      
       console.log('Attempting to connect to:', `${BACKEND_URL}/api/auth/session`);
       
       // Exchange session_id for user data with timeout and retry logic
@@ -208,7 +152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       for (let attempt = 0; attempt < maxRetries; attempt++) {
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒タイムアウト
+          const timeoutId = setTimeout(() => controller.abort(), 65000); // 65s for Render cold start
           
           const response = await fetch(`${BACKEND_URL}/api/auth/session?session_id=${sessionId}`, {
             method: 'POST',
