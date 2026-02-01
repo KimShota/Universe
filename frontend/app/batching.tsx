@@ -411,10 +411,10 @@ export default function BatchingScreen() {
                 <TouchableOpacity style={styles.modalCancel} onPress={() => setShowDateModal(false)}>
                   <Text style={styles.modalCancelText}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
+          <TouchableOpacity
                   style={styles.modalSave}
-                  onPress={() => {
-                    playClickSound();
+            onPress={() => {
+              playClickSound();
                     handleUpdateField('date', dateDraft.trim());
                     setShowDateModal(false);
                   }}
@@ -511,7 +511,7 @@ export default function BatchingScreen() {
               <View style={styles.tipsCloseWrap}>
                 <TouchableOpacity style={styles.tipsCloseButton} onPress={closeTipsModal} activeOpacity={0.85}>
                   <Text style={styles.tipsCloseText}>CLOSE TIPS</Text>
-                </TouchableOpacity>
+          </TouchableOpacity>
               </View>
             </Animated.View>
           </View>
@@ -533,13 +533,13 @@ export default function BatchingScreen() {
             </View>
             <View style={styles.scriptField}>
               <Text style={styles.scriptFieldLabel}>Title</Text>
-              <TextInput
+            <TextInput
                 style={styles.scriptInput}
                 value={currentScript.title ?? ''}
                 onChangeText={(t) => handleUpdateField('title', t)}
-                placeholder="Enter script title..."
-                placeholderTextColor="rgba(255, 255, 255, 0.4)"
-              />
+              placeholder="Enter script title..."
+              placeholderTextColor="rgba(255, 255, 255, 0.4)"
+            />
             </View>
           </View>
 
@@ -553,14 +553,14 @@ export default function BatchingScreen() {
             </View>
             <View style={styles.scriptField}>
               <Text style={styles.scriptFieldLabel}>Mission</Text>
-              <TextInput
+            <TextInput
                 style={[styles.scriptInput, styles.scriptInputMultiline]}
                 value={currentScript.mission ?? ''}
                 onChangeText={(t) => handleUpdateField('mission', t)}
                 placeholder="What is the objective of this content?"
-                placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                multiline
-              />
+              placeholderTextColor="rgba(255, 255, 255, 0.4)"
+              multiline
+            />
             </View>
           </View>
 
@@ -595,14 +595,14 @@ export default function BatchingScreen() {
             </View>
             <View style={styles.scriptField}>
               <Text style={styles.scriptFieldLabel}>Verbal Hook</Text>
-              <TextInput
+            <TextInput
                 style={[styles.scriptInput, styles.scriptInputMultiline]}
                 value={currentScript.verbalHook ?? ''}
                 onChangeText={(t) => handleUpdateField('verbalHook', t)}
                 placeholder="What is said to grab attention..."
-                placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                multiline
-              />
+              placeholderTextColor="rgba(255, 255, 255, 0.4)"
+              multiline
+            />
             </View>
           </View>
 
@@ -660,14 +660,14 @@ export default function BatchingScreen() {
             </View>
             <View style={styles.scriptField}>
               <Text style={styles.scriptFieldLabel}>Call To Action (CTA)</Text>
-              <TextInput
+            <TextInput
                 style={[styles.scriptInput, styles.scriptInputMultiline]}
                 value={currentScript.callToAction ?? ''}
                 onChangeText={(t) => handleUpdateField('callToAction', t)}
                 placeholder="What should viewers do next?"
-                placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                multiline
-              />
+              placeholderTextColor="rgba(255, 255, 255, 0.4)"
+              multiline
+            />
             </View>
           </View>
 
@@ -681,25 +681,25 @@ export default function BatchingScreen() {
             </View>
             <View style={styles.scriptField}>
               <Text style={styles.scriptFieldLabel}>Footage Needed</Text>
-              <TextInput
+            <TextInput
                 style={[styles.scriptInput, styles.scriptInputMultiline]}
                 value={currentScript.footageNeeded ?? ''}
                 onChangeText={(t) => handleUpdateField('footageNeeded', t)}
                 placeholder="Describe the B-roll and primary shots..."
-                placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                multiline
-              />
-            </View>
+              placeholderTextColor="rgba(255, 255, 255, 0.4)"
+              multiline
+            />
+          </View>
             <View style={styles.scriptField}>
               <Text style={styles.scriptFieldLabel}>Audio</Text>
-              <TextInput
+            <TextInput
                 style={[styles.scriptInput, styles.scriptInputMultiline]}
                 value={currentScript.audio ?? ''}
                 onChangeText={(t) => handleUpdateField('audio', t)}
                 placeholder="Voiceover, music, or SFX..."
-                placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                multiline
-              />
+              placeholderTextColor="rgba(255, 255, 255, 0.4)"
+              multiline
+            />
             </View>
           </View>
 
@@ -713,14 +713,14 @@ export default function BatchingScreen() {
             </View>
             <View style={styles.scriptField}>
               <Text style={styles.scriptFieldLabel}>Caption</Text>
-              <TextInput
+            <TextInput
                 style={[styles.scriptInput, styles.scriptInputMultiline]}
                 value={currentScript.caption ?? ''}
                 onChangeText={(t) => handleUpdateField('caption', t)}
                 placeholder="Draft your social media caption..."
-                placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                multiline
-              />
+              placeholderTextColor="rgba(255, 255, 255, 0.4)"
+              multiline
+            />
             </View>
           </View>
         </ScrollView>

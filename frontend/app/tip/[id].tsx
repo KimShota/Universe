@@ -153,7 +153,6 @@ export default function TipDetailScreen() {
                   <Text style={styles.scoreText}>
                     You scored {score} out of {tip.quiz.length}
                   </Text>
-                  <Text style={styles.coinsEarned}>You earned 10 coins! 🪙</Text>
                   <TouchableOpacity
                     style={styles.closeQuizButton}
                     onPress={handleQuizComplete}
@@ -283,13 +282,6 @@ const styles = StyleSheet.create({
   scoreText: {
     color: '#fff',
     fontSize: 20,
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  coinsEarned: {
-    color: '#FFD700',
-    fontSize: 18,
-    fontWeight: 'bold',
     marginBottom: 32,
     textAlign: 'center',
   },

@@ -127,7 +127,6 @@ export default function MainScreen() {
 
             <View style={styles.streakContainer}>
               <Text style={styles.streakText}>🔥 {user?.streak || 0} day streak</Text>
-              <Text style={styles.coinsText}>⭐ {user?.coins || 0} coins</Text>
             </View>
           </View>
 
@@ -274,25 +273,48 @@ export default function MainScreen() {
           onRequestClose={() => setShowMissionModal(false)}
         >
           <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Today's Mission</Text>
-              
+            <View style={styles.missionModalContent}>
+              <Text style={styles.missionModalTitle}>TODAY'S MISSION</Text>
+              <Text style={styles.missionStatus}>SYSTEM SYNC: <Text style={styles.missionStatusActive}>ACTIVE</Text></Text>
+
+              <View style={styles.missionCard}>
+                <View style={styles.missionCardHeader}>
+                  <View style={styles.missionIconWrap}>
+                    <Ionicons name="rocket-outline" size={28} color="#FFD700" />
+                  </View>
+                  <Text style={styles.missionCardTitle}>Post your content</Text>
+                </View>
+                <Text style={styles.missionCardDescription}>
+                  Post your content to share your story with others.
+                </Text>
+                <View style={styles.missionProgressRow}>
+                  <Text style={styles.missionLabel}>PROGRESS</Text>
+                  <View style={styles.missionProgressWrap}>
+                    <View style={[styles.missionProgressBar, { flex: 1 }]}>
+                      <View style={[styles.missionProgressFill, { width: missionCompleted ? '100%' : '0%' }]} />
+                    </View>
+                    <Text style={styles.missionProgressText}>{missionCompleted ? '1' : '0'}/1</Text>
+                  </View>
+                </View>
+              </View>
+
               <TouchableOpacity
-                style={styles.checkboxContainer}
+                style={styles.postNowButton}
                 onPress={handleMissionComplete}
+                activeOpacity={0.85}
               >
-                <View style={styles.checkbox} />
-                <Text style={styles.checkboxText}>Post your content</Text>
+                <Text style={styles.postNowButtonText}>POST NOW</Text>
+                <Ionicons name="arrow-forward" size={20} color="#0a0e27" style={{ marginLeft: 8 }} />
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.closeButton}
+                style={styles.dismissMissionButton}
                 onPress={() => {
                   playClickSound();
                   setShowMissionModal(false);
                 }}
               >
-                <Text style={styles.closeButtonText}>Close</Text>
+                <Text style={styles.dismissMissionText}>Dismiss Mission</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -504,11 +526,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 4,
   },
-  coinsText: {
-    color: '#fbbf24',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   title: {
     fontSize: 32,
     fontWeight: '700',
@@ -666,6 +683,131 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     marginBottom: 24,
     textAlign: 'center',
+  },
+  missionModalContent: {
+    backgroundColor: 'rgba(20, 25, 45, 0.98)',
+    borderRadius: 24,
+    padding: 28,
+    width: '88%',
+    maxWidth: 380,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
+  },
+  missionModalTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#FFD700',
+    marginBottom: 4,
+    textAlign: 'center',
+    letterSpacing: 1,
+  },
+  missionStatus: {
+    fontSize: 12,
+    color: 'rgba(147, 197, 253, 0.8)',
+    marginBottom: 20,
+    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
+  missionStatusActive: {
+    color: '#93C5FD',
+    fontWeight: '600',
+  },
+  missionCard: {
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.15)',
+    borderLeftWidth: 3,
+    borderLeftColor: 'rgba(255, 215, 0, 0.5)',
+  },
+  missionCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 10,
+  },
+  missionIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 215, 0, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.25)',
+  },
+  missionCardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
+  missionCardDescription: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.75)',
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  missionProgressRow: {
+    marginBottom: 12,
+  },
+  missionLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.5)',
+    letterSpacing: 0.8,
+    marginBottom: 6,
+  },
+  missionProgressWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  missionProgressBar: {
+    height: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  missionProgressFill: {
+    height: '100%',
+    backgroundColor: '#FFD700',
+    borderRadius: 4,
+  },
+  missionProgressText: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.8)',
+    minWidth: 28,
+  },
+  postNowButton: {
+    backgroundColor: '#FFD700',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 30,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  postNowButtonText: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0a0e27',
+    letterSpacing: 0.5,
+  },
+  dismissMissionButton: {
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  dismissMissionText: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.5)',
   },
   checkboxContainer: {
     flexDirection: 'row',

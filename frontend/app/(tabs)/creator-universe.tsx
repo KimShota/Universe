@@ -731,7 +731,7 @@ export default function CreatorUniverseScreen() {
                         <View key={index} style={styles.ideaBoxWrapper}>
                           <View style={styles.ideaBox}>
                             <TextInput
-                              style={styles.ideaInput}
+                              style={[styles.ideaInput, category === 'passion' && styles.ideaInputPassion]}
                               value={value}
                               onChangeText={(text) => updateIdentityField(category, index, text)}
                               onBlur={() => saveUniverse()}
@@ -1259,6 +1259,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     textAlignVertical: 'top',
+  },
+  ideaInputPassion: {
+    fontSize: 11,
+    lineHeight: 16,
   },
   deleteIdeaButton: {
     position: 'absolute',
