@@ -1,0 +1,25 @@
+# Supabase project config - used by CLI for functions deploy etc.
+# https://supabase.com/docs/guides/cli/config
+project_id = "universe"
+
+[api]
+enabled = true
+port = 54321
+
+[db]
+port = 54322
+
+[studio]
+enabled = true
+port = 54323
+
+[auth]
+enabled = true
+
+[edge_runtime]
+enabled = true
+
+# Skip gateway JWT verification so Authorization header is forwarded to the function.
+# The function validates the JWT and deletes the user itself.
+[functions.delete-user]
+verify_jwt = false

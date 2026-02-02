@@ -403,6 +403,15 @@ export default function MainScreen() {
                             await supabase.from('content_tips_progress').delete().eq('user_id', uid);
                             await supabase.from('batching_scripts').delete().eq('user_id', uid);
                             await supabase.from('profiles').delete().eq('id', uid);
+
+                            const { data, error } = await supabase.functions.invoke('delete-user', {
+                              method: 'POST',
+                            });
+                            if (error) throw new Error(error.message);
+                            if (data && typeof data === 'object' && 'error' in data) {
+                              throw new Error((data as { error: string }).error);
+                            }
+
                             setShowMenu(false);
                             await logout();
                             router.replace('/');
