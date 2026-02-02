@@ -63,6 +63,7 @@ interface StoryRow {
 }
 
 export default function StoryFinderScreen() {
+  const { user } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
@@ -121,7 +122,7 @@ export default function StoryFinderScreen() {
     } catch (e) {
       console.error('Error loading message:', e);
     }
-  }, []);
+  }, [user?.id]);
 
   const loadRows = useCallback(async () => {
     try {
@@ -142,7 +143,7 @@ export default function StoryFinderScreen() {
     } catch (e) {
       console.error('Error loading story finder:', e);
     }
-  }, []);
+  }, [user?.id]);
 
   useFocusEffect(
     useCallback(() => {
