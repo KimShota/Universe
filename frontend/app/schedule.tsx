@@ -20,6 +20,7 @@ import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { UniverseBackground } from '../components/UniverseBackground';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'expo-router';
 import { playClickSound } from '../utils/soundEffects';
@@ -95,6 +96,7 @@ function relativeTime(ms: number): string {
 }
 
 export default function ScheduleScreen() {
+  const { user } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [schedule, setSchedule] = useState<ScheduleData>(() =>
@@ -167,7 +169,7 @@ export default function ScheduleScreen() {
 
   useEffect(() => {
     loadSchedule();
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 60_000);
@@ -176,19 +178,18 @@ export default function ScheduleScreen() {
 
   const loadSchedule = async () => {
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
+      if (!user?.id) return;
       const { data } = await supabase
         .from('schedule')
         .select('schedule')
-        .eq('user_id', authUser.id)
+        .eq('user_id', user.id)
         .maybeSingle();
       const scheduleData = data?.schedule;
       if (!scheduleData) {
         const defaultSched: ScheduleData = Object.fromEntries(
           DAY_NAMES.map((d) => [d, { idea: '', format: '' }])
         );
-        await supabase.from('schedule').insert({ user_id: authUser.id, schedule: defaultSched });
+        await supabase.from('schedule').insert({ user_id: user.id, schedule: defaultSched });
         setSchedule(defaultSched);
       } else if ((scheduleData as { idea?: Record<string, string> }).idea) {
         const s = scheduleData as { idea: Record<string, string>; format: Record<string, string> };
@@ -209,12 +210,11 @@ export default function ScheduleScreen() {
   const saveSchedule = async (override?: ScheduleData) => {
     const payload = override ?? schedule;
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
+      if (!user?.id) return;
       const { error } = await supabase
         .from('schedule')
         .upsert(
-          { user_id: authUser.id, schedule: payload, updated_at: new Date().toISOString() },
+          { user_id: user.id, schedule: payload, updated_at: new Date().toISOString() },
           { onConflict: 'user_id' }
         );
       if (!error) setLastSaved(Date.now());

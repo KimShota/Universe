@@ -22,6 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { UniverseBackground } from '../components/UniverseBackground';
 import { Ionicons } from '@expo/vector-icons';
 import { playClickSound } from '../utils/soundEffects';
+import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 
 const { width, height } = Dimensions.get('window');
@@ -78,6 +79,7 @@ const SCRIPT_TIPS_PAGE4: { icon: string; title: string; description: string }[] 
 ];
 
 export default function BatchingScreen() {
+  const { user } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [scripts, setScripts] = useState<Script[]>([]);
@@ -90,16 +92,15 @@ export default function BatchingScreen() {
 
   useEffect(() => {
     loadScripts();
-  }, []);
+  }, [user?.id]);
 
   const loadScripts = async () => {
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
+      if (!user?.id) return;
       const { data: rows } = await supabase
         .from('batching_scripts')
         .select('script_id, data')
-        .eq('user_id', authUser.id);
+        .eq('user_id', user.id);
       if (rows && rows.length > 0) {
         const normalized = (rows as { script_id: string; data: Record<string, unknown> }[]).map((r) => ({
           id: r.script_id,
@@ -125,11 +126,10 @@ export default function BatchingScreen() {
 
   const saveScript = async (script: Script) => {
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
+      if (!user?.id) return;
       const { id, ...rest } = script;
       await supabase.from('batching_scripts').upsert(
-        { user_id: authUser.id, script_id: id, data: rest },
+        { user_id: user.id, script_id: id, data: rest },
         { onConflict: 'user_id,script_id' }
       );
     } catch (error) {
@@ -176,12 +176,11 @@ export default function BatchingScreen() {
     if (!scriptId) return;
     playClickSound();
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
+      if (!user?.id) return;
       const { error } = await supabase
         .from('batching_scripts')
         .delete()
-        .eq('user_id', authUser.id)
+        .eq('user_id', user.id)
         .eq('script_id', scriptId);
       if (!error) {
         setScripts(scripts.filter(script => script.id !== scriptId));

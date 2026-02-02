@@ -13,6 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { UniverseBackground } from '../components/UniverseBackground';
+import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { playClickSound } from '../utils/soundEffects';
 
@@ -52,6 +53,7 @@ function parseStep(raw: unknown): 1 | 2 | 3 | 4 | 5 {
 }
 
 export default function OnboardingScreen() {
+  const { user } = useAuth();
   const router = useRouter();
   const params = useLocalSearchParams<{ step?: string; issueId?: string }>();
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(() => parseStep(params.step));
@@ -198,8 +200,7 @@ export default function OnboardingScreen() {
   const completeOnboarding = async () => {
     playClickSound();
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) {
+      if (!user?.id) {
         router.replace('/(tabs)/main');
         return;
       }
@@ -233,7 +234,7 @@ export default function OnboardingScreen() {
 
       const { error } = await supabase.from('creator_universe').upsert(
         {
-          user_id: authUser.id,
+          user_id: user.id,
           overarching_goal: messageEthos.trim(),
           content_pillars,
           avatar,

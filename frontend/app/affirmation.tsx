@@ -190,10 +190,9 @@ export default function AffirmationScreen() {
 
   const handleGoHome = async () => {
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (authUser) {
+      if (user?.id) {
         await supabase.from('sos_completions').insert({
-          user_id: authUser.id,
+          user_id: user.id,
           issue_type: resolvedIssueId,
           asteroids: fears,
           affirmations,
@@ -202,10 +201,10 @@ export default function AffirmationScreen() {
         const { data: profile } = await supabase
           .from('profiles')
           .select('coins')
-          .eq('id', authUser.id)
+          .eq('id', user.id)
           .single();
         const curCoins = profile?.coins ?? 0;
-        await supabase.from('profiles').update({ coins: curCoins + 10 }).eq('id', authUser.id);
+        await supabase.from('profiles').update({ coins: curCoins + 10 }).eq('id', user.id);
         await refreshUser();
       }
     } catch {

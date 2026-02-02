@@ -20,6 +20,7 @@ import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { UniverseBackground } from '../components/UniverseBackground';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'expo-router';
 import { playClickSound } from '../utils/soundEffects';
@@ -72,6 +73,7 @@ function serializeAudioSet(set: Set<string>): string {
 }
 
 export default function AnalysisScreen() {
+  const { user } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [entries, setEntries] = useState<AnalysisEntry[]>([]);
@@ -137,16 +139,15 @@ export default function AnalysisScreen() {
 
   useEffect(() => {
     loadEntries();
-  }, []);
+  }, [user?.id]);
 
   const loadEntries = async () => {
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
+      if (!user?.id) return;
       const { data: rows } = await supabase
         .from('analysis_entries')
         .select('entry_id, data')
-        .eq('user_id', authUser.id);
+        .eq('user_id', user.id);
       if (rows && rows.length > 0) {
         const normalized = rows.map((r: { entry_id: string; data: Record<string, unknown> }) => {
           const e = { id: r.entry_id, ...r.data } as AnalysisEntry & { hook?: string };
@@ -170,11 +171,10 @@ export default function AnalysisScreen() {
 
   const saveEntry = async (entry: AnalysisEntry) => {
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
+      if (!user?.id) return;
       const { id, ...rest } = entry;
       await supabase.from('analysis_entries').upsert(
-        { user_id: authUser.id, entry_id: id, data: rest },
+        { user_id: user.id, entry_id: id, data: rest },
         { onConflict: 'user_id,entry_id' }
       );
     } catch (error) {
@@ -223,12 +223,11 @@ export default function AnalysisScreen() {
     if (!entryId) return;
     playClickSound();
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
+      if (!user?.id) return;
       const { error } = await supabase
         .from('analysis_entries')
         .delete()
-        .eq('user_id', authUser.id)
+        .eq('user_id', user.id)
         .eq('entry_id', entryId);
       if (!error) {
         setEntries(entries.filter(entry => entry.id !== entryId));

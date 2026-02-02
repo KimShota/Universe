@@ -20,6 +20,7 @@ import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { UniverseBackground } from '../components/UniverseBackground';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -110,12 +111,11 @@ export default function StoryFinderScreen() {
 
   const loadMessage = useCallback(async () => {
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
+      if (!user?.id) return;
       const { data } = await supabase
         .from('creator_universe')
         .select('overarching_goal')
-        .eq('user_id', authUser.id)
+        .eq('user_id', user.id)
         .maybeSingle();
       setMessage(data?.overarching_goal ?? '');
     } catch (e) {
@@ -125,12 +125,11 @@ export default function StoryFinderScreen() {
 
   const loadRows = useCallback(async () => {
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
+      if (!user?.id) return;
       const { data } = await supabase
         .from('story_finder')
         .select('rows')
-        .eq('user_id', authUser.id)
+        .eq('user_id', user.id)
         .maybeSingle();
       const raw = ((data?.rows ?? []) as StoryRow[]);
       setRows(raw.map((r) => ({
@@ -154,12 +153,11 @@ export default function StoryFinderScreen() {
 
   const saveRows = async (next: StoryRow[]) => {
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
+      if (!user?.id) return;
       await supabase
         .from('story_finder')
         .upsert(
-          { user_id: authUser.id, rows: next, updated_at: new Date().toISOString() },
+          { user_id: user.id, rows: next, updated_at: new Date().toISOString() },
           { onConflict: 'user_id' }
         );
     } catch (e) {

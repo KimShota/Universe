@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Image,
   Alert,
 } from 'react-native';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { UniverseBackground } from '../../components/UniverseBackground';
 import { Ionicons } from '@expo/vector-icons';
@@ -37,31 +38,27 @@ export default function MainScreen() {
   const { user, logout, refreshUser } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
   const [showMissionModal, setShowMissionModal] = useState(false);
-  const [missionCompleted, setMissionCompleted] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showAssetsMenu, setShowAssetsMenu] = useState(false);
 
-  useEffect(() => {
-    checkTodayMission();
-  }, []);
-
-  const checkTodayMission = async () => {
-    try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
-      const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split('T')[0];
+  const { data: missionData } = useQuery({
+    queryKey: ['mission', today, user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
       const { data } = await supabase
         .from('missions')
         .select('completed')
-        .eq('user_id', authUser.id)
+        .eq('user_id', user.id)
         .eq('date', today)
         .maybeSingle();
-      setMissionCompleted(data?.completed ?? false);
-    } catch (error) {
-      console.error('Error checking mission:', error);
-    }
-  };
+      return data?.completed ?? false;
+    },
+    enabled: !!user?.id,
+  });
+  const missionCompleted = missionData ?? false;
 
   const handlePlanetPress = (planetIndex: number) => {
     playClickSound();
@@ -73,31 +70,23 @@ export default function MainScreen() {
   const handleMissionComplete = async () => {
     playClickSound();
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
-      const today = new Date().toISOString().split('T')[0];
+      if (!user?.id) return;
 
-      const { data: existing } = await supabase
-        .from('missions')
-        .select('completed')
-        .eq('user_id', authUser.id)
-        .eq('date', today)
-        .maybeSingle();
+      const [missionsResult, profileResult] = await Promise.all([
+        supabase.from('missions').select('completed').eq('user_id', user.id).eq('date', today).maybeSingle(),
+        supabase.from('profiles').select('coins, current_planet, last_post_date, streak').eq('id', user.id).single(),
+      ]);
 
+      const existing = missionsResult.data;
       if (existing?.completed) return;
 
+      const profile = profileResult.data;
+      const cur = profile ?? { coins: 0, current_planet: 0, last_post_date: null, streak: 0 };
+
       await supabase.from('missions').upsert(
-        { user_id: authUser.id, date: today, completed: true },
+        { user_id: user.id, date: today, completed: true },
         { onConflict: 'user_id,date' }
       );
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('coins, current_planet, last_post_date, streak')
-        .eq('id', authUser.id)
-        .single();
-
-      const cur = profile ?? { coins: 0, current_planet: 0, last_post_date: null, streak: 0 };
       let newStreak = 1;
       if (cur.last_post_date) {
         const last = new Date(cur.last_post_date);
@@ -114,9 +103,9 @@ export default function MainScreen() {
           last_post_date: today,
           streak: newStreak,
         })
-        .eq('id', authUser.id);
+        .eq('id', user.id);
 
-      setMissionCompleted(true);
+      queryClient.invalidateQueries({ queryKey: ['mission', today, user.id] });
       setShowMissionModal(false);
       await refreshUser();
     } catch (error) {
@@ -403,9 +392,8 @@ export default function MainScreen() {
                         style: 'destructive',
                         onPress: async () => {
                           try {
-                            const { data: { user: authUser } } = await supabase.auth.getUser();
-                            if (!authUser) return;
-                            const uid = authUser.id;
+                            const uid = user?.id;
+                            if (!uid) return;
                             await supabase.from('missions').delete().eq('user_id', uid);
                             await supabase.from('sos_completions').delete().eq('user_id', uid);
                             await supabase.from('creator_universe').delete().eq('user_id', uid);

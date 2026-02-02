@@ -185,7 +185,7 @@ const TIRED_FLOW_SCREENS: TiredFlowScreen[] = [
 export default function SOSFlowScreen() {
   const { id, onboarding } = useLocalSearchParams<{ id?: string; onboarding?: string }>();
   const router = useRouter();
-  const { refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   const issue = SOS_ISSUES.find((i) => i.id === id);
   const isOnboarding = onboarding === '1' || onboarding === 'true';
 
@@ -300,10 +300,9 @@ export default function SOSFlowScreen() {
 
   const handleComplete = async () => {
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
+      if (!user?.id) return;
       await supabase.from('sos_completions').insert({
-        user_id: authUser.id,
+        user_id: user.id,
         issue_type: issue.id,
         asteroids,
         affirmations,
@@ -312,10 +311,10 @@ export default function SOSFlowScreen() {
       const { data: profile } = await supabase
         .from('profiles')
         .select('coins')
-        .eq('id', authUser.id)
+        .eq('id', user.id)
         .single();
       const curCoins = profile?.coins ?? 0;
-      await supabase.from('profiles').update({ coins: curCoins + 10 }).eq('id', authUser.id);
+      await supabase.from('profiles').update({ coins: curCoins + 10 }).eq('id', user.id);
       await refreshUser();
       router.push('/(tabs)/main');
     } catch (error) {

@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { UniverseBackground } from '../../components/UniverseBackground';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import Svg, { Line } from 'react-native-svg';
 import { useRouter } from 'expo-router';
@@ -33,6 +34,7 @@ type ScreenType = 'vision' | 'avatar' | 'identity';
 type InfoScreenType = 'why' | 'vision' | 'avatar' | 'identity';
 
 export default function CreatorUniverseScreen() {
+  const { user } = useAuth();
   const router = useRouter();
   const scrollViewRef = useRef<ScrollView>(null);
   const infoScrollRef = useRef<ScrollView>(null);
@@ -89,12 +91,11 @@ export default function CreatorUniverseScreen() {
 
   const loadUniverse = useCallback(async () => {
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
+      if (!user?.id) return;
       const { data, error } = await supabase
         .from('creator_universe')
         .select('*')
-        .eq('user_id', authUser.id)
+        .eq('user_id', user.id)
         .maybeSingle();
       if (error || !data) {
         const defaultPillars = [
@@ -104,7 +105,7 @@ export default function CreatorUniverseScreen() {
           { title: 'Content Pillar 4', ideas: [] as string[] },
         ];
         await supabase.from('creator_universe').insert({
-          user_id: authUser.id,
+          user_id: user.id,
           overarching_goal: '',
           content_pillars: defaultPillars,
         });
@@ -165,7 +166,7 @@ export default function CreatorUniverseScreen() {
     } catch (error) {
       console.error('Error loading universe:', error);
     }
-  }, []);
+  }, [user?.id]);
 
   useFocusEffect(
     useCallback(() => {
@@ -180,8 +181,7 @@ export default function CreatorUniverseScreen() {
     identity?: typeof identity;
   }) => {
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
+      if (!user?.id) return;
       const g = overrides?.overarching_goal ?? goal;
       const d = overrides?.demographic ?? demographic;
       const p = overrides?.psychographic ?? psychographic;
@@ -190,7 +190,7 @@ export default function CreatorUniverseScreen() {
         .from('creator_universe')
         .upsert(
           {
-            user_id: authUser.id,
+            user_id: user.id,
             overarching_goal: g,
             content_pillars: pillars,
             avatar: { demographic: d, psychographic: p },

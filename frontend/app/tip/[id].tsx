@@ -19,7 +19,7 @@ export default function TipDetailScreen() {
   const params = useLocalSearchParams<{ id?: string | string[] }>();
   const id = Array.isArray(params.id) ? params.id[0] : params.id ?? '';
   const router = useRouter();
-  const { refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   const tip = CONTENT_TIPS.find((t) => t.id === id);
 
   const [showQuiz, setShowQuiz] = useState(false);
@@ -58,36 +58,33 @@ export default function TipDetailScreen() {
 
   const handleQuizComplete = async () => {
     try {
-      if (tip.quiz?.length) {
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        if (authUser) {
-          const { data: existing } = await supabase
-            .from('content_tips_progress')
-            .select('quiz_completed')
-            .eq('user_id', authUser.id)
-            .eq('tip_id', tip.id)
-            .maybeSingle();
-          if (!existing?.quiz_completed) {
-            await supabase.from('content_tips_progress').upsert(
-              {
-                user_id: authUser.id,
-                tip_id: tip.id,
-                quiz_completed: true,
-                quiz_score: score,
-                completed_at: new Date().toISOString(),
-              },
-              { onConflict: 'user_id,tip_id' }
-            );
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('coins')
-              .eq('id', authUser.id)
-              .single();
-            const curCoins = profile?.coins ?? 0;
-            await supabase.from('profiles').update({ coins: curCoins + 10 }).eq('id', authUser.id);
-          }
-          await refreshUser();
+      if (tip.quiz?.length && user?.id) {
+        const { data: existing } = await supabase
+          .from('content_tips_progress')
+          .select('quiz_completed')
+          .eq('user_id', user.id)
+          .eq('tip_id', tip.id)
+          .maybeSingle();
+        if (!existing?.quiz_completed) {
+          await supabase.from('content_tips_progress').upsert(
+            {
+              user_id: user.id,
+              tip_id: tip.id,
+              quiz_completed: true,
+              quiz_score: score,
+              completed_at: new Date().toISOString(),
+            },
+            { onConflict: 'user_id,tip_id' }
+          );
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('coins')
+            .eq('id', user.id)
+            .single();
+          const curCoins = profile?.coins ?? 0;
+          await supabase.from('profiles').update({ coins: curCoins + 10 }).eq('id', user.id);
         }
+        await refreshUser();
       }
       setShowQuiz(false);
       setQuizComplete(false);
