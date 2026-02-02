@@ -1,6 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import Constants from 'expo-constants';
-import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { Platform } from 'react-native';
@@ -124,10 +122,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (Platform.OS === 'web') {
         redirectUrl = typeof window !== 'undefined' ? window.location.origin + '/' : '';
       } else {
-        const isStandalone = Constants.executionEnvironment === 'standalone' || Constants.executionEnvironment === 'bare';
-        redirectUrl = isStandalone
-          ? `${APP_SCHEME}://`
-          : AuthSession.makeRedirectUri({ path: '/', preferLocalhost: false });
+        // Linking.createURL uses the actual app scheme (frontend:// for dev build, exp:// for Expo Go)
+        const base = Linking.createURL('/');
+        redirectUrl = base.endsWith('/') ? base : `${base}/`;
       }
 
       console.log('[OAuth] Add this URL to Supabase Redirect URLs:', redirectUrl);
