@@ -4,7 +4,7 @@
     "slug": "frontend",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./Media/universe-icon.png",
+    "icon": "./Media/universe-icon-2.png",
     "scheme": "frontend",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
@@ -15,7 +15,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./Media/universe-icon.png",
+        "foregroundImage": "./Media/universe-icon-2.png",
         "backgroundColor": "#000"
       },
       "edgeToEdgeEnabled": true,
@@ -31,7 +31,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./Media/universe-icon.png",
+          "image": "./Media/universe-icon-2.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#000"
