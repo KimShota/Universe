@@ -18,7 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ONBOARDING_DONE_KEY = 'onboarding:done';
 
-const APP_ICON = require('../Media/saturn.png');
+const APP_ICON = require('../Media/bear-waving.png');
 
 const FEATURES = [
   { icon: 'sparkles' as const, title: 'Overcome Fear', desc: "Get support when you're struggling" },
@@ -81,11 +81,7 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <View style={styles.iconOuter}>
-              <View style={styles.iconInner}>
-                <Image source={APP_ICON} style={styles.iconImage} resizeMode="contain" />
-              </View>
-            </View>
+            <Image source={APP_ICON} style={styles.iconImage} resizeMode="contain" />
             <Text style={styles.title}>Universe</Text>
             <Text style={styles.subtitle}>Your Content Creation Journey</Text>
           </View>
@@ -145,35 +141,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 32,
   },
-  iconOuter: {
-    width: 88,
-    height: 88,
-    borderRadius: 22,
-    backgroundColor: 'rgba(60, 45, 90, 0.85)',
-    padding: 6,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.2)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  iconInner: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 16,
-    backgroundColor: 'rgba(20, 55, 60, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
   iconImage: {
-    width: 56,
-    height: 56,
+    width: 120,
+    height: 120,
+    marginBottom: 16,
   },
   title: {
     fontSize: 36,
