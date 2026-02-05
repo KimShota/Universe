@@ -4,7 +4,7 @@ import * as Linking from 'expo-linking';
 import { Platform } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { isValidDeepLink, parseAuthTokensFromUrl } from '../lib/deepLink';
-import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
+import type { User as SupabaseUser, Session, AuthError } from '@supabase/supabase-js';
 
 // Required so the in-app browser closes and delivers the redirect URL to the app
 WebBrowser.maybeCompleteAuthSession();
@@ -26,6 +26,8 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: () => Promise<void>;
+  loginWithEmail: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signUpWithEmail: (email: string, password: string, name?: string) => Promise<{ error: AuthError | null }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -171,6 +173,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginWithEmail = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error && (await supabase.auth.getSession()).data.session) {
+      await syncSession((await supabase.auth.getSession()).data.session);
+    }
+    return { error };
+  };
+
+  const signUpWithEmail = async (email: string, password: string, name?: string) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: name?.trim() || undefined } },
+    });
+    if (!error && (await supabase.auth.getSession()).data.session) {
+      await syncSession((await supabase.auth.getSession()).data.session);
+    }
+    return { error };
+  };
+
   const logout = async () => {
     await supabase.auth.signOut();
     setUser(null);
@@ -185,7 +207,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithEmail, signUpWithEmail, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

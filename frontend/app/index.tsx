@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,27 +8,28 @@ import {
   ActivityIndicator,
   ScrollView,
   SafeAreaView,
+  TextInput,
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import { UniverseBackground } from '../components/UniverseBackground';
-import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ONBOARDING_DONE_KEY = 'onboarding:done';
 
 const APP_ICON = require('../Media/bear-waving.png');
 
-const FEATURES = [
-  { icon: 'sparkles' as const, title: 'Overcome Fear', desc: "Get support when you're struggling" },
-  { icon: 'rocket' as const, title: 'Stay Consistent', desc: 'Track your posting streak' },
-  { icon: 'trending-up' as const, title: 'Grow Strategically', desc: 'Use Universe System to grow your personal brand fast' },
-];
+type EmailMode = 'signin' | 'signup';
 
 export default function LoginScreen() {
-  const { user, loading, login } = useAuth();
+  const { user, loading, login, loginWithEmail, signUpWithEmail } = useAuth();
   const router = useRouter();
+  const [emailMode, setEmailMode] = useState<EmailMode>('signin');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     WebBrowser.maybeCompleteAuthSession();
@@ -86,29 +87,76 @@ export default function LoginScreen() {
             <Text style={styles.subtitle}>Your Content Creation Journey</Text>
           </View>
 
-          <View style={styles.content}>
-            {FEATURES.map((f) => (
-              <View key={f.title} style={styles.featureCard}>
-                <View style={styles.featureIconWrap}>
-                  <Ionicons name={f.icon} size={24} color="#FFD700" />
-                </View>
-                <View style={styles.featureTextWrap}>
-                  <Text style={styles.featureTitle}>{f.title}</Text>
-                  <Text style={styles.featureText}>{f.desc}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
-
           <View style={styles.ctaWrap}>
+            <View style={styles.emailForm}>
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                placeholderTextColor="rgba(255,255,255,0.4)"
+                value={email}
+                onChangeText={(t) => { setEmail(t); setAuthError(null); }}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!submitting}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                placeholderTextColor="rgba(255,255,255,0.4)"
+                value={password}
+                onChangeText={(t) => { setPassword(t); setAuthError(null); }}
+                secureTextEntry
+                editable={!submitting}
+              />
+              {authError ? <Text style={styles.errorText}>{authError}</Text> : null}
+              <TouchableOpacity
+                style={[styles.emailSubmitButton, submitting && styles.emailSubmitDisabled]}
+                onPress={async () => {
+                  const e = email.trim();
+                  const p = password;
+                  if (!e || !p) {
+                    setAuthError('Please enter email and password.');
+                    return;
+                  }
+                  setSubmitting(true);
+                  setAuthError(null);
+                  const result = emailMode === 'signup'
+                    ? await signUpWithEmail(e, p)
+                    : await loginWithEmail(e, p);
+                  setSubmitting(false);
+                  if (result.error) {
+                    setAuthError(result.error.message || 'Something went wrong.');
+                    return;
+                  }
+                }}
+                disabled={submitting}
+              >
+                <Text style={styles.emailSubmitText}>
+                  {submitting ? 'Please wait...' : emailMode === 'signup' ? 'Sign up' : 'Sign in'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.signUpLinkButton}
+                onPress={() => {
+                  setEmailMode(emailMode === 'signin' ? 'signup' : 'signin');
+                  setAuthError(null);
+                }}
+                disabled={submitting}
+              >
+                <Text style={styles.signUpLinkText}>
+                  {emailMode === 'signin' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.orDivider}>or continue with</Text>
             <TouchableOpacity style={styles.loginButton} onPress={login} activeOpacity={0.85}>
               <View style={styles.googleBadge}>
                 <Text style={styles.googleG}>G</Text>
               </View>
               <Text style={styles.loginButtonText}>Continue with Google</Text>
             </TouchableOpacity>
-            <Text style={styles.helperText}>Join thousands of creators on their journey</Text>
-            <View style={styles.pagination} />
+            <Text style={styles.helperText}>Join creators on their journey</Text>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -133,68 +181,86 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 40,
-    paddingBottom: 32,
+    paddingHorizontal: 28,
+    paddingTop: 36,
+    paddingBottom: 40,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
-  },
-  iconImage: {
-    width: 120,
-    height: 120,
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: '#FFD700',
-    marginBottom: 6,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.65)',
-    textAlign: 'center',
-  },
-  content: {
-    width: '100%',
-    gap: 16,
     marginBottom: 28,
   },
-  featureCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(60, 45, 90, 0.5)',
-    paddingVertical: 18,
-    paddingHorizontal: 20,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.2)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
+  iconImage: {
+    width: 112,
+    height: 112,
+    marginBottom: 14,
   },
-  featureIconWrap: {
-    marginRight: 16,
-  },
-  featureTextWrap: { flex: 1 },
-  featureTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+  title: {
+    fontSize: 32,
+    fontWeight: '800',
     color: '#FFD700',
     marginBottom: 4,
+    letterSpacing: 0.5,
   },
-  featureText: {
-    fontSize: 14,
+  subtitle: {
+    fontSize: 15,
     color: 'rgba(255, 255, 255, 0.7)',
-    lineHeight: 20,
+    textAlign: 'center',
+    paddingHorizontal: 8,
   },
   ctaWrap: {
     width: '100%',
     alignItems: 'center',
+  },
+  emailForm: {
+    width: '100%',
+    maxWidth: 320,
+    marginBottom: 16,
+  },
+  input: {
+    backgroundColor: 'rgba(60, 45, 90, 0.6)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: '#fff',
+    marginBottom: 12,
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#ff6b6b',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  emailSubmitButton: {
+    backgroundColor: 'rgba(255, 215, 0, 0.9)',
+    paddingVertical: 14,
+    borderRadius: 24,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  emailSubmitDisabled: {
+    opacity: 0.7,
+  },
+  emailSubmitText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0a0e27',
+  },
+  signUpLinkButton: {
+    marginTop: 4,
+    marginBottom: 20,
+    paddingVertical: 6,
+  },
+  signUpLinkText: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  orDivider: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.45)',
+    marginBottom: 14,
   },
   loginButton: {
     flexDirection: 'row',
@@ -203,11 +269,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFD700',
     paddingVertical: 16,
     paddingHorizontal: 28,
-    borderRadius: 30,
+    borderRadius: 28,
     width: '100%',
     maxWidth: 320,
     gap: 12,
-    marginBottom: 14,
+    marginBottom: 12,
   },
   googleBadge: {
     width: 24,
@@ -228,15 +294,9 @@ const styles = StyleSheet.create({
     color: '#0a0e27',
   },
   helperText: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.55)',
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.5)',
     textAlign: 'center',
-    marginBottom: 24,
-  },
-  pagination: {
-    width: 32,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    marginTop: 4,
   },
 });
