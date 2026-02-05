@@ -15,6 +15,7 @@ import {
   Platform,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  Alert,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
@@ -24,6 +25,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { playClickSound } from '../utils/soundEffects';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { MAX_SCRIPTS } from '../constants/limits';
 
 const { width, height } = Dimensions.get('window');
 const SHEET_MAX_HEIGHT = Math.min(height * 0.92, height - 60);
@@ -138,6 +140,10 @@ export default function BatchingScreen() {
   };
 
   const handleAddNew = async () => {
+    if (scripts.length >= MAX_SCRIPTS) {
+      Alert.alert('Limit reached', `You can create up to ${MAX_SCRIPTS} scripts. Delete one to add a new one.`);
+      return;
+    }
     const newScript: Script = {
       id: Date.now().toString(),
       title: '',
@@ -357,11 +363,12 @@ export default function BatchingScreen() {
           {/* Add Button */}
           <View style={styles.addButtonContainer}>
             <TouchableOpacity
-              style={styles.addButton}
+              style={[styles.addButton, scripts.length >= MAX_SCRIPTS && styles.addButtonDisabled]}
               onPress={() => {
                 playClickSound();
                 handleAddNew();
               }}
+              disabled={scripts.length >= MAX_SCRIPTS}
             >
               <Ionicons name="add" size={32} color="#FFD700" />
             </TouchableOpacity>
@@ -1018,6 +1025,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 8,
     elevation: 8,
+  },
+  addButtonDisabled: {
+    opacity: 0.5,
   },
   paginationContainer: {
     position: 'absolute',

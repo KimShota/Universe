@@ -15,6 +15,7 @@ import {
   Platform,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  Alert,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,6 +25,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'expo-router';
 import { playClickSound } from '../utils/soundEffects';
+import { MAX_ANALYSIS_ENTRIES } from '../constants/limits';
 
 const { width, height } = Dimensions.get('window');
 const SHEET_MAX_HEIGHT = Math.min(height * 0.92, height - 60);
@@ -183,6 +185,10 @@ export default function AnalysisScreen() {
   };
 
   const handleAddNew = async () => {
+    if (entries.length >= MAX_ANALYSIS_ENTRIES) {
+      Alert.alert('Limit reached', `You can create up to ${MAX_ANALYSIS_ENTRIES} analysis entries. Delete one to add a new one.`);
+      return;
+    }
     playClickSound();
     const newEntry: AnalysisEntry = {
       id: Date.now().toString(),
@@ -435,8 +441,9 @@ export default function AnalysisScreen() {
           {/* Add Button */}
           <View style={styles.addButtonContainer}>
             <TouchableOpacity
-              style={styles.addButton}
+              style={[styles.addButton, entries.length >= MAX_ANALYSIS_ENTRIES && styles.addButtonDisabled]}
               onPress={handleAddNew}
+              disabled={entries.length >= MAX_ANALYSIS_ENTRIES}
             >
               <Ionicons name="add" size={32} color="#FFD700" />
             </TouchableOpacity>
@@ -851,6 +858,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 8,
     elevation: 8,
+  },
+  addButtonDisabled: {
+    opacity: 0.5,
   },
   contentContainer: {
     padding: 20,

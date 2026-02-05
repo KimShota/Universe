@@ -15,6 +15,7 @@ import {
   Animated,
   PanResponder,
   Platform,
+  Alert,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,6 +26,7 @@ import { supabase } from '../lib/supabase';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { playClickSound } from '../utils/soundEffects';
+import { MAX_STORY_CARDS } from '../constants/limits';
 
 const { width, height } = Dimensions.get('window');
 const SHEET_MAX_HEIGHT = Math.min(height * 0.92, height - 60);
@@ -176,6 +178,10 @@ export default function StoryFinderScreen() {
   };
 
   const addCard = () => {
+    if (rows.length >= MAX_STORY_CARDS) {
+      Alert.alert('Limit reached', `You can create up to ${MAX_STORY_CARDS} story cards. Delete one to add a new one.`);
+      return;
+    }
     playClickSound();
     const newRow: StoryRow = {
       id: Date.now().toString(),
@@ -395,7 +401,11 @@ export default function StoryFinderScreen() {
             </View>
           )}
 
-          <TouchableOpacity style={styles.addCardButton} onPress={addCard}>
+          <TouchableOpacity
+            style={[styles.addCardButton, rows.length >= MAX_STORY_CARDS && styles.addCardButtonDisabled]}
+            onPress={addCard}
+            disabled={rows.length >= MAX_STORY_CARDS}
+          >
             <Ionicons name="add" size={24} color="rgba(255, 255, 255, 0.85)" />
             <Text style={styles.addCardText}>Add new story card</Text>
           </TouchableOpacity>
@@ -561,6 +571,9 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'rgba(255, 215, 0, 0.35)',
     borderStyle: 'dashed',
+  },
+  addCardButtonDisabled: {
+    opacity: 0.5,
   },
   addCardText: {
     fontSize: 16,
