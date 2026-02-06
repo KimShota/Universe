@@ -9,6 +9,7 @@ import {
   ScrollView,
   SafeAreaView,
   TextInput,
+  Alert,
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { useRouter } from 'expo-router';
@@ -130,6 +131,12 @@ export default function LoginScreen() {
                   if (result.error) {
                     setAuthError(result.error.message || 'Something went wrong.');
                     return;
+                  }
+                  if (emailMode === 'signup') {
+                    Alert.alert(
+                      'Check your email',
+                      "We've sent you a confirmation link. Please check your inbox and click the link to activate your account."
+                    );
                   }
                 }}
                 disabled={submitting}
