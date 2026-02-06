@@ -185,7 +185,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: name?.trim() || undefined } },
+      options: {
+        data: { full_name: name?.trim() || undefined },
+        emailRedirectTo: 'https://kimshota.github.io/Confirmation_page_quiz/',
+      },
     });
     if (!error && (await supabase.auth.getSession()).data.session) {
       await syncSession((await supabase.auth.getSession()).data.session);

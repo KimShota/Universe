@@ -85,9 +85,11 @@ export default function LoginScreen() {
             <Image source={APP_ICON} style={styles.iconImage} resizeMode="contain" />
             <Text style={styles.title}>Universe</Text>
             <Text style={styles.subtitle}>Your Content Creation Journey</Text>
+            <View style={styles.headerLine} />
           </View>
 
           <View style={styles.ctaWrap}>
+            <View style={styles.emailFormCard}>
             <View style={styles.emailForm}>
               <TextInput
                 style={styles.input}
@@ -145,11 +147,26 @@ export default function LoginScreen() {
                 disabled={submitting}
               >
                 <Text style={styles.signUpLinkText}>
-                  {emailMode === 'signin' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+                  {emailMode === 'signin' ? (
+                    <>
+                      <Text style={styles.signUpLinkLabel}>{"Don't have an account? "}</Text>
+                      <Text style={styles.signUpLinkHighlight}>Sign up</Text>
+                    </>
+                  ) : (
+                    <>
+                      <Text style={styles.signUpLinkLabel}>Already have an account? </Text>
+                      <Text style={styles.signUpLinkHighlight}>Sign in</Text>
+                    </>
+                  )}
                 </Text>
               </TouchableOpacity>
             </View>
-            <Text style={styles.orDivider}>or continue with</Text>
+            </View>
+            <View style={styles.orDividerWrap}>
+              <View style={styles.orDividerLine} />
+              <Text style={styles.orDivider}>or continue with</Text>
+              <View style={styles.orDividerLine} />
+            </View>
             <TouchableOpacity style={styles.loginButton} onPress={login} activeOpacity={0.85}>
               <View style={styles.googleBadge}>
                 <Text style={styles.googleG}>G</Text>
@@ -181,64 +198,87 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     alignItems: 'center',
-    paddingHorizontal: 28,
-    paddingTop: 36,
-    paddingBottom: 40,
+    paddingHorizontal: 24,
+    paddingTop: 32,
+    paddingBottom: 48,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 28,
+    marginBottom: 32,
   },
   iconImage: {
-    width: 112,
-    height: 112,
-    marginBottom: 14,
+    width: 100,
+    height: 100,
+    marginBottom: 12,
   },
   title: {
-    fontSize: 32,
+    fontSize: 30,
     fontWeight: '800',
     color: '#FFD700',
-    marginBottom: 4,
-    letterSpacing: 0.5,
+    marginBottom: 6,
+    letterSpacing: 1,
   },
   subtitle: {
-    fontSize: 15,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.75)',
     textAlign: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: 16,
+    lineHeight: 20,
+  },
+  headerLine: {
+    width: 48,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: 'rgba(255, 215, 0, 0.35)',
+    marginTop: 20,
   },
   ctaWrap: {
     width: '100%',
     alignItems: 'center',
+    maxWidth: 340,
+  },
+  emailFormCard: {
+    width: '100%',
+    backgroundColor: 'rgba(40, 30, 60, 0.5)',
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.12)',
   },
   emailForm: {
     width: '100%',
-    maxWidth: 320,
-    marginBottom: 16,
   },
   input: {
-    backgroundColor: 'rgba(60, 45, 90, 0.6)',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
     fontSize: 16,
     color: '#fff',
-    marginBottom: 12,
+    marginBottom: 14,
   },
   errorText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#ff6b6b',
     marginBottom: 12,
     textAlign: 'center',
   },
   emailSubmitButton: {
-    backgroundColor: 'rgba(255, 215, 0, 0.9)',
-    paddingVertical: 14,
-    borderRadius: 24,
+    backgroundColor: '#FFD700',
+    paddingVertical: 16,
+    borderRadius: 14,
     alignItems: 'center',
-    marginBottom: 12,
+    marginTop: 4,
+    marginBottom: 16,
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
   },
   emailSubmitDisabled: {
     opacity: 0.7,
@@ -249,54 +289,74 @@ const styles = StyleSheet.create({
     color: '#0a0e27',
   },
   signUpLinkButton: {
-    marginTop: 4,
-    marginBottom: 20,
-    paddingVertical: 6,
+    alignItems: 'center',
+    paddingVertical: 4,
   },
   signUpLinkText: {
-    fontSize: 13,
+    fontSize: 14,
+  },
+  signUpLinkLabel: {
     color: 'rgba(255, 255, 255, 0.7)',
   },
+  signUpLinkHighlight: {
+    color: '#FFD700',
+    fontWeight: '600',
+  },
+  orDividerWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 320,
+    marginBottom: 18,
+    gap: 12,
+  },
+  orDividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+  },
   orDivider: {
-    fontSize: 13,
+    fontSize: 12,
     color: 'rgba(255, 255, 255, 0.45)',
-    marginBottom: 14,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   loginButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFD700',
-    paddingVertical: 16,
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 215, 0, 0.6)',
+    paddingVertical: 15,
     paddingHorizontal: 28,
-    borderRadius: 28,
+    borderRadius: 14,
     width: '100%',
     maxWidth: 320,
     gap: 12,
-    marginBottom: 12,
+    marginBottom: 16,
   },
   googleBadge: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: 'rgba(10, 14, 39, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   googleG: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#fff',
+    color: '#FFFFFF',
   },
   loginButtonText: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '700',
-    color: '#0a0e27',
+    color: '#FFD700',
   },
   helperText: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: 'rgba(255, 255, 255, 0.55)',
     textAlign: 'center',
-    marginTop: 4,
   },
 });
