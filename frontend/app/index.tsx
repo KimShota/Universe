@@ -214,8 +214,8 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   iconImage: {
-    width: 100,
-    height: 100,
+    width: 130,
+    height: 130,
     marginBottom: 12,
   },
   title: {
