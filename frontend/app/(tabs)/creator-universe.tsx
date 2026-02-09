@@ -9,6 +9,8 @@ import {
   SafeAreaView,
   Dimensions,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { UniverseBackground } from '../../components/UniverseBackground';
 import { Ionicons } from '@expo/vector-icons';
@@ -375,19 +377,25 @@ export default function CreatorUniverseScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Horizontal Scrollable Screens */}
-        <ScrollView
-          ref={scrollViewRef}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-          style={styles.horizontalScroll}
+        {/* Horizontal Scrollable Screens — avoid keyboard covering inputs */}
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoid}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         >
+          <ScrollView
+            ref={scrollViewRef}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+            style={styles.horizontalScroll}
+            keyboardShouldPersistTaps="handled"
+          >
           {/* Vision Screen */}
           <View style={styles.screen}>
-            <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
+            <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer} keyboardShouldPersistTaps="handled">
               {/* Your Ethos */}
               <View style={styles.goalContainer}>
                 <View style={styles.goalLabelRow}>
@@ -503,7 +511,7 @@ export default function CreatorUniverseScreen() {
 
           {/* Avatar Screen */}
           <View style={styles.screen}>
-            <ScrollView style={styles.scrollView} contentContainerStyle={[styles.contentContainer, styles.contentContainerAvatar]}>
+            <ScrollView style={styles.scrollView} contentContainerStyle={[styles.contentContainer, styles.contentContainerAvatar]} keyboardShouldPersistTaps="handled">
               {/* Target Avatar */}
               <View style={[styles.goalContainer, styles.goalContainerAvatar]}>
                 <View style={styles.goalLabelRow}>
@@ -732,7 +740,7 @@ export default function CreatorUniverseScreen() {
 
           {/* Identity Screen */}
           <View style={styles.screen}>
-            <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
+            <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer} keyboardShouldPersistTaps="handled">
               {/* Identity */}
               <View style={styles.goalContainer}>
                 <View style={styles.goalLabelRow}>
@@ -825,7 +833,8 @@ export default function CreatorUniverseScreen() {
               </View>
             </ScrollView>
           </View>
-        </ScrollView>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
 
       {/* Info Modal — swipeable Vision / Avatar / Identity */}
@@ -1055,6 +1064,9 @@ const styles = StyleSheet.create({
   helpButton: {
     zIndex: 1,
     padding: 4,
+  },
+  keyboardAvoid: {
+    flex: 1,
   },
   horizontalScroll: {
     flex: 1,
