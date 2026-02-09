@@ -14,13 +14,17 @@ import { UniverseBackground } from '../../components/UniverseBackground';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
-import Svg, { Line } from 'react-native-svg';
+import Svg, { Line, Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { playClickSound } from '../../utils/soundEffects';
 
 const { width, height } = Dimensions.get('window');
 const INFO_PAGE_WIDTH = Math.min(width - 40, 500);
+const DIAGRAM_WIDTH = width - 40;
+const DIAGRAM_CENTER = DIAGRAM_WIDTH / 2;
+const CONNECTION_GOLD = 'rgba(255, 215, 0, 0.9)';
+const CONNECTION_GLOW = 'rgba(255, 215, 0, 0.25)';
 
 const REGION_LAYOUT: string[][] = [
   ['North America'],
@@ -395,19 +399,29 @@ export default function CreatorUniverseScreen() {
                   value={goal}
                   onChangeText={setGoal}
                   onBlur={() => saveUniverse()}
-                  placeholder="What's your main goal?"
+                  placeholder="What is your message?"
                   placeholderTextColor="rgba(255, 255, 255, 0.45)"
                   multiline
                 />
               </View>
 
-              {/* Connection Lines from Goal to Pillars */}
+              {/* Connection Lines from Goal to Pillars — curved */}
               <View style={styles.connectionsContainer}>
-                <Svg height="60" width={width - 40} style={styles.svg}>
-                  <Line x1={(width - 40) / 2} y1="0" x2={(width - 40) * 0.125} y2="60" stroke="#FFD700" strokeWidth="3" />
-                  <Line x1={(width - 40) / 2} y1="0" x2={(width - 40) * 0.375} y2="60" stroke="#FFD700" strokeWidth="3" />
-                  <Line x1={(width - 40) / 2} y1="0" x2={(width - 40) * 0.625} y2="60" stroke="#FFD700" strokeWidth="3" />
-                  <Line x1={(width - 40) / 2} y1="0" x2={(width - 40) * 0.875} y2="60" stroke="#FFD700" strokeWidth="3" />
+                <Svg height="60" width={DIAGRAM_WIDTH} style={styles.svg}>
+                  {[0.125, 0.375, 0.625, 0.875].map((t) => {
+                    const ex = DIAGRAM_WIDTH * t;
+                    const pathD = `M ${DIAGRAM_CENTER} 0 Q ${ex} 28 ${ex} 60`;
+                    return (
+                      <Path key={t} d={pathD} stroke={CONNECTION_GLOW} strokeWidth={8} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                    );
+                  })}
+                  {[0.125, 0.375, 0.625, 0.875].map((t) => {
+                    const ex = DIAGRAM_WIDTH * t;
+                    const pathD = `M ${DIAGRAM_CENTER} 0 Q ${ex} 28 ${ex} 60`;
+                    return (
+                      <Path key={t} d={pathD} stroke={CONNECTION_GOLD} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                    );
+                  })}
                 </Svg>
               </View>
 
@@ -420,7 +434,7 @@ export default function CreatorUniverseScreen() {
                       value={pillar.title}
                       onChangeText={(text) => updatePillarTitle(index, text)}
                       onBlur={() => saveUniverse()}
-                      placeholder={`Content Pillar ${index + 1}`}
+                      placeholder={`Pillar ${index + 1}`}
                       placeholderTextColor="rgba(255, 215, 0, 0.5)"
                       multiline
                       numberOfLines={2}
@@ -431,11 +445,15 @@ export default function CreatorUniverseScreen() {
 
               {/* Connection Lines from Pillars to Ideas */}
               <View style={styles.pillarConnectionsContainer}>
-                <Svg height="40" width={width - 40} style={styles.svg}>
-                  <Line x1={(width - 40) * 0.125} y1="0" x2={(width - 40) * 0.125} y2="40" stroke="#FFD700" strokeWidth="3" />
-                  <Line x1={(width - 40) * 0.375} y1="0" x2={(width - 40) * 0.375} y2="40" stroke="#FFD700" strokeWidth="3" />
-                  <Line x1={(width - 40) * 0.625} y1="0" x2={(width - 40) * 0.625} y2="40" stroke="#FFD700" strokeWidth="3" />
-                  <Line x1={(width - 40) * 0.875} y1="0" x2={(width - 40) * 0.875} y2="40" stroke="#FFD700" strokeWidth="3" />
+                <Svg height="40" width={DIAGRAM_WIDTH} style={styles.svg}>
+                  {[0.125, 0.375, 0.625, 0.875].map((t) => {
+                    const x = DIAGRAM_WIDTH * t;
+                    return <Line key={t} x1={x} y1="0" x2={x} y2="40" stroke={CONNECTION_GLOW} strokeWidth={8} strokeLinecap="round" />;
+                  })}
+                  {[0.125, 0.375, 0.625, 0.875].map((t) => {
+                    const x = DIAGRAM_WIDTH * t;
+                    return <Line key={t} x1={x} y1="0" x2={x} y2="40" stroke={CONNECTION_GOLD} strokeWidth={2.5} strokeLinecap="round" />;
+                  })}
                 </Svg>
               </View>
 
@@ -494,11 +512,19 @@ export default function CreatorUniverseScreen() {
                 </View>
               </View>
 
-              {/* Connection Lines from Target Avatar */}
+              {/* Connection Lines from Target Avatar — curved */}
               <View style={styles.connectionsContainer}>
-                <Svg height="60" width={width - 40} style={styles.svg}>
-                  <Line x1={(width - 40) / 2} y1="0" x2={(width - 40) * 0.25} y2="60" stroke="#FFD700" strokeWidth="3" />
-                  <Line x1={(width - 40) / 2} y1="0" x2={(width - 40) * 0.75} y2="60" stroke="#FFD700" strokeWidth="3" />
+                <Svg height="60" width={DIAGRAM_WIDTH} style={styles.svg}>
+                  {[0.25, 0.75].map((t) => {
+                    const ex = DIAGRAM_WIDTH * t;
+                    const pathD = `M ${DIAGRAM_CENTER} 0 Q ${ex} 28 ${ex} 60`;
+                    return <Path key={t} d={pathD} stroke={CONNECTION_GLOW} strokeWidth={8} fill="none" strokeLinecap="round" strokeLinejoin="round" />;
+                  })}
+                  {[0.25, 0.75].map((t) => {
+                    const ex = DIAGRAM_WIDTH * t;
+                    const pathD = `M ${DIAGRAM_CENTER} 0 Q ${ex} 28 ${ex} 60`;
+                    return <Path key={t} d={pathD} stroke={CONNECTION_GOLD} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />;
+                  })}
                 </Svg>
               </View>
 
@@ -520,9 +546,11 @@ export default function CreatorUniverseScreen() {
 
               {/* Connection Lines from Categories to Inputs */}
               <View style={styles.pillarConnectionsContainer}>
-                <Svg height="40" width={width - 40} style={styles.svg}>
-                  <Line x1={(width - 40) * 0.25} y1="0" x2={(width - 40) * 0.25} y2="40" stroke="#FFD700" strokeWidth="3" />
-                  <Line x1={(width - 40) * 0.75} y1="0" x2={(width - 40) * 0.75} y2="40" stroke="#FFD700" strokeWidth="3" />
+                <Svg height="40" width={DIAGRAM_WIDTH} style={styles.svg}>
+                  <Line x1={DIAGRAM_WIDTH * 0.25} y1="0" x2={DIAGRAM_WIDTH * 0.25} y2="40" stroke={CONNECTION_GLOW} strokeWidth={8} strokeLinecap="round" />
+                  <Line x1={DIAGRAM_WIDTH * 0.75} y1="0" x2={DIAGRAM_WIDTH * 0.75} y2="40" stroke={CONNECTION_GLOW} strokeWidth={8} strokeLinecap="round" />
+                  <Line x1={DIAGRAM_WIDTH * 0.25} y1="0" x2={DIAGRAM_WIDTH * 0.25} y2="40" stroke={CONNECTION_GOLD} strokeWidth={2.5} strokeLinecap="round" />
+                  <Line x1={DIAGRAM_WIDTH * 0.75} y1="0" x2={DIAGRAM_WIDTH * 0.75} y2="40" stroke={CONNECTION_GOLD} strokeWidth={2.5} strokeLinecap="round" />
                 </Svg>
               </View>
 
@@ -713,13 +741,19 @@ export default function CreatorUniverseScreen() {
                 </View>
               </View>
 
-              {/* Connection Lines from Identity */}
+              {/* Connection Lines from Identity — curved */}
               <View style={styles.connectionsContainer}>
-                <Svg height="60" width={width - 40} style={styles.svg}>
-                  <Line x1={(width - 40) / 2} y1="0" x2={(width - 40) * 0.125} y2="60" stroke="#FFD700" strokeWidth="3" />
-                  <Line x1={(width - 40) / 2} y1="0" x2={(width - 40) * 0.375} y2="60" stroke="#FFD700" strokeWidth="3" />
-                  <Line x1={(width - 40) / 2} y1="0" x2={(width - 40) * 0.625} y2="60" stroke="#FFD700" strokeWidth="3" />
-                  <Line x1={(width - 40) / 2} y1="0" x2={(width - 40) * 0.875} y2="60" stroke="#FFD700" strokeWidth="3" />
+                <Svg height="60" width={DIAGRAM_WIDTH} style={styles.svg}>
+                  {[0.125, 0.375, 0.625, 0.875].map((t) => {
+                    const ex = DIAGRAM_WIDTH * t;
+                    const pathD = `M ${DIAGRAM_CENTER} 0 Q ${ex} 28 ${ex} 60`;
+                    return <Path key={t} d={pathD} stroke={CONNECTION_GLOW} strokeWidth={8} fill="none" strokeLinecap="round" strokeLinejoin="round" />;
+                  })}
+                  {[0.125, 0.375, 0.625, 0.875].map((t) => {
+                    const ex = DIAGRAM_WIDTH * t;
+                    const pathD = `M ${DIAGRAM_CENTER} 0 Q ${ex} 28 ${ex} 60`;
+                    return <Path key={t} d={pathD} stroke={CONNECTION_GOLD} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />;
+                  })}
                 </Svg>
               </View>
 
@@ -736,11 +770,15 @@ export default function CreatorUniverseScreen() {
 
               {/* Connection Lines from Categories to Inputs */}
               <View style={styles.pillarConnectionsContainer}>
-                <Svg height="40" width={width - 40} style={styles.svg}>
-                  <Line x1={(width - 40) * 0.125} y1="0" x2={(width - 40) * 0.125} y2="40" stroke="#FFD700" strokeWidth="3" />
-                  <Line x1={(width - 40) * 0.375} y1="0" x2={(width - 40) * 0.375} y2="40" stroke="#FFD700" strokeWidth="3" />
-                  <Line x1={(width - 40) * 0.625} y1="0" x2={(width - 40) * 0.625} y2="40" stroke="#FFD700" strokeWidth="3" />
-                  <Line x1={(width - 40) * 0.875} y1="0" x2={(width - 40) * 0.875} y2="40" stroke="#FFD700" strokeWidth="3" />
+                <Svg height="40" width={DIAGRAM_WIDTH} style={styles.svg}>
+                  {[0.125, 0.375, 0.625, 0.875].map((t) => {
+                    const x = DIAGRAM_WIDTH * t;
+                    return <Line key={t} x1={x} y1="0" x2={x} y2="40" stroke={CONNECTION_GLOW} strokeWidth={8} strokeLinecap="round" />;
+                  })}
+                  {[0.125, 0.375, 0.625, 0.875].map((t) => {
+                    const x = DIAGRAM_WIDTH * t;
+                    return <Line key={t} x1={x} y1="0" x2={x} y2="40" stroke={CONNECTION_GOLD} strokeWidth={2.5} strokeLinecap="round" />;
+                  })}
                 </Svg>
               </View>
 
@@ -752,7 +790,7 @@ export default function CreatorUniverseScreen() {
                     <View key={category} style={styles.ideasColumn}>
                       {identity[category].map((value, index) => (
                         <View key={index} style={styles.ideaBoxWrapper}>
-                          <View style={styles.ideaBox}>
+                          <View style={[styles.ideaBox, category === 'pain' && styles.ideaBoxPain]}>
                             <TextInput
                               style={[styles.ideaInput, category === 'passion' && styles.ideaInputPassion]}
                               value={value}
@@ -957,10 +995,10 @@ export default function CreatorUniverseScreen() {
 
 const cardShadow = {
   shadowColor: '#FFD700',
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.15,
-  shadowRadius: 8,
-  elevation: 4,
+  shadowOffset: { width: 0, height: 3 },
+  shadowOpacity: 0.22,
+  shadowRadius: 10,
+  elevation: 6,
 };
 
 const styles = StyleSheet.create({
@@ -1058,9 +1096,9 @@ const styles = StyleSheet.create({
   },
   goalInput: {
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 215, 0, 0.45)',
-    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 215, 0, 0.5)',
+    borderRadius: 18,
     padding: 18,
     color: '#fff',
     fontSize: 16,
@@ -1073,7 +1111,7 @@ const styles = StyleSheet.create({
   },
   connectionsContainer: {
     height: 56,
-    marginBottom: 2,
+    marginBottom: 4,
   },
   svg: {
     position: 'absolute',
@@ -1089,31 +1127,32 @@ const styles = StyleSheet.create({
   },
   pillarBox: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.07)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 215, 0, 0.35)',
-    borderRadius: 14,
-    padding: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 215, 0, 0.4)',
+    borderRadius: 16,
+    padding: 14,
     minHeight: 84,
     justifyContent: 'center',
     ...cardShadow,
   },
   avatarBox: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.07)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 215, 0, 0.35)',
-    borderRadius: 14,
-    padding: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 215, 0, 0.4)',
+    borderRadius: 16,
+    padding: 14,
     minHeight: 84,
     justifyContent: 'center',
     ...cardShadow,
   },
   pillarTitle: {
     color: '#FFD700',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
     textAlign: 'center',
+    letterSpacing: 0.3,
   },
   avatarCategoryHeader: {
     flexDirection: 'row',
@@ -1122,8 +1161,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   pillarConnectionsContainer: {
-    height: 36,
-    marginBottom: 2,
+    height: 40,
+    marginBottom: 4,
   },
   ideasRow: {
     flexDirection: 'row',
@@ -1147,11 +1186,12 @@ const styles = StyleSheet.create({
     gap: 0,
   },
   avatarPanel: {
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 215, 0, 0.28)',
+    ...cardShadow,
   },
   avatarSection: {
     marginBottom: 14,
@@ -1258,24 +1298,28 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: 'rgba(255, 215, 0, 0.28)',
     borderRadius: 12,
-    padding: 12,
+    padding: 14,
     color: '#fff',
     fontSize: 14,
     lineHeight: 20,
-    minHeight: 56,
+    minHeight: 76,
     textAlignVertical: 'top',
   },
   ideaBoxWrapper: {
     position: 'relative',
   },
   ideaBox: {
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: 'rgba(255, 255, 255, 0.07)',
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 215, 0, 0.28)',
-    borderRadius: 12,
-    padding: 12,
-    minHeight: 58,
+    borderColor: 'rgba(255, 215, 0, 0.35)',
+    borderRadius: 14,
+    padding: 14,
+    minHeight: 78,
     ...cardShadow,
+  },
+  ideaBoxPain: {
+    minHeight: 96,
+    padding: 16,
   },
   ideaInput: {
     color: '#fff',
