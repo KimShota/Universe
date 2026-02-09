@@ -75,6 +75,8 @@ export default function CreatorUniverseScreen() {
     desire: '',
     creators: '',
   });
+  const MIN_PROFESSION_HEIGHT = 56;
+  const [professionHeight, setProfessionHeight] = useState(MIN_PROFESSION_HEIGHT);
 
   // Identity screen state — start with 0 boxes per category; users add via + like Vision
   const [identity, setIdentity] = useState<{
@@ -382,11 +384,11 @@ export default function CreatorUniverseScreen() {
           {/* Vision Screen */}
           <View style={styles.screen}>
             <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
-              {/* Overarching Goal */}
+              {/* Your Ethos */}
               <View style={styles.goalContainer}>
                 <View style={styles.goalLabelRow}>
                   <Ionicons name="compass-outline" size={16} color="#FFD700" />
-                  <Text style={styles.goalLabel}>Overarching Goal</Text>
+                  <Text style={styles.goalLabel}>Your Ethos</Text>
                 </View>
                 <TextInput
                   style={styles.goalInput}
@@ -638,12 +640,18 @@ export default function CreatorUniverseScreen() {
                     <View style={styles.avatarSection}>
                       <Text style={styles.avatarFieldLabel}>Profession</Text>
                       <TextInput
-                        style={styles.psychographicInput}
+                        style={[styles.psychographicInput, { height: professionHeight }]}
                         value={demographic.profession}
                         onChangeText={(t) => setDemographic({ ...demographic, profession: t })}
+                        onContentSizeChange={(e) => {
+                          const h = e.nativeEvent?.contentSize?.height;
+                          if (h == null) return;
+                          setProfessionHeight(Math.max(MIN_PROFESSION_HEIGHT, h + 28));
+                        }}
                         onBlur={() => saveUniverse()}
                         placeholder="e.g. Entrepreneurs, marketers..."
                         placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                        multiline
                       />
                     </View>
                   </View>

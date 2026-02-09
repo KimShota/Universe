@@ -24,6 +24,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'expo-router';
+import * as Clipboard from 'expo-clipboard';
 import { playClickSound } from '../utils/soundEffects';
 import { MAX_ANALYSIS_ENTRIES } from '../constants/limits';
 
@@ -83,6 +84,8 @@ export default function AnalysisScreen() {
   const [showEntryDetail, setShowEntryDetail] = useState(false);
   const [showTipModal, setShowTipModal] = useState(false);
   const [tipPage, setTipPage] = useState(1);
+  const MIN_EXPANDABLE_HEIGHT = 80;
+  const [expandableHeights, setExpandableHeights] = useState({ pacing: MIN_EXPANDABLE_HEIGHT, storyArc: MIN_EXPANDABLE_HEIGHT, callToAction: MIN_EXPANDABLE_HEIGHT });
 
   const sheetAnim = useRef(new Animated.Value(SHEET_MAX_HEIGHT)).current;
   const panStartY = useRef(0);
@@ -122,6 +125,11 @@ export default function AnalysisScreen() {
       stiffness: 200,
     }).start();
   }, [showTipModal, sheetAnim]);
+
+  useEffect(() => {
+    if (selectedEntryId)
+      setExpandableHeights({ pacing: MIN_EXPANDABLE_HEIGHT, storyArc: MIN_EXPANDABLE_HEIGHT, callToAction: MIN_EXPANDABLE_HEIGHT });
+  }, [selectedEntryId]);
 
   const sheetPanResponder = useMemo(
     () =>
@@ -628,6 +636,22 @@ export default function AnalysisScreen() {
                   placeholder="https://www.instagram.com/reel/."
                   placeholderTextColor="rgba(255, 255, 255, 0.4)"
                 />
+                {(currentEntry.reelLink ?? '').trim().length > 0 && (
+                  <TouchableOpacity
+                    style={styles.copyButton}
+                    onPress={async () => {
+                      playClickSound();
+                      const link = (currentEntry.reelLink ?? '').trim();
+                      if (link) {
+                        await Clipboard.setStringAsync(link);
+                        Alert.alert('Copied', 'Instagram link copied to clipboard');
+                      }
+                    }}
+                    accessibilityLabel="Copy link"
+                  >
+                    <Ionicons name="copy-outline" size={20} color="#FFD700" />
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
           </View>
@@ -709,31 +733,49 @@ export default function AnalysisScreen() {
             <View style={styles.field}>
               <Text style={styles.fieldLabel}>PACING NOTES</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, styles.inputExpandable, { height: expandableHeights.pacing }]}
                 value={currentEntry.pacing ?? ''}
                 onChangeText={(t) => handleUpdateField('pacing', t)}
+                onContentSizeChange={(e) => {
+                  const h = e.nativeEvent?.contentSize?.height;
+                  if (h == null) return;
+                  setExpandableHeights((prev) => ({ ...prev, pacing: Math.max(MIN_EXPANDABLE_HEIGHT, h + 28) }));
+                }}
                 placeholder="Pacing slow in scenes where there is"
                 placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                multiline
               />
             </View>
             <View style={styles.field}>
               <Text style={styles.fieldLabel}>STORY ARC</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, styles.inputExpandable, { height: expandableHeights.storyArc }]}
                 value={currentEntry.storyArc ?? ''}
                 onChangeText={(t) => handleUpdateField('storyArc', t)}
+                onContentSizeChange={(e) => {
+                  const h = e.nativeEvent?.contentSize?.height;
+                  if (h == null) return;
+                  setExpandableHeights((prev) => ({ ...prev, storyArc: Math.max(MIN_EXPANDABLE_HEIGHT, h + 28) }));
+                }}
                 placeholder="Problem → pursuit → payoff..."
                 placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                multiline
               />
             </View>
             <View style={styles.field}>
               <Text style={styles.fieldLabel}>CALL TO ACTION (CTA)</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, styles.inputExpandable, { height: expandableHeights.callToAction }]}
                 value={currentEntry.callToAction ?? ''}
                 onChangeText={(t) => handleUpdateField('callToAction', t)}
+                onContentSizeChange={(e) => {
+                  const h = e.nativeEvent?.contentSize?.height;
+                  if (h == null) return;
+                  setExpandableHeights((prev) => ({ ...prev, callToAction: Math.max(MIN_EXPANDABLE_HEIGHT, h + 28) }));
+                }}
                 placeholder="What should viewers do next?"
                 placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                multiline
               />
             </View>
           </View>
@@ -932,8 +974,19 @@ const styles = StyleSheet.create({
   inputIconLeft: {
     marginRight: 10,
   },
+  copyButton: {
+    padding: 10,
+    marginLeft: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   textArea: {
     minHeight: 100,
+    textAlignVertical: 'top',
+    paddingTop: 14,
+  },
+  inputExpandable: {
+    minHeight: 80,
     textAlignVertical: 'top',
     paddingTop: 14,
   },

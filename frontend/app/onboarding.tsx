@@ -80,6 +80,8 @@ export default function OnboardingScreen() {
   const [avatarStruggle, setAvatarStruggle] = useState('');
   const [avatarDesire, setAvatarDesire] = useState('');
   const [avatarCreators, setAvatarCreators] = useState('');
+  const MIN_PROFESSION_HEIGHT = 52;
+  const [professionHeight, setProfessionHeight] = useState(MIN_PROFESSION_HEIGHT);
 
   // Page 3 — Personal Story & Strength
   const [struggledWith, setStruggledWith] = useState('');
@@ -559,11 +561,17 @@ export default function OnboardingScreen() {
 
                 <Text style={styles.fieldLabel}>What profession(s) does your target avatar have?</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, styles.inputExpandable, { height: professionHeight }]}
                   value={profession}
                   onChangeText={setProfession}
+                  onContentSizeChange={(e) => {
+                    const h = e.nativeEvent?.contentSize?.height;
+                    if (h == null) return;
+                    setProfessionHeight(Math.max(MIN_PROFESSION_HEIGHT, h + 28));
+                  }}
                   placeholder="e.g. Entrepreneurs, marketers..."
                   placeholderTextColor="rgba(255,255,255,0.45)"
+                  multiline
                 />
 
                 <Text style={styles.fieldLabel}>What does your target avatar struggle with?</Text>
@@ -826,6 +834,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     minHeight: 52,
     marginBottom: 6,
+  },
+  inputExpandable: {
+    minHeight: 52,
+    textAlignVertical: 'top',
+    paddingTop: 14,
   },
   row: {
     flexDirection: 'row',
