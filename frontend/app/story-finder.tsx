@@ -16,6 +16,7 @@ import {
   PanResponder,
   Platform,
   Alert,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -297,12 +298,17 @@ export default function StoryFinderScreen() {
           </View>
         </Modal>
 
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoid}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
         >
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
           <Text style={styles.messageLabel}>THE CENTRAL MESSAGE</Text>
           <View style={styles.messageBox}>
             <Text
@@ -409,7 +415,8 @@ export default function StoryFinderScreen() {
             <Ionicons name="add" size={24} color="rgba(255, 255, 255, 0.85)" />
             <Text style={styles.addCardText}>Add new story card</Text>
           </TouchableOpacity>
-        </ScrollView>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </UniverseBackground>
   );
@@ -417,6 +424,9 @@ export default function StoryFinderScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  keyboardAvoid: {
+    flex: 1,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
