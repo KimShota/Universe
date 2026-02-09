@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
@@ -131,12 +133,17 @@ export default function AutoScriptGeneratorScreen() {
           <View style={styles.headerSpacer} />
         </View>
 
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.contentContainer}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoid}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
         >
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.contentContainer}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
           <Text style={styles.intro}>
             Fill in your ideas below, then tap Copy to Clipboard to paste into ChatGPT.
           </Text>
@@ -261,7 +268,8 @@ export default function AutoScriptGeneratorScreen() {
           <Text style={styles.hint}>
             Paste the copied prompt into ChatGPT to generate your 45-second script with 3 hook options.
           </Text>
-        </ScrollView>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </UniverseBackground>
   );
@@ -269,6 +277,9 @@ export default function AutoScriptGeneratorScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  keyboardAvoid: {
+    flex: 1,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
