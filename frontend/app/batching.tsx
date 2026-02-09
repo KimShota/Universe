@@ -16,6 +16,7 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   Alert,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
@@ -519,12 +520,17 @@ export default function BatchingScreen() {
           </View>
         </Modal>
 
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.contentContainer}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoid}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
         >
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.contentContainer}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
           {/* 1. Title */}
           <View style={styles.scriptCard}>
             <View style={styles.scriptSectionTitle}>
@@ -725,7 +731,8 @@ export default function BatchingScreen() {
             />
             </View>
           </View>
-        </ScrollView>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </UniverseBackground>
   );
@@ -733,6 +740,9 @@ export default function BatchingScreen() {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  keyboardAvoid: {
     flex: 1,
   },
   header: {
