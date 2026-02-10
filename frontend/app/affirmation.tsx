@@ -13,6 +13,8 @@ import {
   TouchableWithoutFeedback,
   Image,
   Easing,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -229,6 +231,11 @@ export default function AffirmationScreen() {
           <View style={{ width: 26 }} />
         </View>
 
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoid}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
+        >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.body}>
             <Text style={styles.title}>Write 3 affirmations</Text>
@@ -307,6 +314,7 @@ export default function AffirmationScreen() {
             </View>
           </View>
         </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
 
         <Modal visible={showCelebration} transparent animationType="fade">
           <View style={styles.modalOverlay}>
@@ -334,6 +342,7 @@ export default function AffirmationScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  keyboardAvoid: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

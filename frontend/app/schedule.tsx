@@ -59,8 +59,13 @@ const FORMAT_OPTIONS: { id: string; label: string; icon: string }[] = [
 ];
 const PRESET_FORMAT_IDS = FORMAT_OPTIONS.filter((o) => o.id !== 'Other').map((o) => o.id);
 
+interface DaySchedule {
+  idea: string;
+  format: string;
+  script_id?: string;
+}
 interface ScheduleData {
-  [day: string]: { idea: string; format: string };
+  [day: string]: DaySchedule;
 }
 
 function getWeekDates(): { date: Date; dayName: (typeof DAY_NAMES)[number] }[] {
@@ -108,6 +113,9 @@ export default function ScheduleScreen() {
   const [tipPage, setTipPage] = useState(1);
   const [, setLastSaved] = useState<number>(0);
   const [now, setNow] = useState(() => Date.now());
+  const [scripts, setScripts] = useState<{ id: string; title: string }[]>([]);
+  const [showScriptPicker, setShowScriptPicker] = useState(false);
+  const [pickerDay, setPickerDay] = useState<(typeof DAY_NAMES)[number] | null>(null);
   const hasLoadedRef = useRef(false);
   const cardsScrollRef = useRef<ScrollView>(null);
   const tipsPagesScrollRef = useRef<ScrollView>(null);
@@ -167,9 +175,34 @@ export default function ScheduleScreen() {
     }).start();
   }, [showTipModal, sheetAnim]);
 
+  const loadScripts = useCallback(async () => {
+    try {
+      if (!user?.id) return;
+      const { data: rows } = await supabase
+        .from('batching_scripts')
+        .select('script_id, data')
+        .eq('user_id', user.id);
+      if (rows?.length) {
+        const list = (rows as { script_id: string; data: Record<string, unknown> }[]).map((r) => ({
+          id: r.script_id,
+          title: (r.data?.title as string) || 'Untitled Script',
+        }));
+        setScripts(list);
+      } else {
+        setScripts([]);
+      }
+    } catch (e) {
+      console.error('Error loading scripts for schedule:', e);
+    }
+  }, [user?.id]);
+
   useEffect(() => {
     loadSchedule();
   }, [user?.id]);
+
+  useEffect(() => {
+    loadScripts();
+  }, [loadScripts]);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 60_000);
@@ -192,14 +225,20 @@ export default function ScheduleScreen() {
         await supabase.from('schedule').insert({ user_id: user.id, schedule: defaultSched });
         setSchedule(defaultSched);
       } else if ((scheduleData as { idea?: Record<string, string> }).idea) {
-        const s = scheduleData as { idea: Record<string, string>; format: Record<string, string> };
+        const s = scheduleData as { idea: Record<string, string>; format: Record<string, string>; script_id?: Record<string, string> };
         const next: ScheduleData = {};
         DAY_NAMES.forEach((d) => {
-          next[d] = { idea: s.idea?.[d] || '', format: s.format?.[d] || '' };
+          next[d] = { idea: s.idea?.[d] || '', format: s.format?.[d] || '', script_id: s.script_id?.[d] };
         });
         setSchedule(next);
       } else {
-        setSchedule(scheduleData as ScheduleData);
+        const raw = scheduleData as Record<string, DaySchedule>;
+        const next: ScheduleData = {};
+        DAY_NAMES.forEach((d) => {
+          const dayData = raw[d];
+          next[d] = { idea: dayData?.idea ?? '', format: dayData?.format ?? '', script_id: dayData?.script_id };
+        });
+        setSchedule(next);
       }
       hasLoadedRef.current = true;
     } catch (e) {
@@ -243,6 +282,21 @@ export default function ScheduleScreen() {
       [day]: { ...prev[day], format: value },
     }));
     setLastModified(Date.now());
+  };
+
+  const updateScriptLink = (day: (typeof DAY_NAMES)[number], scriptId: string | null) => {
+    setSchedule((prev) => ({
+      ...prev,
+      [day]: { ...prev[day], script_id: scriptId ?? undefined },
+    }));
+    setLastModified(Date.now());
+    setShowScriptPicker(false);
+    setPickerDay(null);
+  };
+
+  const openScriptForDay = (scriptId: string) => {
+    playClickSound();
+    router.push({ pathname: '/batching', params: { scriptId } });
   };
 
   const scrollToDay = (index: number) => {
@@ -366,6 +420,45 @@ export default function ScheduleScreen() {
           </View>
         </Modal>
 
+        <Modal visible={showScriptPicker} transparent animationType="fade">
+          <View style={styles.scriptPickerWrap}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={() => { playClickSound(); setShowScriptPicker(false); setPickerDay(null); }}>
+              <View style={styles.scriptPickerBackdrop} />
+            </Pressable>
+            <View style={styles.scriptPickerContainer} pointerEvents="box-none">
+            <View style={styles.scriptPickerCard}>
+              <Text style={styles.scriptPickerTitle}>Link script to {pickerDay}</Text>
+              <ScrollView style={styles.scriptPickerList} keyboardShouldPersistTaps="handled">
+                {scripts.length === 0 ? (
+                  <Text style={styles.scriptPickerEmpty}>No scripts yet. Create one in Batching.</Text>
+                ) : (
+                  scripts.map((s) => (
+                    <TouchableOpacity
+                      key={s.id}
+                      style={styles.scriptPickerItem}
+                      onPress={() => {
+                        playClickSound();
+                        if (pickerDay) updateScriptLink(pickerDay, s.id);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="document-text-outline" size={20} color="#FFD700" />
+                      <Text style={styles.scriptPickerItemText} numberOfLines={1}>{s.title || 'Untitled'}</Text>
+                    </TouchableOpacity>
+                  ))
+                )}
+              </ScrollView>
+              <TouchableOpacity
+                style={styles.scriptPickerCancel}
+                onPress={() => { playClickSound(); setShowScriptPicker(false); setPickerDay(null); }}
+              >
+                <Text style={styles.scriptPickerCancelText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+            </View>
+          </View>
+        </Modal>
+
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
@@ -477,6 +570,47 @@ export default function ScheduleScreen() {
                       autoCapitalize="words"
                     />
                   )}
+
+                  <Text style={styles.sectionLabel}>SCRIPT</Text>
+                  <View style={styles.scriptLinkRow}>
+                    {data?.script_id ? (
+                      <>
+                        <TouchableOpacity
+                          style={styles.openScriptButton}
+                          onPress={() => openScriptForDay(data.script_id!)}
+                          activeOpacity={0.8}
+                        >
+                          <Ionicons name="document-text" size={18} color="#FFD700" />
+                          <Text style={styles.openScriptButtonText} numberOfLines={1}>
+                            {scripts.find((s) => s.id === data.script_id)?.title || 'Open script'}
+                          </Text>
+                          <Ionicons name="open-outline" size={16} color="#FFD700" />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.unlinkScriptButton}
+                          onPress={() => {
+                            playClickSound();
+                            updateScriptLink(dayName, null);
+                          }}
+                        >
+                          <Ionicons name="close-circle-outline" size={20} color="rgba(255,255,255,0.6)" />
+                        </TouchableOpacity>
+                      </>
+                    ) : (
+                      <TouchableOpacity
+                        style={styles.linkScriptButton}
+                        onPress={() => {
+                          playClickSound();
+                          setPickerDay(dayName);
+                          setShowScriptPicker(true);
+                        }}
+                        activeOpacity={0.8}
+                      >
+                        <Ionicons name="link" size={18} color="#FFD700" />
+                        <Text style={styles.linkScriptButtonText}>Link to a script</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
 
                   <View style={styles.statusRow}>
                     <View style={styles.statusLeft}>
@@ -654,6 +788,115 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.9)',
   },
   formatChipTextSelected: { color: '#FFD700' },
+  scriptLinkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  openScriptButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 215, 0, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.4)',
+  },
+  openScriptButtonText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFD700',
+  },
+  unlinkScriptButton: { padding: 8 },
+  linkScriptButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.35)',
+  },
+  linkScriptButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFD700',
+  },
+  scriptPickerWrap: {
+    flex: 1,
+  },
+  scriptPickerBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  scriptPickerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+  },
+  scriptPickerCard: {
+    width: '100%',
+    maxWidth: 340,
+    maxHeight: '70%',
+    backgroundColor: 'rgba(40, 30, 60, 0.98)',
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.25)',
+  },
+  scriptPickerTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFD700',
+    marginBottom: 16,
+  },
+  scriptPickerList: {
+    maxHeight: 280,
+  },
+  scriptPickerEmpty: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.6)',
+    paddingVertical: 20,
+  },
+  scriptPickerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    marginBottom: 8,
+  },
+  scriptPickerItemText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#fff',
+  },
+  scriptPickerCancel: {
+    marginTop: 16,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  scriptPickerCancelText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.8)',
+  },
   otherFormatInput: {
     marginTop: 10,
     backgroundColor: 'rgba(255, 255, 255, 0.06)',

@@ -19,7 +19,7 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { UniverseBackground } from '../components/UniverseBackground';
 import { Ionicons } from '@expo/vector-icons';
@@ -84,10 +84,12 @@ const SCRIPT_TIPS_PAGE4: { icon: string; title: string; description: string }[] 
 export default function BatchingScreen() {
   const { user } = useAuth();
   const router = useRouter();
+  const params = useLocalSearchParams<{ scriptId?: string }>();
   const insets = useSafeAreaInsets();
   const [scripts, setScripts] = useState<Script[]>([]);
   const [selectedScriptId, setSelectedScriptId] = useState<string | null>(null);
   const [showScriptDetail, setShowScriptDetail] = useState(false);
+  const hasAppliedScriptIdRef = useRef(false);
   const [showDateModal, setShowDateModal] = useState(false);
   const [showTipsModal, setShowTipsModal] = useState(false);
   const [tipPage, setTipPage] = useState(1);
@@ -96,6 +98,18 @@ export default function BatchingScreen() {
   useEffect(() => {
     loadScripts();
   }, [user?.id]);
+
+  useEffect(() => {
+    const scriptId = params.scriptId ?? null;
+    const id = typeof scriptId === 'string' ? scriptId : Array.isArray(scriptId) ? scriptId[0] : null;
+    if (!id || hasAppliedScriptIdRef.current || scripts.length === 0) return;
+    const exists = scripts.some((s) => s.id === id);
+    if (exists) {
+      hasAppliedScriptIdRef.current = true;
+      setSelectedScriptId(id);
+      setShowScriptDetail(true);
+    }
+  }, [params.scriptId, scripts]);
 
   const loadScripts = async () => {
     try {

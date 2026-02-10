@@ -12,6 +12,8 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   Easing,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -253,6 +255,11 @@ export default function LetGoScreen() {
           <View style={{ width: 26 }} />
         </View>
 
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoid}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
+        >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.scene}>
             <View style={[styles.blackHoleWrap, { left: center.x - 175, top: center.y - 175 }]}>
@@ -385,6 +392,7 @@ export default function LetGoScreen() {
             </View>
           </View>
         </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
 
         <Modal visible={showGoodJob} transparent animationType="fade">
           <View style={styles.modalOverlay}>
@@ -409,6 +417,7 @@ export default function LetGoScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  keyboardAvoid: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

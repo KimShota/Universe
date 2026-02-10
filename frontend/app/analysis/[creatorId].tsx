@@ -20,14 +20,14 @@ import {
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { UniverseBackground } from '../components/UniverseBackground';
+import { UniverseBackground } from '../../components/UniverseBackground';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
-import { useRouter } from 'expo-router';
+import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
-import { playClickSound } from '../utils/soundEffects';
-import { MAX_ANALYSIS_ENTRIES } from '../constants/limits';
+import { playClickSound } from '../../utils/soundEffects';
+import { MAX_ANALYSIS_ENTRIES } from '../../constants/limits';
 
 const { width, height } = Dimensions.get('window');
 const SHEET_MAX_HEIGHT = Math.min(height * 0.92, height - 60);
@@ -76,9 +76,10 @@ function serializeAudioSet(set: Set<string>): string {
   return Array.from(set).join(', ');
 }
 
-export default function AnalysisScreen() {
+export default function AnalysisCreatorScreen() {
   const { user } = useAuth();
   const router = useRouter();
+  const { creatorId } = useLocalSearchParams<{ creatorId: string }>();
   const insets = useSafeAreaInsets();
   const [entries, setEntries] = useState<AnalysisEntry[]>([]);
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
@@ -149,16 +150,21 @@ export default function AnalysisScreen() {
   );
 
   useEffect(() => {
+    if (!creatorId) {
+      router.replace('/analysis');
+      return;
+    }
     loadEntries();
-  }, [user?.id]);
+  }, [user?.id, creatorId]);
 
   const loadEntries = async () => {
     try {
-      if (!user?.id) return;
+      if (!user?.id || !creatorId) return;
       const { data: rows } = await supabase
         .from('analysis_entries')
         .select('entry_id, data')
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .eq('creator_id', creatorId);
       if (rows && rows.length > 0) {
         const normalized = rows.map((r: { entry_id: string; data: Record<string, unknown> }) => {
           const e = { id: r.entry_id, ...r.data } as AnalysisEntry & { hook?: string };
@@ -174,6 +180,8 @@ export default function AnalysisScreen() {
           };
         });
         setEntries(normalized);
+      } else {
+        setEntries([]);
       }
     } catch (error) {
       console.error('Error loading entries:', error);
@@ -182,11 +190,11 @@ export default function AnalysisScreen() {
 
   const saveEntry = async (entry: AnalysisEntry) => {
     try {
-      if (!user?.id) return;
+      if (!user?.id || !creatorId) return;
       const { id, ...rest } = entry;
       await supabase.from('analysis_entries').upsert(
-        { user_id: user.id, entry_id: id, data: rest },
-        { onConflict: 'user_id,entry_id' }
+        { user_id: user.id, creator_id: creatorId, entry_id: id, data: rest },
+        { onConflict: 'user_id,creator_id,entry_id' }
       );
     } catch (error) {
       console.error('Error saving entry:', error);
@@ -238,11 +246,12 @@ export default function AnalysisScreen() {
     if (!entryId) return;
     playClickSound();
     try {
-      if (!user?.id) return;
+      if (!user?.id || !creatorId) return;
       const { error } = await supabase
         .from('analysis_entries')
         .delete()
         .eq('user_id', user.id)
+        .eq('creator_id', creatorId)
         .eq('entry_id', entryId);
       if (!error) {
         setEntries(entries.filter(entry => entry.id !== entryId));

@@ -11,6 +11,8 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { UniverseBackground } from '../../components/UniverseBackground';
 import { Ionicons } from '@expo/vector-icons';
@@ -391,11 +393,13 @@ export default function CreatorUniverseScreen() {
             onScroll={handleScroll}
             scrollEventThrottle={16}
             style={styles.horizontalScroll}
-            keyboardShouldPersistTaps="handled"
+            keyboardShouldPersistTaps="always"
           >
           {/* Vision Screen */}
           <View style={styles.screen}>
-            <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer} keyboardShouldPersistTaps="handled">
+            <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer} keyboardShouldPersistTaps="always">
+              <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <View style={{ flexGrow: 1 }}>
               {/* Your Ethos */}
               <View style={styles.goalContainer}>
                 <View style={styles.goalLabelRow}>
@@ -506,12 +510,16 @@ export default function CreatorUniverseScreen() {
                   </View>
                 ))}
               </View>
+                </View>
+              </TouchableWithoutFeedback>
             </ScrollView>
           </View>
 
           {/* Avatar Screen */}
           <View style={styles.screen}>
-            <ScrollView style={styles.scrollView} contentContainerStyle={[styles.contentContainer, styles.contentContainerAvatar]} keyboardShouldPersistTaps="handled">
+            <ScrollView style={styles.scrollView} contentContainerStyle={[styles.contentContainer, styles.contentContainerAvatar]} keyboardShouldPersistTaps="always">
+              <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <View style={{ flexGrow: 1 }}>
               {/* Target Avatar */}
               <View style={[styles.goalContainer, styles.goalContainerAvatar]}>
                 <View style={styles.goalLabelRow}>
@@ -735,12 +743,16 @@ export default function CreatorUniverseScreen() {
                   </View>
                 </View>
               </View>
+                </View>
+              </TouchableWithoutFeedback>
             </ScrollView>
           </View>
 
           {/* Identity Screen */}
           <View style={styles.screen}>
-            <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer} keyboardShouldPersistTaps="handled">
+            <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer} keyboardShouldPersistTaps="always">
+              <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <View style={{ flexGrow: 1 }}>
               {/* Identity */}
               <View style={styles.goalContainer}>
                 <View style={styles.goalLabelRow}>
@@ -798,9 +810,9 @@ export default function CreatorUniverseScreen() {
                     <View key={category} style={styles.ideasColumn}>
                       {identity[category].map((value, index) => (
                         <View key={index} style={styles.ideaBoxWrapper}>
-                          <View style={[styles.ideaBox, category === 'pain' && styles.ideaBoxPain]}>
+                          <View style={[styles.ideaBox, styles.ideaBoxPain]}>
                             <TextInput
-                              style={[styles.ideaInput, category === 'passion' && styles.ideaInputPassion]}
+                              style={styles.ideaInput}
                               value={value}
                               onChangeText={(text) => updateIdentityField(category, index, text)}
                               onBlur={() => saveUniverse()}
@@ -831,6 +843,8 @@ export default function CreatorUniverseScreen() {
                   );
                 })}
               </View>
+                </View>
+              </TouchableWithoutFeedback>
             </ScrollView>
           </View>
           </ScrollView>
@@ -929,6 +943,22 @@ export default function CreatorUniverseScreen() {
                 <ScrollView style={styles.infoScroll} contentContainerStyle={styles.infoContent}>
                   <Text style={styles.infoScreenTitle}>Vision</Text>
                   <Text style={styles.infoSubtitle}>How to construct your vision universe:</Text>
+                  <Text style={styles.infoSectionTitle}>Your Ethos</Text>
+                  <Text style={styles.infoBody}>
+                    It is your message that you want to present to the world. Find your ethos that connects your various interests.
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.infoEthosButton}
+                    onPress={() => {
+                      playClickSound();
+                      setShowInfoModal(false);
+                      router.push('/ethos-brainstorm');
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="bulb-outline" size={18} color="#FFD700" />
+                    <Text style={styles.infoEthosButtonText}>Brainstorm your ethos</Text>
+                  </TouchableOpacity>
                   <Text style={styles.infoSectionTitle}>The first pillar</Text>
                   <Text style={styles.infoBody}>
                     This should be Your Skill (What You Know). If you want to sell a product, people will buy from you because of this.
@@ -1468,6 +1498,25 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 215, 0, 0.9)',
     marginTop: 14,
     marginBottom: 6,
+  },
+  infoEthosButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 12,
+    marginBottom: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 215, 0, 0.18)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 215, 0, 0.55)',
+  },
+  infoEthosButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFD700',
   },
   infoBody: {
     fontSize: 14,
