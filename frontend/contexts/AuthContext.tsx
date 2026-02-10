@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { Platform } from 'react-native';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { supabase } from '../lib/supabase';
 import { isValidDeepLink, parseAuthTokensFromUrl } from '../lib/deepLink';
 import type { User as SupabaseUser, Session, AuthError } from '@supabase/supabase-js';
@@ -26,6 +27,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: () => Promise<void>;
+  loginWithApple: () => Promise<void>;
   loginWithEmail: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signUpWithEmail: (email: string, password: string, name?: string) => Promise<{ error: AuthError | null }>;
   logout: () => Promise<void>;
@@ -173,6 +175,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginWithApple = async () => {
+    if (Platform.OS !== 'ios') return;
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      if (!credential.identityToken) {
+        console.warn('[Apple] No identity token');
+        return;
+      }
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: 'apple',
+        token: credential.identityToken,
+      });
+      if (error) {
+        console.error('Apple sign in error:', error);
+        return;
+      }
+      if (data?.session) {
+        await syncSession(data.session);
+        if (credential.fullName) {
+          const given = credential.fullName.givenName ?? '';
+          const family = credential.fullName.familyName ?? '';
+          const fullName = `${given}${family}`.trim() || undefined;
+          if (fullName) {
+            await supabase.auth.updateUser({
+              data: {
+                full_name: fullName,
+                given_name: credential.fullName.givenName ?? undefined,
+                family_name: credential.fullName.familyName ?? undefined,
+              },
+            });
+            await syncSession((await supabase.auth.getSession()).data.session);
+          }
+        }
+      }
+    } catch (err: unknown) {
+      if ((err as { code?: string })?.code === 'ERR_REQUEST_CANCELED') return;
+      console.error('Apple login error:', err);
+    }
+  };
+
   const loginWithEmail = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (!error && (await supabase.auth.getSession()).data.session) {
@@ -210,7 +257,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, loginWithEmail, signUpWithEmail, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithApple, loginWithEmail, signUpWithEmail, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

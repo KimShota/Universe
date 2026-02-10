@@ -10,7 +10,9 @@ import {
   SafeAreaView,
   TextInput,
   Alert,
+  Platform,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
@@ -24,7 +26,7 @@ const APP_ICON = require('../Media/bear-waving.png');
 type EmailMode = 'signin' | 'signup';
 
 export default function LoginScreen() {
-  const { user, loading, login, loginWithEmail, signUpWithEmail } = useAuth();
+  const { user, loading, login, loginWithApple, loginWithEmail, signUpWithEmail } = useAuth();
   const router = useRouter();
   const [emailMode, setEmailMode] = useState<EmailMode>('signin');
   const [email, setEmail] = useState('');
@@ -174,6 +176,12 @@ export default function LoginScreen() {
               <Text style={styles.orDivider}>or continue with</Text>
               <View style={styles.orDividerLine} />
             </View>
+            {Platform.OS === 'ios' && (
+              <TouchableOpacity style={styles.appleButton} onPress={loginWithApple} activeOpacity={0.85}>
+                <Ionicons name="logo-apple" size={22} color="#fff" />
+                <Text style={styles.appleButtonText}>Sign in with Apple</Text>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity style={styles.loginButton} onPress={login} activeOpacity={0.85}>
               <View style={styles.googleBadge}>
                 <Text style={styles.googleG}>G</Text>
@@ -327,6 +335,25 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.45)',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  appleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#000',
+    borderWidth: 0,
+    paddingVertical: 15,
+    paddingHorizontal: 28,
+    borderRadius: 14,
+    width: '100%',
+    maxWidth: 320,
+    gap: 10,
+    marginBottom: 12,
+  },
+  appleButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
   },
   loginButton: {
     flexDirection: 'row',
