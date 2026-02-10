@@ -11,7 +11,8 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.shotacademic.frontend",
-      "appleTeamId": "Z39Z3TL56V"
+      "appleTeamId": "Z39Z3TL56V",
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -28,6 +29,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-apple-authentication",
       [
         "expo-splash-screen",
         {
