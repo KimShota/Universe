@@ -28,6 +28,10 @@ export default function AnalysisCreatorsScreen() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [newCreatorName, setNewCreatorName] = useState('');
   const [entryCounts, setEntryCounts] = useState<Record<string, number>>({});
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [renamingCreator, setRenamingCreator] = useState<Creator | null>(null);
+  const [renameValue, setRenameValue] = useState('');
 
   const loadCreators = useCallback(async () => {
     try {
@@ -99,6 +103,68 @@ export default function AnalysisCreatorsScreen() {
     setShowAddModal(true);
   };
 
+  const openRenameModal = (creator: Creator) => {
+    playClickSound();
+    setRenamingCreator(creator);
+    setRenameValue(creator.name);
+    setShowRenameModal(true);
+  };
+
+  const handleSaveRename = async () => {
+    const name = renameValue.trim();
+    if (!name || !renamingCreator || !user?.id) return;
+    playClickSound();
+    try {
+      const { error } = await supabase
+        .from('analysis_creators')
+        .update({ name })
+        .eq('id', renamingCreator.id)
+        .eq('user_id', user.id);
+      if (error) throw error;
+      setShowRenameModal(false);
+      setRenamingCreator(null);
+      setRenameValue('');
+      await loadCreators();
+    } catch (e) {
+      console.error('Error renaming creator:', e);
+      Alert.alert('Error', 'Could not rename creator.');
+    }
+  };
+
+  const handleDeleteCreator = (creator: Creator) => {
+    playClickSound();
+    Alert.alert(
+      'Delete creator',
+      `Delete "${creator.name}" and all ${entryCounts[creator.id] ?? 0} analysis entries? This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            if (!user?.id) return;
+            setDeletingId(creator.id);
+            try {
+              const { error } = await supabase
+                .from('analysis_creators')
+                .delete()
+                .eq('id', creator.id)
+                .eq('user_id', user.id);
+              if (error) throw error;
+              await loadCreators();
+              await loadEntryCounts();
+            } catch (e) {
+              console.error('Error deleting creator:', e);
+              Alert.alert('Error', 'Could not delete creator.');
+            } finally {
+              setDeletingId(null);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <UniverseBackground>
       <SafeAreaView style={styles.container}>
@@ -138,6 +204,7 @@ export default function AnalysisCreatorsScreen() {
                 router.push(`/analysis/${c.id}`);
               }}
               activeOpacity={0.8}
+              disabled={deletingId === c.id}
             >
               <View style={styles.creatorCardIcon}>
                 <Ionicons name="person" size={24} color="#FFD700" />
@@ -148,6 +215,26 @@ export default function AnalysisCreatorsScreen() {
                   {entryCounts[c.id] ?? 0} analysis {entryCounts[c.id] === 1 ? 'entry' : 'entries'}
                 </Text>
               </View>
+              <TouchableOpacity
+                style={styles.renameButton}
+                onPress={() => openRenameModal(c)}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                disabled={deletingId === c.id}
+              >
+                <Ionicons name="pencil-outline" size={20} color="rgba(255,255,255,0.7)" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={() => handleDeleteCreator(c)}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                disabled={deletingId === c.id}
+              >
+                <Ionicons
+                  name="trash-outline"
+                  size={22}
+                  color={deletingId === c.id ? 'rgba(255,255,255,0.3)' : 'rgba(255,100,100,0.9)'}
+                />
+              </TouchableOpacity>
               <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.5)" />
             </TouchableOpacity>
           ))}
@@ -183,6 +270,41 @@ export default function AnalysisCreatorsScreen() {
               </TouchableOpacity>
               <TouchableOpacity style={styles.modalSave} onPress={handleAddCreator}>
                 <Text style={styles.modalSaveText}>Create</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <Modal visible={showRenameModal} transparent animationType="fade">
+        <Pressable style={styles.modalOverlay} onPress={() => setShowRenameModal(false)}>
+          <Pressable style={styles.modalBox} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.modalTitle}>Rename creator</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={renameValue}
+              onChangeText={setRenameValue}
+              placeholder="Creator name (e.g. @username)"
+              placeholderTextColor="rgba(255,255,255,0.4)"
+              autoFocus
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.modalCancel}
+                onPress={() => {
+                  setShowRenameModal(false);
+                  setRenamingCreator(null);
+                  setRenameValue('');
+                }}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalSave}
+                onPress={handleSaveRename}
+                disabled={!renameValue.trim()}
+              >
+                <Text style={styles.modalSaveText}>Save</Text>
               </TouchableOpacity>
             </View>
           </Pressable>
@@ -232,6 +354,8 @@ const styles = StyleSheet.create({
   creatorCardIcon: { marginRight: 14 },
   creatorCardText: { flex: 1 },
   creatorName: { fontSize: 16, fontWeight: '600', color: '#fff' },
+  renameButton: { padding: 8, marginRight: 2 },
+  deleteButton: { padding: 8, marginRight: 4 },
   creatorCount: { fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 },
   addButtonWrap: {
     position: 'absolute',
