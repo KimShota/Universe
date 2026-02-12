@@ -11,6 +11,9 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Modal,
+  Pressable,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { UniverseBackground } from '../../components/UniverseBackground';
@@ -18,6 +21,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { playClickSound } from '../../utils/soundEffects';
+import { MAX_ANALYSIS_CREATORS_FOR_PATTERN } from '../../constants/limits';
 
 const { width } = Dimensions.get('window');
 const FORMAT_OPTIONS = ['Silent film / B-roll', 'Split Screen', 'Talking head', 'Other'];
@@ -57,6 +61,11 @@ export default function AnalysisPatternsScreen() {
   const [heatmapRows, setHeatmapRows] = useState<{ creator: Creator; cells: NormalizedEntry[] }[]>([]);
   const [insightText, setInsightText] = useState('');
   const [savingInsight, setSavingInsight] = useState(false);
+  const [aiPatternLoading, setAiPatternLoading] = useState(false);
+  const [aiPatternResult, setAiPatternResult] = useState<string | null>(null);
+  const [aiResultExpanded, setAiResultExpanded] = useState(false);
+  const [showCreatorSelectModal, setShowCreatorSelectModal] = useState(false);
+  const [selectedCreatorIdsForAi, setSelectedCreatorIdsForAi] = useState<string[]>([]);
 
   const loadData = useCallback(async () => {
     try {
@@ -127,12 +136,86 @@ export default function AnalysisPatternsScreen() {
 
       const insightRow = insightRes.data as { insight_text: string } | null;
       setInsightText(insightRow?.insight_text ?? '');
+      setSelectedCreatorIdsForAi((prev) => {
+        if (prev.length > 0) return prev;
+        if (creatorsList.length <= MAX_ANALYSIS_CREATORS_FOR_PATTERN)
+          return creatorsList.map((c) => c.id);
+        return creatorsList.slice(0, MAX_ANALYSIS_CREATORS_FOR_PATTERN).map((c) => c.id);
+      });
     } catch (e) {
       console.error('Error loading pattern data:', e);
     } finally {
       setLoading(false);
     }
   }, [user?.id]);
+
+  const creatorIdsForAi =
+    creators.length <= MAX_ANALYSIS_CREATORS_FOR_PATTERN
+      ? creators.map((c) => c.id)
+      : selectedCreatorIdsForAi.slice(0, MAX_ANALYSIS_CREATORS_FOR_PATTERN);
+
+  const runAiPatternAnalysis = useCallback(async () => {
+    const ids = creatorIdsForAi;
+    if (ids.length === 0) {
+      Alert.alert('No creators', 'Add at least one creator with analysis entries.');
+      return;
+    }
+    playClickSound();
+    setAiPatternLoading(true);
+    setAiPatternResult(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        setAiPatternResult('Error: Not signed in.');
+        return;
+      }
+      const url = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
+      const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
+      if (!url) {
+        setAiPatternResult('Error: Supabase URL not configured.');
+        return;
+      }
+      if (!anonKey) {
+        setAiPatternResult('Error: Supabase anon key not configured.');
+        return;
+      }
+      const res = await fetch(`${url}/functions/v1/analyze-patterns`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${anonKey}`,
+        },
+        body: JSON.stringify({ creatorIds: ids, access_token: session.access_token }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const err = data as { error?: string; code?: string; detail?: string };
+        console.error('[analyze-patterns] Error response:', res.status, { code: err?.code, error: err?.error, detail: err?.detail, raw: data });
+        const errMsg = err?.error ?? `Request failed (${res.status})`;
+        const withDetail = err?.detail ? `${errMsg}. ${err.detail}` : errMsg;
+        throw new Error(withDetail);
+      }
+      const pattern = (data as { pattern?: string })?.pattern ?? null;
+      setAiPatternResult(pattern || 'No summary returned.');
+      setAiResultExpanded(false);
+    } catch (e) {
+      console.error('AI pattern analysis error:', e);
+      const msg = e instanceof Error ? e.message : 'Failed to get AI pattern.';
+      setAiPatternResult(`Error: ${msg}`);
+    } finally {
+      setAiPatternLoading(false);
+    }
+  }, [creatorIdsForAi]);
+
+  const toggleCreatorForAi = (creatorId: string) => {
+    playClickSound();
+    setSelectedCreatorIdsForAi((prev) => {
+      const has = prev.includes(creatorId);
+      if (has) return prev.filter((id) => id !== creatorId);
+      if (prev.length >= MAX_ANALYSIS_CREATORS_FOR_PATTERN) return prev;
+      return [...prev, creatorId];
+    });
+  };
 
   const saveInsight = useCallback(async (text: string) => {
     if (!user?.id) return;
@@ -288,6 +371,62 @@ export default function AnalysisPatternsScreen() {
             </View>
           </View>
 
+          <Text style={styles.sectionLabel}>Find patterns with AI</Text>
+          <View style={styles.aiCard}>
+            <Text style={styles.aiHint}>
+              Choose which creators to include (up to {MAX_ANALYSIS_CREATORS_FOR_PATTERN}), then analyze. Up to 7 videos per creator (max 49).
+            </Text>
+            <TouchableOpacity
+              style={[styles.aiButton, (aiPatternLoading || creators.length === 0) && styles.aiButtonDisabled]}
+              onPress={() => {
+                playClickSound();
+                setShowCreatorSelectModal(true);
+              }}
+              disabled={aiPatternLoading || creators.length === 0}
+            >
+              <Ionicons name="people-outline" size={20} color="#FFD700" />
+              <Text style={styles.aiButtonText}>Select creators to include & find patterns</Text>
+            </TouchableOpacity>
+            {aiPatternResult !== null && (
+              <View style={styles.aiResultBox}>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => setAiResultExpanded((e) => !e)}
+                  style={styles.aiResultHeader}
+                >
+                  <Text style={styles.aiResultLabel}>AI pattern summary</Text>
+                  <Ionicons
+                    name={aiResultExpanded ? 'chevron-up' : 'chevron-down'}
+                    size={18}
+                    color="rgba(255,215,0,0.9)"
+                  />
+                </TouchableOpacity>
+                {aiResultExpanded ? (
+                  <ScrollView
+                    style={styles.aiResultScroll}
+                    nestedScrollEnabled
+                    showsVerticalScrollIndicator
+                  >
+                    <Text style={styles.aiResultText}>{aiPatternResult}</Text>
+                  </ScrollView>
+                ) : (
+                  <Text style={styles.aiResultText} numberOfLines={5}>
+                    {aiPatternResult}
+                  </Text>
+                )}
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => setAiResultExpanded((e) => !e)}
+                  style={styles.aiResultToggle}
+                >
+                  <Text style={styles.aiResultToggleText}>
+                    {aiResultExpanded ? 'Show less' : 'Show more'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+
           <Text style={styles.sectionLabel}>Your pattern finding</Text>
           <View style={styles.insightCard}>
             <Text style={styles.insightQuestion}>What common pattern did you find across {total} video{total !== 1 ? 's' : ''}?</Text>
@@ -309,6 +448,60 @@ export default function AnalysisPatternsScreen() {
           <View style={styles.footer} />
         </ScrollView>
         </KeyboardAvoidingView>
+
+        <Modal visible={showCreatorSelectModal} transparent animationType="fade">
+          <Pressable style={styles.modalOverlay} onPress={() => setShowCreatorSelectModal(false)}>
+            <Pressable style={styles.modalBox} onPress={(e) => e.stopPropagation()}>
+              <Text style={styles.modalTitle}>
+                Which creators to include in AI pattern analysis?
+              </Text>
+              <Text style={styles.modalSubtitle}>
+                {selectedCreatorIdsForAi.length} selected (max {MAX_ANALYSIS_CREATORS_FOR_PATTERN})
+              </Text>
+              <ScrollView style={styles.modalCreatorList} keyboardShouldPersistTaps="handled">
+                {creators.map((c) => {
+                  const selected = selectedCreatorIdsForAi.includes(c.id);
+                  return (
+                    <TouchableOpacity
+                      key={c.id}
+                      style={styles.modalCreatorRow}
+                      onPress={() => toggleCreatorForAi(c.id)}
+                      activeOpacity={0.8}
+                    >
+                      <View style={[styles.modalCheckbox, selected && styles.modalCheckboxSelected]}>
+                        {selected && <Ionicons name="checkmark" size={16} color="#0a0e27" />}
+                      </View>
+                      <Text style={styles.modalCreatorName} numberOfLines={1}>{c.name}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+              <View style={styles.modalActions}>
+                <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setShowCreatorSelectModal(false)}>
+                  <Text style={styles.modalCancelBtnText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.modalAnalyzeBtn,
+                    (selectedCreatorIdsForAi.length === 0 || aiPatternLoading) && styles.modalAnalyzeBtnDisabled,
+                  ]}
+                  onPress={async () => {
+                    if (selectedCreatorIdsForAi.length === 0 || aiPatternLoading) return;
+                    setShowCreatorSelectModal(false);
+                    await runAiPatternAnalysis();
+                  }}
+                  disabled={selectedCreatorIdsForAi.length === 0 || aiPatternLoading}
+                >
+                  {aiPatternLoading ? (
+                    <ActivityIndicator size="small" color="#0a0e27" />
+                  ) : (
+                    <Text style={styles.modalAnalyzeBtnText}>Analyze</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </Pressable>
+          </Pressable>
+        </Modal>
       </SafeAreaView>
     </UniverseBackground>
   );
@@ -407,4 +600,86 @@ const styles = StyleSheet.create({
   },
   insightSaving: { fontSize: 11, color: 'rgba(255,255,255,0.5)' },
   footer: { height: 24 },
+  aiCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.07)',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.25)',
+    gap: 12,
+  },
+  aiHint: { fontSize: 12, color: 'rgba(255,255,255,0.6)' },
+  aiButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 215, 0, 0.5)',
+  },
+  aiButtonDisabled: { opacity: 0.6 },
+  aiButtonText: { fontSize: 15, fontWeight: '600', color: '#FFD700' },
+  aiResultBox: {
+    marginTop: 8,
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.2)',
+  },
+  aiResultHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  aiResultLabel: { fontSize: 11, fontWeight: '700', color: 'rgba(255,215,0,0.9)' },
+  aiResultScroll: { maxHeight: 280 },
+  aiResultText: { fontSize: 14, color: 'rgba(255,255,255,0.9)', lineHeight: 20 },
+  aiResultToggle: { marginTop: 8, paddingVertical: 4, alignSelf: 'flex-start' },
+  aiResultToggleText: { fontSize: 13, fontWeight: '600', color: 'rgba(255,215,0,0.9)' },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  modalBox: {
+    backgroundColor: 'rgba(28,28,40,0.98)',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
+    maxHeight: '80%',
+  },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: '#FFD700', marginBottom: 4 },
+  modalSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.6)', marginBottom: 14 },
+  modalCreatorList: { maxHeight: 280, marginBottom: 16 },
+  modalCreatorRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
+  modalCheckbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: 'rgba(255,215,0,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCheckboxSelected: { backgroundColor: '#FFD700', borderColor: '#FFD700' },
+  modalCreatorName: { flex: 1, fontSize: 15, color: '#fff' },
+  modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12 },
+  modalCancelBtn: { paddingVertical: 10, paddingHorizontal: 16 },
+  modalCancelBtnText: { color: 'rgba(255,255,255,0.7)', fontSize: 16 },
+  modalAnalyzeBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    backgroundColor: 'rgba(255,215,0,0.9)',
+    borderRadius: 12,
+  },
+  modalAnalyzeBtnDisabled: { opacity: 0.5 },
+  modalAnalyzeBtnText: { color: '#0a0e27', fontWeight: '600', fontSize: 16 },
 });
