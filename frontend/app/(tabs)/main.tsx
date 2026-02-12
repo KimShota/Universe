@@ -242,7 +242,7 @@ export default function MainScreen() {
           </ScrollView>
 
           {/* Bottom Navigation */}
-          <View style={[styles.bottomNav, { paddingBottom: insets.bottom + 20 }]}>
+          <View style={[styles.bottomNav, { paddingBottom: insets.bottom + 7 }]}>
             <TouchableOpacity
               style={styles.navButton}
               onPress={() => {
@@ -484,19 +484,6 @@ export default function MainScreen() {
                 onPress={() => {
                   playClickSound();
                   setShowAssetsMenu(false);
-                  router.push('/(tabs)/content-tips');
-                }}
-              >
-                <Ionicons name="bulb-outline" size={24} color="#FFD700" />
-                <Text style={styles.assetsMenuItemText}>Content Tips</Text>
-                <Ionicons name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.5)" />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.assetsMenuItem}
-                onPress={() => {
-                  playClickSound();
-                  setShowAssetsMenu(false);
                   router.push('/story-finder');
                 }}
               >
@@ -528,6 +515,19 @@ export default function MainScreen() {
               >
                 <Ionicons name="sparkles-outline" size={24} color="#FFD700" />
                 <Text style={styles.assetsMenuItemText}>Idea Generator</Text>
+                <Ionicons name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.5)" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.assetsMenuItem}
+                onPress={() => {
+                  playClickSound();
+                  setShowAssetsMenu(false);
+                  router.push('/(tabs)/content-tips');
+                }}
+              >
+                <Ionicons name="bulb-outline" size={24} color="#FFD700" />
+                <Text style={styles.assetsMenuItemText}>Content Tips</Text>
                 <Ionicons name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.5)" />
               </TouchableOpacity>
 
