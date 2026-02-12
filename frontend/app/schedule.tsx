@@ -571,55 +571,68 @@ export default function ScheduleScreen() {
                     />
                   )}
 
-                  <Text style={styles.sectionLabel}>SCRIPT</Text>
-                  <View style={styles.scriptLinkRow}>
-                    {data?.script_id ? (
-                      <>
+                  <View style={styles.scriptSection}>
+                    <Text style={styles.sectionLabel}>SCRIPT</Text>
+                    <View style={styles.scriptLinkRow}>
+                      {data?.script_id ? (
+                        <>
+                          <TouchableOpacity
+                            style={styles.openScriptButton}
+                            onPress={() => openScriptForDay(data.script_id!)}
+                            activeOpacity={0.8}
+                          >
+                            <View style={styles.openScriptIconWrap}>
+                              <Ionicons name="document-text" size={20} color="#FFD700" />
+                            </View>
+                            <View style={styles.openScriptTextWrap}>
+                              <Text style={styles.openScriptButtonText} numberOfLines={1}>
+                                {scripts.find((s) => s.id === data.script_id)?.title || 'Open script'}
+                              </Text>
+                              <Text style={styles.openScriptHint}>Tap to open in Batching</Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={18} color="rgba(255, 215, 0, 0.8)" />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.unlinkScriptButton}
+                            onPress={() => {
+                              playClickSound();
+                              updateScriptLink(dayName, null);
+                            }}
+                          >
+                            <Ionicons name="close-circle-outline" size={22} color="rgba(255,255,255,0.5)" />
+                          </TouchableOpacity>
+                        </>
+                      ) : (
                         <TouchableOpacity
-                          style={styles.openScriptButton}
-                          onPress={() => openScriptForDay(data.script_id!)}
-                          activeOpacity={0.8}
-                        >
-                          <Ionicons name="document-text" size={18} color="#FFD700" />
-                          <Text style={styles.openScriptButtonText} numberOfLines={1}>
-                            {scripts.find((s) => s.id === data.script_id)?.title || 'Open script'}
-                          </Text>
-                          <Ionicons name="open-outline" size={16} color="#FFD700" />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={styles.unlinkScriptButton}
+                          style={styles.linkScriptButton}
                           onPress={() => {
                             playClickSound();
-                            updateScriptLink(dayName, null);
+                            setPickerDay(dayName);
+                            setShowScriptPicker(true);
                           }}
+                          activeOpacity={0.85}
                         >
-                          <Ionicons name="close-circle-outline" size={20} color="rgba(255,255,255,0.6)" />
+                          <View style={styles.linkScriptIconWrap}>
+                            <Ionicons name="link" size={20} color="#FFD700" />
+                          </View>
+                          <View style={styles.linkScriptTextWrap}>
+                            <Text style={styles.linkScriptButtonText}>Link to a script</Text>
+                            <Text style={styles.linkScriptHint}>Choose from Batching</Text>
+                          </View>
+                          <Ionicons name="add-circle-outline" size={22} color="rgba(255, 215, 0, 0.7)" />
                         </TouchableOpacity>
-                      </>
-                    ) : (
-                      <TouchableOpacity
-                        style={styles.linkScriptButton}
-                        onPress={() => {
-                          playClickSound();
-                          setPickerDay(dayName);
-                          setShowScriptPicker(true);
-                        }}
-                        activeOpacity={0.8}
-                      >
-                        <Ionicons name="link" size={18} color="#FFD700" />
-                        <Text style={styles.linkScriptButtonText}>Link to a script</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-
-                  <View style={styles.statusRow}>
-                    <View style={styles.statusLeft}>
-                      <View style={styles.statusDot} />
-                      <Text style={styles.statusText}>Draft saved locally</Text>
+                      )}
                     </View>
-                    <Text style={styles.statusRight}>
-                      Modified {relativeTime(now - lastModified)}
-                    </Text>
+
+                    <View style={styles.statusBar}>
+                      <View style={styles.statusLeft}>
+                        <View style={styles.statusDot} />
+                        <Text style={styles.statusText}>Draft saved locally</Text>
+                      </View>
+                      <Text style={styles.statusRight}>
+                        Modified {relativeTime(now - lastModified)}
+                      </Text>
+                    </View>
                   </View>
                 </View>
               );
@@ -788,47 +801,85 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.9)',
   },
   formatChipTextSelected: { color: '#FFD700' },
+  scriptSection: {
+    marginTop: 4,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.06)',
+  },
   scriptLinkRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginTop: 8,
-    marginBottom: 4,
+    gap: 12,
+    marginTop: 10,
   },
   openScriptButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 215, 0, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.4)',
-  },
-  openScriptButtonText: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFD700',
-  },
-  unlinkScriptButton: { padding: 8 },
-  linkScriptButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderWidth: 1,
+    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 215, 0, 0.08)',
+    borderWidth: 1.5,
     borderColor: 'rgba(255, 215, 0, 0.35)',
   },
-  linkScriptButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
+  openScriptIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  openScriptTextWrap: { flex: 1, minWidth: 0 },
+  openScriptButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
     color: '#FFD700',
+  },
+  openScriptHint: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.5)',
+    marginTop: 2,
+  },
+  unlinkScriptButton: {
+    padding: 10,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  linkScriptButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
+    borderStyle: 'dashed',
+  },
+  linkScriptIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  linkScriptTextWrap: { flex: 1, minWidth: 0 },
+  linkScriptButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFD700',
+  },
+  linkScriptHint: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.45)',
+    marginTop: 2,
   },
   scriptPickerWrap: {
     flex: 1,
@@ -908,14 +959,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 215, 0, 0.25)',
   },
-  statusRow: {
+  statusBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 20,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+    marginTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
   },
   statusLeft: {
     flexDirection: 'row',
@@ -930,11 +982,13 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.55)',
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontWeight: '500',
   },
   statusRight: {
-    fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.5)',
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.45)',
+    fontWeight: '500',
   },
   tipsSheetOverlay: {
     flex: 1,
