@@ -367,11 +367,6 @@ export default function MainScreen() {
           <View style={styles.menuOverlay}>
             <View style={styles.menuContent}>
               <Text style={styles.menuTitle}>Menu</Text>
-              
-              <View style={styles.userInfo}>
-                <Text style={styles.userName}>{user?.name}</Text>
-                <Text style={styles.userEmail}>{user?.email}</Text>
-              </View>
 
               <TouchableOpacity
                 style={styles.homeMenuButton}
@@ -927,22 +922,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFD700',
     marginBottom: 24,
-  },
-  userInfo: {
-    marginBottom: 24,
-    padding: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 12,
-  },
-  userName: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  userEmail: {
-    color: '#999',
-    fontSize: 14,
   },
   homeMenuButton: {
     backgroundColor: 'rgba(255, 215, 0, 0.2)',
