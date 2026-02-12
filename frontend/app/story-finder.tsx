@@ -311,10 +311,7 @@ export default function StoryFinderScreen() {
           >
           <Text style={styles.messageLabel}>THE CENTRAL MESSAGE</Text>
           <View style={styles.messageBox}>
-            <Text
-              style={styles.messagePlaceholder}
-              numberOfLines={2}
-            >
+            <Text style={styles.messagePlaceholder}>
               {message || 'One message. Many stories. Total alignment.'}
             </Text>
           </View>

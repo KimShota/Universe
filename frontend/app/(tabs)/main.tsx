@@ -242,7 +242,7 @@ export default function MainScreen() {
           </ScrollView>
 
           {/* Bottom Navigation */}
-          <View style={[styles.bottomNav, { paddingBottom: insets.bottom + 7 }]}>
+          <View style={[styles.bottomNav, { paddingBottom: insets.bottom + 9 }]}>
             <TouchableOpacity
               style={styles.navButton}
               onPress={() => {
