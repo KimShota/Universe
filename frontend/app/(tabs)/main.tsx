@@ -140,18 +140,18 @@ export default function MainScreen() {
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.menuButton}
-              onPress={() => {
-                playClickSound();
-                setShowMenu(true);
-              }}
+            onPress={() => {
+              playClickSound();
+              setShowMenu(true);
+            }}
           >
-              <Ionicons name="menu" size={28} color="#ffffff" />
+            <Ionicons name="menu" size={26} color="rgba(255,255,255,0.95)" />
           </TouchableOpacity>
 
-            <View style={styles.streakContainer}>
-              <Text style={styles.streakText}>🔥 {user?.streak || 0} day streak</Text>
-            </View>
+          <View style={styles.streakPill}>
+            <Text style={styles.streakText}>🔥 {user?.streak ?? 0} day streak</Text>
           </View>
+        </View>
 
           {/* Roadmap Section */}
           <ScrollView
@@ -159,7 +159,10 @@ export default function MainScreen() {
             contentContainerStyle={styles.roadmapContent}
             showsVerticalScrollIndicator={false}
           >
-            <Text style={styles.title}>I'M THE NICHE</Text>
+            <View style={styles.titleBlock}>
+              <Text style={styles.title}>I'M THE NICHE</Text>
+              <Text style={styles.titleSubtitle}>Your content journey</Text>
+            </View>
 
             <View style={styles.roadmapContainer}>
               <Svg height={roadmapSteps[roadmapSteps.length - 1].y + 100} width={width}>
@@ -177,8 +180,8 @@ export default function MainScreen() {
                               x2={nextStep.x}
                               y2={nextStep.y}
                               stroke="#FFD700"
-                              strokeWidth="6"
-                              opacity={0.35}
+                              strokeWidth="8"
+                              opacity={0.4}
                             />
                             <Line
                               x1={step.x}
@@ -186,7 +189,7 @@ export default function MainScreen() {
                               x2={nextStep.x}
                               y2={nextStep.y}
                               stroke="#FFD700"
-                              strokeWidth="2.5"
+                              strokeWidth="3"
                               opacity={1}
                             />
                           </>
@@ -244,33 +247,44 @@ export default function MainScreen() {
               style={styles.navButton}
               onPress={() => {
                 playClickSound();
-                router.push('/(tabs)/content-tips');
+                router.push('/(tabs)/creator-universe');
               }}
             >
-              <Ionicons name="bulb-outline" color="#ffffff" size={24} />
-              <Text style={styles.navText}>Content Tips</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.sosButton}
-              onPress={() => {
-                playClickSound();
-                router.push('/sos');
-              }}
-            >
-              <Ionicons name="alert-circle" color="#ffffff" size={40} />
-              <Text style={styles.sosText}>SOS!</Text>
+              <Ionicons name="telescope-outline" color="#ffffff" size={24} />
+              <Text style={styles.navText}>Creator Universe</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.navButton}
               onPress={() => {
                 playClickSound();
-                router.push('/(tabs)/creator-universe');
+                router.push('/batching');
               }}
             >
-              <Ionicons name="telescope-outline" color="#ffffff" size={24} />
-              <Text style={styles.navText}>Creator Universe</Text>
+              <Ionicons name="layers-outline" color="#ffffff" size={24} />
+              <Text style={styles.navText}>Batching</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.navButton}
+              onPress={() => {
+                playClickSound();
+                router.push('/analysis');
+              }}
+            >
+              <Ionicons name="analytics-outline" color="#ffffff" size={24} />
+              <Text style={styles.navText}>Analysis</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.navButton}
+              onPress={() => {
+                playClickSound();
+                router.push('/schedule');
+              }}
+            >
+              <Ionicons name="calendar-outline" color="#ffffff" size={24} />
+              <Text style={styles.navText}>Schedule</Text>
             </TouchableOpacity>
           </View>
 
@@ -281,8 +295,9 @@ export default function MainScreen() {
               playClickSound();
               setShowAssetsMenu(true);
             }}
+            activeOpacity={0.9}
           >
-            <Ionicons name="folder-outline" size={24} color="#0a0e27" />
+            <Ionicons name="folder-open-outline" size={22} color="#FFD700" />
             <Text style={styles.assetsButtonText}>Assets</Text>
           </TouchableOpacity>
         </View>
@@ -463,43 +478,17 @@ export default function MainScreen() {
           <View style={styles.modalOverlay}>
             <View style={styles.assetsMenuContent}>
               <Text style={styles.modalTitle}>Assets</Text>
-              
-              <TouchableOpacity
-                style={styles.assetsMenuItem}
-                onPress={() => {
-                  playClickSound();
-                  setShowAssetsMenu(false);
-                  router.push('/batching');
-                }}
-              >
-                <Ionicons name="layers-outline" size={24} color="#FFD700" />
-                <Text style={styles.assetsMenuItemText}>Batching</Text>
-                <Ionicons name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.5)" />
-              </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.assetsMenuItem}
                 onPress={() => {
                   playClickSound();
                   setShowAssetsMenu(false);
-                  router.push('/analysis');
+                  router.push('/(tabs)/content-tips');
                 }}
               >
-                <Ionicons name="analytics-outline" size={24} color="#FFD700" />
-                <Text style={styles.assetsMenuItemText}>Analysis</Text>
-                <Ionicons name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.5)" />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.assetsMenuItem}
-                onPress={() => {
-                  playClickSound();
-                  setShowAssetsMenu(false);
-                  router.push('/schedule');
-                }}
-              >
-                <Ionicons name="calendar-outline" size={24} color="#FFD700" />
-                <Text style={styles.assetsMenuItemText}>Schedule</Text>
+                <Ionicons name="bulb-outline" size={24} color="#FFD700" />
+                <Text style={styles.assetsMenuItemText}>Content Tips</Text>
                 <Ionicons name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.5)" />
               </TouchableOpacity>
 
@@ -567,47 +556,66 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   menuButton: {
-    padding: 8,
+    padding: 10,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
-  streakContainer: {
-    alignItems: 'flex-end',
+  streakPill: {
+    backgroundColor: 'rgba(255, 215, 0, 0.18)',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.35)',
+  },
+  streakText: {
+    color: '#FFE066',
+    fontSize: 14,
+    fontWeight: '700',
   },
   assetsButton: {
     position: 'absolute',
     right: 20,
-    backgroundColor: '#e5e7eb',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 25,
+    backgroundColor: 'rgba(20, 20, 40, 0.92)',
+    paddingVertical: 14,
+    paddingHorizontal: 22,
+    borderRadius: 28,
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
     elevation: 8,
-    gap: 8,
+    gap: 10,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 215, 0, 0.4)',
   },
   assetsButtonText: {
-    color: '#0a0e27',
-    fontSize: 14,
-    fontWeight: '600',
+    color: '#FFD700',
+    fontSize: 15,
+    fontWeight: '700',
   },
-  streakText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
+  titleBlock: {
+    marginBottom: 36,
+    alignItems: 'center',
   },
   title: {
-    fontSize: 32,
-    fontWeight: '700',
+    fontSize: 28,
+    fontWeight: '800',
     color: '#ffffff',
     textAlign: 'center',
-    marginBottom: 40,
+    letterSpacing: 1.2,
+  },
+  titleSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255, 215, 0, 0.85)',
+    marginTop: 8,
+    letterSpacing: 0.5,
+    fontWeight: '500',
   },
   roadmapScroll: {
     flex: 1,
@@ -624,36 +632,41 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 100,
     height: 100,
-    borderRadius: 25,
+    borderRadius: 50,
     backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
     elevation: 8,
   },
   planetImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 40,
+    width: 92,
+    height: 92,
+    borderRadius: 46,
   },
   planetImageShadowed: {
-    opacity: 0.4,
+    opacity: 0.45,
   },
   stepShadowed: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.5,
-    shadowRadius: 10,
+    shadowRadius: 12,
     elevation: 12,
   },
   stepCompleted: {},
   stepCurrent: {
-    shadowColor: '#fbbf24',
-    shadowOpacity: 0.6,
+    borderWidth: 3,
+    borderColor: 'rgba(255, 215, 0, 0.7)',
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 14,
+    elevation: 12,
   },
   stepText: {
     fontSize: 24,
@@ -669,42 +682,27 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    backgroundColor: 'rgba(10, 14, 39, 0.95)',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: 12,
+    paddingTop: 16,
+    paddingBottom: 4,
+    backgroundColor: 'rgba(10, 14, 39, 0.97)',
+    borderTopWidth: 2,
+    borderTopColor: 'rgba(255, 215, 0, 0.25)',
   },
   navButton: {
+    flex: 1,
     alignItems: 'center',
-    padding: 10,
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 4,
   },
   navText: {
-    color: '#ffffff',
-    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: 11,
     marginTop: 4,
-    fontWeight: '500',
-  },
-  sosButton: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#dc2626',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#dc2626',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 12,
-    marginTop: -40,
-  },
-  sosText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '700',
-    marginTop: 4,
+    fontWeight: '600',
   },
   assetsMenuContent: {
     backgroundColor: 'rgba(20, 20, 40, 0.95)',
