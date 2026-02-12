@@ -530,6 +530,19 @@ export default function MainScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity
+                style={styles.assetsMenuItem}
+                onPress={() => {
+                  playClickSound();
+                  setShowAssetsMenu(false);
+                  router.push('/idea-generator');
+                }}
+              >
+                <Ionicons name="sparkles-outline" size={24} color="#FFD700" />
+                <Text style={styles.assetsMenuItemText}>Idea Generator</Text>
+                <Ionicons name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.5)" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
                 style={styles.closeButton}
                 onPress={() => {
                   playClickSound();
