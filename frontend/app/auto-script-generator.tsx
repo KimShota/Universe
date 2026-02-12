@@ -10,12 +10,14 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
 import { UniverseBackground } from '../components/UniverseBackground';
 import { Ionicons } from '@expo/vector-icons';
 import { playClickSound } from '../utils/soundEffects';
+import { supabase } from '../lib/supabase';
 
 const PROMPT_TEMPLATE = `Act as a short-for video scriptwriter for Reels/TikTok/Shorts. Write a 45 second script in a Hook → Value → Payoff → CTA structure. 
 
@@ -87,6 +89,22 @@ export default function AutoScriptGeneratorScreen() {
   const [tone, setTone] = useState('');
   const [ctaGoal, setCtaGoal] = useState('');
   const [platform, setPlatform] = useState('');
+  const [generating, setGenerating] = useState(false);
+  const [generatedScript, setGeneratedScript] = useState<string | null>(null);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+
+  const formValues = {
+    topic,
+    targetViewer,
+    corePromise,
+    keyPoint1,
+    keyPoint2,
+    keyPoint3,
+    proofCredibility,
+    tone,
+    ctaGoal,
+    platform,
+  };
 
   const handleCopy = useCallback(async () => {
     playClickSound();
@@ -113,6 +131,54 @@ export default function AutoScriptGeneratorScreen() {
       Alert.alert('Error', 'Failed to copy to clipboard.');
     }
   }, [topic, targetViewer, corePromise, keyPoint1, keyPoint2, keyPoint3, proofCredibility, tone, ctaGoal, platform]);
+
+  const handleAutoGenerate = useCallback(async () => {
+    playClickSound();
+    setGenerateError(null);
+    setGeneratedScript(null);
+    setGenerating(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        setGenerateError('Not signed in.');
+        return;
+      }
+      const url = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
+      const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
+      if (!url || !anonKey) {
+        setGenerateError('Supabase not configured.');
+        return;
+      }
+      const prompt = buildPrompt(formValues);
+      const res = await fetch(`${url}/functions/v1/generate-script`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${anonKey}`,
+        },
+        body: JSON.stringify({ access_token: session.access_token, prompt }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const err = (data as { error?: string }).error;
+        setGenerateError(err ?? `Request failed (${res.status})`);
+        return;
+      }
+      const script = (data as { script?: string }).script ?? '';
+      setGeneratedScript(script || 'No script generated.');
+    } catch (e) {
+      setGenerateError(e instanceof Error ? e.message : 'Failed to generate script.');
+    } finally {
+      setGenerating(false);
+    }
+  }, [formValues.topic, formValues.targetViewer, formValues.corePromise, formValues.keyPoint1, formValues.keyPoint2, formValues.keyPoint3, formValues.proofCredibility, formValues.tone, formValues.ctaGoal, formValues.platform]);
+
+  const copyGeneratedScript = useCallback(async () => {
+    if (!generatedScript) return;
+    playClickSound();
+    await Clipboard.setStringAsync(generatedScript);
+    Alert.alert('Copied', 'Script copied to clipboard.');
+  }, [generatedScript]);
 
   return (
     <UniverseBackground>
@@ -265,9 +331,49 @@ export default function AutoScriptGeneratorScreen() {
             <Text style={styles.copyButtonText}>Copy to Clipboard</Text>
           </TouchableOpacity>
 
+          <TouchableOpacity
+            style={styles.autoGenerateButton}
+            onPress={handleAutoGenerate}
+            activeOpacity={0.85}
+            disabled={generating}
+          >
+            {generating ? (
+              <>
+                <ActivityIndicator size="small" color="#1a1a24" />
+                <Text style={styles.autoGenerateButtonText}>Generating…</Text>
+              </>
+            ) : (
+              <>
+                <Ionicons name="sparkles" size={22} color="#1a1a24" />
+                <Text style={styles.autoGenerateButtonText}>Auto-generate with AI</Text>
+              </>
+            )}
+          </TouchableOpacity>
+
           <Text style={styles.hint}>
-            Paste the copied prompt into ChatGPT to generate your 45-second script with 3 hook options.
+            Paste the copied prompt into ChatGPT, or use Auto-generate to get a script instantly.
           </Text>
+
+          {generateError && (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>{generateError}</Text>
+            </View>
+          )}
+
+          {generatedScript && !generating && (
+            <View style={styles.outputCard}>
+              <View style={styles.outputHeader}>
+                <Text style={styles.outputTitle}>Generated script</Text>
+                <TouchableOpacity style={styles.copyScriptButton} onPress={copyGeneratedScript}>
+                  <Ionicons name="copy-outline" size={18} color="#FFD700" />
+                  <Text style={styles.copyScriptButtonText}>Copy</Text>
+                </TouchableOpacity>
+              </View>
+              <ScrollView style={styles.outputScroll} nestedScrollEnabled>
+                <Text style={styles.outputText}>{generatedScript}</Text>
+              </ScrollView>
+            </View>
+          )}
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -387,10 +493,73 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#0a0e27',
   },
+  autoGenerateButton: {
+    backgroundColor: 'rgba(255, 215, 0, 0.85)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 18,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    gap: 10,
+    marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 215, 0, 0.5)',
+  },
+  autoGenerateButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#0a0e27',
+  },
   hint: {
     fontSize: 13,
     color: 'rgba(255, 255, 255, 0.6)',
     textAlign: 'center',
     lineHeight: 20,
+  },
+  errorBox: {
+    backgroundColor: 'rgba(220, 80, 80, 0.15)',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(220, 80, 80, 0.4)',
+  },
+  errorText: { fontSize: 14, color: 'rgba(255,255,255,0.95)' },
+  outputCard: {
+    backgroundColor: 'rgba(60, 45, 90, 0.5)',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.2)',
+  },
+  outputHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  outputTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#FFD700',
+    letterSpacing: 1,
+  },
+  copyScriptButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(255,215,0,0.2)',
+    borderRadius: 8,
+  },
+  copyScriptButtonText: { fontSize: 13, fontWeight: '600', color: '#FFD700' },
+  outputScroll: { maxHeight: 360 },
+  outputText: {
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.9)',
+    lineHeight: 22,
   },
 });
