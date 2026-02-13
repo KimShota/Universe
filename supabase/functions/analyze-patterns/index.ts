@@ -40,7 +40,6 @@ serve(async (req) => {
       ? body.access_token.trim()
       : (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
   if (!token) {
-    console.log('[analyze-patterns] 401: no token in body or Authorization header');
     return new Response(
       JSON.stringify({ error: 'Unauthorized', code: 'NO_TOKEN' }),
       { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -50,7 +49,6 @@ serve(async (req) => {
   const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
   const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
   const geminiApiKey = Deno.env.get('GEMINI_API_KEY') ?? '';
-  console.log('[analyze-patterns] SUPABASE_URL (auth base):', supabaseUrl ? `${supabaseUrl.replace(/\/$/, '')}/auth/v1` : '(empty)');
   if (!supabaseUrl || !supabaseServiceRoleKey) {
     return new Response(JSON.stringify({ error: 'Server configuration error' }), {
       status: 500,
@@ -68,7 +66,6 @@ serve(async (req) => {
   const baseUrl = supabaseUrl.replace(/\/$/, '');
   const issuer = `${baseUrl}/auth/v1`;
   const jwksUrl = `${baseUrl}/auth/v1/.well-known/jwks.json`;
-  console.log('[analyze-patterns] JWT verify: issuer=', issuer, 'jwksUrl=', jwksUrl);
   try {
     const JWKS = jose.createRemoteJWKSet(new URL(jwksUrl));
     const { payload } = await jose.jwtVerify(token, JWKS, { issuer });
@@ -77,10 +74,8 @@ serve(async (req) => {
       throw new Error('Missing sub in JWT');
     }
     userId = sub;
-    console.log('[analyze-patterns] JWT verified, userId=', userId);
   } catch (e) {
     const detail = e instanceof Error ? e.message : String(e);
-    console.error('[analyze-patterns] JWT verification failed:', detail, e);
     return new Response(
       JSON.stringify({
         error: 'Invalid or expired token',

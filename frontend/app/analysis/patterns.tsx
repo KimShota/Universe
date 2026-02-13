@@ -200,7 +200,6 @@ export default function AnalysisPatternsScreen() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         const err = data as { error?: string; code?: string; detail?: string };
-        console.error('[analyze-patterns] Error response:', res.status, { code: err?.code, error: err?.error, detail: err?.detail, raw: data });
         const errMsg = err?.error ?? `Request failed (${res.status})`;
         const withDetail = err?.detail ? `${errMsg}. ${err.detail}` : errMsg;
         throw new Error(withDetail);
