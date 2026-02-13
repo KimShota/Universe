@@ -18,6 +18,7 @@ import { UniverseBackground } from '../components/UniverseBackground';
 import { Ionicons } from '@expo/vector-icons';
 import { playClickSound } from '../utils/soundEffects';
 import { supabase } from '../lib/supabase';
+import { canUseAiFeature, recordAiFeatureUsed, AI_FEATURE_KEYS } from '../utils/aiUsageLimit';
 
 const PROMPT_TEMPLATE = `Act as a short-for video scriptwriter for Reels/TikTok/Shorts. Write a 45 second script in a Hook → Value → Payoff → CTA structure. 
 
@@ -136,13 +137,22 @@ export default function AutoScriptGeneratorScreen() {
     playClickSound();
     setGenerateError(null);
     setGeneratedScript(null);
-    setGenerating(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
         setGenerateError('Not signed in.');
         return;
       }
+      const userId = session?.user?.id ?? '';
+      const allowed = await canUseAiFeature(AI_FEATURE_KEYS.auto_script, userId);
+      if (!allowed) {
+        Alert.alert(
+          'Limit reached',
+          'You can only use Auto-generate with AI once per day. Try again tomorrow.'
+        );
+        return;
+      }
+      setGenerating(true);
       const url = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
       const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
       if (!url || !anonKey) {
@@ -166,6 +176,7 @@ export default function AutoScriptGeneratorScreen() {
       }
       const script = (data as { script?: string }).script ?? '';
       setGeneratedScript(script || 'No script generated.');
+      await recordAiFeatureUsed(AI_FEATURE_KEYS.auto_script, userId);
     } catch (e) {
       setGenerateError(e instanceof Error ? e.message : 'Failed to generate script.');
     } finally {

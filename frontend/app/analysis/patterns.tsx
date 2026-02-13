@@ -22,6 +22,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { playClickSound } from '../../utils/soundEffects';
 import { MAX_ANALYSIS_CREATORS_FOR_PATTERN } from '../../constants/limits';
+import { canUseAiFeature, recordAiFeatureUsed, AI_FEATURE_KEYS } from '../../utils/aiUsageLimit';
 
 const { width } = Dimensions.get('window');
 const FORMAT_OPTIONS = ['Silent film / B-roll', 'Split Screen', 'Talking head', 'Other'];
@@ -161,7 +162,6 @@ export default function AnalysisPatternsScreen() {
       return;
     }
     playClickSound();
-    setAiPatternLoading(true);
     setAiPatternResult(null);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -169,6 +169,16 @@ export default function AnalysisPatternsScreen() {
         setAiPatternResult('Error: Not signed in.');
         return;
       }
+      const userId = user?.id ?? session?.user?.id ?? '';
+      const allowed = await canUseAiFeature(AI_FEATURE_KEYS.find_patterns, userId);
+      if (!allowed) {
+        Alert.alert(
+          'Limit reached',
+          'You can only use Find patterns with AI once per day. Try again tomorrow.'
+        );
+        return;
+      }
+      setAiPatternLoading(true);
       const url = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
       const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
       if (!url) {
@@ -198,6 +208,7 @@ export default function AnalysisPatternsScreen() {
       const pattern = (data as { pattern?: string })?.pattern ?? null;
       setAiPatternResult(pattern || 'No summary returned.');
       setAiResultExpanded(false);
+      await recordAiFeatureUsed(AI_FEATURE_KEYS.find_patterns, userId);
     } catch (e) {
       console.error('AI pattern analysis error:', e);
       const msg = e instanceof Error ? e.message : 'Failed to get AI pattern.';
@@ -205,7 +216,7 @@ export default function AnalysisPatternsScreen() {
     } finally {
       setAiPatternLoading(false);
     }
-  }, [creatorIdsForAi]);
+  }, [creatorIdsForAi, user?.id]);
 
   const toggleCreatorForAi = (creatorId: string) => {
     playClickSound();

@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { playClickSound } from '../utils/soundEffects';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { canUseAiFeature, recordAiFeatureUsed, AI_FEATURE_KEYS } from '../utils/aiUsageLimit';
 
 export default function IdeaGeneratorScreen() {
   const router = useRouter();
@@ -27,13 +28,22 @@ export default function IdeaGeneratorScreen() {
   const generateIdeas = useCallback(async () => {
     setError(null);
     setIdeas([]);
-    setLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
         setError('Not signed in.');
         return;
       }
+      const userId = user?.id ?? session?.user?.id ?? '';
+      const allowed = await canUseAiFeature(AI_FEATURE_KEYS.idea_generator, userId);
+      if (!allowed) {
+        Alert.alert(
+          'Limit reached',
+          'You can only use Idea Generator once per day. Try again tomorrow.'
+        );
+        return;
+      }
+      setLoading(true);
       const url = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
       const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
       if (!url || !anonKey) {
@@ -56,12 +66,13 @@ export default function IdeaGeneratorScreen() {
       }
       const list = (data as { ideas?: string[] }).ideas;
       setIdeas(Array.isArray(list) ? list : []);
+      await recordAiFeatureUsed(AI_FEATURE_KEYS.idea_generator, userId);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to generate ideas.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.id]);
 
   const copyAll = useCallback(async () => {
     playClickSound();
