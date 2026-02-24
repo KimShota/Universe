@@ -403,7 +403,7 @@ export default function CreatorUniverseScreen() {
               {/* Your Ethos */}
               <View style={styles.goalContainer}>
                 <View style={styles.goalLabelRow}>
-                  <Ionicons name="compass-outline" size={16} color="#FFD700" />
+                  <Ionicons name="compass-outline" size={18} color="#FFD700" />
                   <Text style={styles.goalLabel}>Your Ethos</Text>
                 </View>
                 <TextInput
@@ -412,7 +412,7 @@ export default function CreatorUniverseScreen() {
                   onChangeText={setGoal}
                   onBlur={() => saveUniverse()}
                   placeholder="What is your message?"
-                  placeholderTextColor="rgba(255, 255, 255, 0.45)"
+                  placeholderTextColor="rgba(255, 215, 0, 0.55)"
                   multiline
                 />
               </View>
@@ -1115,18 +1115,22 @@ const styles = StyleSheet.create({
   goalContainer: {
     alignItems: 'center',
     marginBottom: 4,
+    paddingVertical: 4,
   },
   goalLabelRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 10,
+    gap: 8,
+    marginBottom: 12,
   },
   goalLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.85)',
-    letterSpacing: 0.5,
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#FFD700',
+    letterSpacing: 0.8,
+    textShadowColor: 'rgba(255, 215, 0, 0.6)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
   },
   goalContainerAvatar: {
     marginBottom: 6,
@@ -1137,19 +1141,26 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.95)',
   },
   goalInput: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 215, 0, 0.06)',
     borderWidth: 2,
-    borderColor: 'rgba(255, 215, 0, 0.5)',
+    borderColor: 'rgba(255, 215, 0, 0.65)',
     borderRadius: 18,
     padding: 18,
-    color: '#fff',
+    color: '#FFD700',
     fontSize: 16,
     lineHeight: 24,
     minHeight: 88,
     width: '85%',
     textAlign: 'center',
     textAlignVertical: 'top',
-    ...cardShadow,
+    textShadowColor: 'rgba(255, 215, 0, 0.9)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 12,
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.45,
+    shadowRadius: 16,
+    elevation: 8,
   },
   connectionsContainer: {
     height: 56,
@@ -1173,7 +1184,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'rgba(255, 215, 0, 0.4)',
     borderRadius: 16,
-    padding: 14,
+    padding: 5,
     minHeight: 84,
     justifyContent: 'center',
     ...cardShadow,
@@ -1364,10 +1375,13 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   ideaInput: {
-    color: '#fff',
+    color: '#FFE066',
     fontSize: 12,
     lineHeight: 18,
     textAlignVertical: 'top',
+    textShadowColor: 'rgba(255, 224, 102, 0.85)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
   },
   ideaInputPassion: {
     fontSize: 11,

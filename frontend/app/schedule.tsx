@@ -181,7 +181,8 @@ export default function ScheduleScreen() {
       const { data: rows } = await supabase
         .from('batching_scripts')
         .select('script_id, data')
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .order('id', { ascending: true });
       if (rows?.length) {
         const list = (rows as { script_id: string; data: Record<string, unknown> }[]).map((r) => ({
           id: r.script_id,

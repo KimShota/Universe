@@ -92,6 +92,8 @@ export default function BatchingScreen() {
   const hasAppliedScriptIdRef = useRef(false);
   const [showDateModal, setShowDateModal] = useState(false);
   const [showTipsModal, setShowTipsModal] = useState(false);
+  const [showArchiveModal, setShowArchiveModal] = useState(false);
+  const [archivedScripts, setArchivedScripts] = useState<Script[]>([]);
   const [tipPage, setTipPage] = useState(1);
   const [dateDraft, setDateDraft] = useState('');
 
@@ -111,33 +113,57 @@ export default function BatchingScreen() {
     }
   }, [params.scriptId, scripts]);
 
+  const normalizeRow = (r: { script_id: string; data: Record<string, unknown> }): Script => ({
+    id: r.script_id,
+    ...r.data,
+    titleHook: (r.data?.titleHook as string) ?? '',
+    visualHook: (r.data?.visualHook as string) ?? '',
+    verbalHook: (r.data?.verbalHook as string) ?? '',
+    problem: (r.data?.problem as string) ?? '',
+    promise: (r.data?.promise as string) ?? '',
+    credibility: (r.data?.credibility as string) ?? '',
+    delivery: (r.data?.delivery as string) ?? '',
+    footageNeeded: (r.data?.footageNeeded as string) ?? '',
+    audio: (r.data?.audio as string) ?? '',
+    caption: (r.data?.caption as string) ?? '',
+    callToAction: (r.data?.callToAction as string) ?? '',
+  } as Script);
+
   const loadScripts = async () => {
     try {
       if (!user?.id) return;
       const { data: rows } = await supabase
         .from('batching_scripts')
         .select('script_id, data')
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .eq('archived', false)
+        .order('id', { ascending: true });
       if (rows && rows.length > 0) {
-        const normalized = (rows as { script_id: string; data: Record<string, unknown> }[]).map((r) => ({
-          id: r.script_id,
-          ...r.data,
-          titleHook: (r.data?.titleHook as string) ?? '',
-          visualHook: (r.data?.visualHook as string) ?? '',
-          verbalHook: (r.data?.verbalHook as string) ?? '',
-          problem: (r.data?.problem as string) ?? '',
-          promise: (r.data?.promise as string) ?? '',
-          credibility: (r.data?.credibility as string) ?? '',
-          delivery: (r.data?.delivery as string) ?? '',
-          footageNeeded: (r.data?.footageNeeded as string) ?? '',
-          audio: (r.data?.audio as string) ?? '',
-          caption: (r.data?.caption as string) ?? '',
-          callToAction: (r.data?.callToAction as string) ?? '',
-        })) as Script[];
-        setScripts(normalized);
+        setScripts((rows as { script_id: string; data: Record<string, unknown> }[]).map(normalizeRow));
+      } else {
+        setScripts([]);
       }
     } catch (error) {
       console.error('Error loading scripts:', error);
+    }
+  };
+
+  const loadArchivedScripts = async () => {
+    try {
+      if (!user?.id) return;
+      const { data: rows } = await supabase
+        .from('batching_scripts')
+        .select('script_id, data')
+        .eq('user_id', user.id)
+        .eq('archived', true)
+        .order('id', { ascending: false });
+      if (rows && rows.length > 0) {
+        setArchivedScripts((rows as { script_id: string; data: Record<string, unknown> }[]).map(normalizeRow));
+      } else {
+        setArchivedScripts([]);
+      }
+    } catch (error) {
+      console.error('Error loading archived scripts:', error);
     }
   };
 
@@ -146,12 +172,63 @@ export default function BatchingScreen() {
       if (!user?.id) return;
       const { id, ...rest } = script;
       await supabase.from('batching_scripts').upsert(
-        { user_id: user.id, script_id: id, data: rest },
+        { user_id: user.id, script_id: id, data: rest, archived: false },
         { onConflict: 'user_id,script_id' }
       );
     } catch (error) {
       console.error('Error saving script:', error);
     }
+  };
+
+  const handleArchiveScript = async (scriptId: string) => {
+    if (!scriptId || !user?.id) return;
+    playClickSound();
+    try {
+      const { error } = await supabase
+        .from('batching_scripts')
+        .update({ archived: true })
+        .eq('user_id', user.id)
+        .eq('script_id', scriptId);
+      if (!error) {
+        setScripts((prev) => prev.filter((s) => s.id !== scriptId));
+        if (selectedScriptId === scriptId) {
+          setShowScriptDetail(false);
+          setSelectedScriptId(null);
+        }
+      }
+    } catch (error) {
+      console.error('Error archiving script:', error);
+    }
+  };
+
+  const handleAddFromArchive = async (script: Script) => {
+    if (!user?.id || scripts.length >= MAX_SCRIPTS) {
+      if (scripts.length >= MAX_SCRIPTS) Alert.alert('Limit reached', `You can have up to ${MAX_SCRIPTS} scripts. Delete or archive one to add more.`);
+      return;
+    }
+    playClickSound();
+    try {
+      const newId = Date.now().toString();
+      const { id: _oldId, ...data } = script;
+      await supabase.from('batching_scripts').insert({
+        user_id: user.id,
+        script_id: newId,
+        data: { ...data, date: new Date().toISOString().split('T')[0] },
+        archived: false,
+      });
+      await loadScripts();
+      setShowArchiveModal(false);
+      setSelectedScriptId(newId);
+      setShowScriptDetail(true);
+    } catch (error) {
+      console.error('Error adding from archive:', error);
+    }
+  };
+
+  const openArchiveModal = async () => {
+    playClickSound();
+    setShowArchiveModal(true);
+    await loadArchivedScripts();
   };
 
   const handleAddNew = async () => {
@@ -329,6 +406,9 @@ export default function BatchingScreen() {
             <View style={styles.titleContainer}>
               <Text style={styles.title}>Batching</Text>
             </View>
+            <TouchableOpacity onPress={openArchiveModal} style={styles.archiveHeaderButton}>
+              <Ionicons name="archive-outline" size={22} color="#FFD700" />
+            </TouchableOpacity>
           </View>
 
           <ScrollView
@@ -359,21 +439,71 @@ export default function BatchingScreen() {
                       </Text>
                     </View>
                   </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.deleteButton}
-                    onPress={() => {
-                      playClickSound();
-                      script.id && handleDeleteScript(script.id);
-                    }}
-                    disabled={!script.id}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="trash-outline" size={20} color="#ff4444" />
-                  </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.archiveButton}
+                      onPress={() => script.id && handleArchiveScript(script.id)}
+                      disabled={!script.id}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="archive-outline" size={20} color="#FFD700" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.deleteButton}
+                      onPress={() => {
+                        playClickSound();
+                        script.id && handleDeleteScript(script.id);
+                      }}
+                      disabled={!script.id}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="trash-outline" size={20} color="#ff4444" />
+                    </TouchableOpacity>
                 </View>
               </View>
             ))}
           </ScrollView>
+
+          {/* Archive Modal */}
+          <Modal visible={showArchiveModal} transparent animationType="fade">
+            <Pressable style={styles.modalOverlay} onPress={() => setShowArchiveModal(false)}>
+              <Pressable style={styles.archiveModalBox} onPress={() => {}}>
+                <View style={styles.archiveModalHeader}>
+                  <Text style={styles.archiveModalTitle}>Archive</Text>
+                  <TouchableOpacity onPress={() => { playClickSound(); setShowArchiveModal(false); }} style={styles.archiveModalClose}>
+                    <Ionicons name="close" size={24} color="#FFD700" />
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.archiveModalSubtitle}>Saved scripts you can add back to batching</Text>
+                <ScrollView
+                  style={styles.archiveModalScroll}
+                  contentContainerStyle={styles.archiveModalScrollContent}
+                  showsVerticalScrollIndicator={true}
+                  nestedScrollEnabled={true}
+                >
+                  {archivedScripts.length === 0 ? (
+                    <Text style={styles.archiveEmptyText}>No archived scripts yet. Archive a script from your list to see it here.</Text>
+                  ) : (
+                    archivedScripts.map((script, index) => (
+                      <View key={script.id || `archived-${index}`} style={styles.archiveRow}>
+                        <View style={styles.archiveRowText}>
+                          <Text style={styles.archiveRowTitle}>{script.title || 'Untitled Script'}</Text>
+                          <Text style={styles.archiveRowDate}>{script.date || '—'}</Text>
+                        </View>
+                        <TouchableOpacity
+                          style={styles.addFromArchiveButton}
+                          onPress={() => handleAddFromArchive(script)}
+                          activeOpacity={0.8}
+                        >
+                          <Ionicons name="add-circle-outline" size={20} color="#FFD700" />
+                          <Text style={styles.addFromArchiveLabel}>Add to Batching</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ))
+                  )}
+                </ScrollView>
+              </Pressable>
+            </Pressable>
+          </Modal>
 
           {/* Add Button */}
           <View style={styles.addButtonContainer}>
@@ -779,12 +909,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 1,
   },
-  titleContainer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
+  archiveHeaderButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     alignItems: 'center',
-    zIndex: 0,
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  titleContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     fontSize: 18,
@@ -833,15 +970,109 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.7)',
   },
+  archiveButton: {
+    padding: 10,
+    marginLeft: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   deleteButton: {
     padding: 10,
-    marginLeft: 12,
+    marginLeft: 8,
     borderRadius: 8,
     backgroundColor: 'rgba(255, 68, 68, 0.2)',
     borderWidth: 1,
     borderColor: 'rgba(255, 68, 68, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  archiveModalBox: {
+    width: '100%',
+    maxWidth: 400,
+    height: '80%',
+    maxHeight: '80%',
+    backgroundColor: 'rgba(30, 25, 50, 0.98)',
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
+  },
+  archiveModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  archiveModalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFD700',
+  },
+  archiveModalClose: {
+    padding: 4,
+  },
+  archiveModalSubtitle: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginBottom: 16,
+  },
+  archiveModalScroll: {
+    flex: 1,
+    minHeight: 0,
+  },
+  archiveModalScrollContent: {
+    paddingBottom: 24,
+    gap: 12,
+  },
+  archiveEmptyText: {
+    fontSize: 15,
+    color: 'rgba(255, 255, 255, 0.6)',
+    textAlign: 'center',
+    paddingVertical: 24,
+  },
+  archiveRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.25)',
+  },
+  archiveRowText: {
+    flex: 1,
+    marginRight: 12,
+  },
+  archiveRowTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFD700',
+    marginBottom: 4,
+  },
+  archiveRowDate: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.6)',
+  },
+  addFromArchiveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.5)',
+  },
+  addFromArchiveLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#FFD700',
   },
   contentContainer: {
     padding: 20,

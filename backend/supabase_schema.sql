@@ -114,10 +114,12 @@ CREATE TABLE IF NOT EXISTS batching_scripts (
     user_id TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     script_id TEXT NOT NULL,
     data JSONB NOT NULL DEFAULT '{}',
+    archived BOOLEAN NOT NULL DEFAULT FALSE,
     UNIQUE(user_id, script_id)
 );
 
 CREATE INDEX idx_batching_user ON batching_scripts(user_id);
+CREATE INDEX IF NOT EXISTS idx_batching_archived ON batching_scripts(user_id, archived);
 
 -- Enable RLS (Row Level Security) - use service role key in backend to bypass
 -- For service role, RLS is bypassed by default
