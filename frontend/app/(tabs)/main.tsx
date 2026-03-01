@@ -518,6 +518,19 @@ export default function MainScreen() {
                 onPress={() => {
                   playClickSound();
                   setShowAssetsMenu(false);
+                  router.push('/effective-formats');
+                }}
+              >
+                <Ionicons name="layers-outline" size={24} color="#FFD700" />
+                <Text style={styles.assetsMenuItemText}>Effective Formats</Text>
+                <Ionicons name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.5)" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.assetsMenuItem}
+                onPress={() => {
+                  playClickSound();
+                  setShowAssetsMenu(false);
                   router.push('/(tabs)/content-tips');
                 }}
               >
