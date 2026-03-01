@@ -220,10 +220,12 @@ export default function EffectiveFormatsScreen() {
           </TouchableOpacity>
         </View>
 
-        <Modal visible={showModal} transparent animationType="fade">
-          <Pressable style={styles.modalOverlay} onPress={closeModal}>
-            <Pressable style={styles.modalBox} onPress={(e) => e.stopPropagation()}>
-              <View style={styles.modalHeader}>
+        <Modal visible={showModal} transparent animationType="fade" statusBarTranslucent>
+          <View style={styles.modalOverlayWrap}>
+            <Pressable style={styles.modalOverlay} onPress={closeModal} />
+            <View style={styles.modalBoxWrap}>
+              <Pressable style={styles.modalBox} onPress={(e) => e.stopPropagation()}>
+                <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>{editingId ? 'Edit format' : 'Add format'}</Text>
                 <TouchableOpacity onPress={closeModal} style={styles.modalClose}>
                   <Ionicons name="close" size={24} color="#FFD700" />
@@ -231,7 +233,7 @@ export default function EffectiveFormatsScreen() {
               </View>
               <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalKav}>
                 <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalScrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-                  <Text style={styles.fieldLabel}>Format name *</Text>
+                  <Text style={[styles.fieldLabel, styles.fieldLabelFirst]}>Format name *</Text>
                   <TextInput
                     style={styles.input}
                     value={draftName}
@@ -275,8 +277,9 @@ export default function EffectiveFormatsScreen() {
                   </TouchableOpacity>
                 </View>
               </KeyboardAvoidingView>
-            </Pressable>
-          </Pressable>
+              </Pressable>
+            </View>
+          </View>
         </Modal>
       </SafeAreaView>
     </UniverseBackground>
@@ -437,41 +440,52 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#0a0e27',
   },
-  modalOverlay: {
+  modalOverlayWrap: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
   },
-  modalBox: {
+  modalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.78)',
+  },
+  modalBoxWrap: {
     width: '100%',
     maxWidth: 400,
     height: '85%',
     maxHeight: '85%',
-    backgroundColor: 'rgba(28, 24, 48, 0.98)',
+    paddingHorizontal: 24,
+    zIndex: 1,
+  },
+  modalBox: {
+    flex: 1,
+    backgroundColor: '#1c1830',
     borderRadius: 24,
     padding: 22,
     borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.35)',
+    borderColor: 'rgba(255, 215, 0, 0.4)',
+    overflow: 'hidden',
   },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 18,
+    marginBottom: 20,
   },
   modalTitle: { fontSize: 19, fontWeight: '700', color: '#FFD700' },
   modalClose: { padding: 4 },
   modalKav: { flex: 1, minHeight: 0 },
   modalScroll: { flex: 1, minHeight: 0 },
-  modalScrollContent: { paddingBottom: 24, flexGrow: 1 },
+  modalScrollContent: { paddingBottom: 28, flexGrow: 1 },
   fieldLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: 'rgba(255, 215, 0, 0.9)',
-    marginBottom: 6,
-    marginTop: 12,
+    color: 'rgba(255, 215, 0, 0.95)',
+    marginBottom: 8,
+    marginTop: 18,
+  },
+  fieldLabelFirst: {
+    marginTop: 0,
   },
   input: {
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
